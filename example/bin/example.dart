@@ -15,7 +15,6 @@ void main() async {
 
   // Usa o roteador importado
   app.use(createRouter());
-
   app.serveStatic('public');
 
   app.get('/todos/:id', (Request req, Response res) async {

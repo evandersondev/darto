@@ -104,7 +104,7 @@ class Darto {
     };
   }
 
-  void listen(int port, void Function()? callback) async {
+  void listen(int port, [void Function()? callback]) async {
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
     callback?.call();
 

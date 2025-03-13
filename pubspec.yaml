@@ -9,6 +9,7 @@ environment:
 # Add regular dependencies here.
 dependencies:
   path: ^1.9.1
+  mime: ^2.0.0
   # path: ^1.8.0
 
 dev_dependencies:

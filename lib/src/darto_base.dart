@@ -25,6 +25,59 @@ class Darto {
   void delete(String path, Handler handler) =>
       _addRoute('DELETE', path, handler);
 
+  // ---------------------------------------------------------
+  // Mecanismo simples de Rate Limiting para proteção contra DoS
+  // ---------------------------------------------------------
+  static const int maxRequestsPerInterval = 5;
+  static const Duration rateLimitInterval = Duration(seconds: 1);
+  static final Map<String, List<DateTime>> _ipRequestLog = {};
+
+  /// Verifica se o número de requisições originadas do IP do cliente
+  /// excedeu o limite permitido no intervalo configurado.
+  /// Caso exceda, envia uma resposta 429 (Too Many Requests) e retorna false.
+  /// Caso contrário, registra a requisição e retorna true para continuar o processamento.
+  static Future<bool> rateLimit(HttpRequest request) async {
+    final ip = request.connectionInfo?.remoteAddress.address ?? 'unknown';
+    final now = DateTime.now();
+
+    _ipRequestLog.putIfAbsent(ip, () => []);
+    // Filtra as requisições feitas no intervalo de tempo definido
+    _ipRequestLog[ip] =
+        _ipRequestLog[ip]!
+            .where((time) => now.difference(time) < rateLimitInterval)
+            .toList();
+
+    if (_ipRequestLog[ip]!.length >= maxRequestsPerInterval) {
+      // Excede o limite, envia mensagem de erro 429.
+      request.response
+        ..statusCode = HttpStatus.tooManyRequests
+        ..write('Too many requests. Please try again later.')
+        ..close();
+      return false;
+    }
+    // Registra a requisição e permite o processamento
+    _ipRequestLog[ip]!.add(now);
+    return true;
+  }
+
+  // ---------------------------------------------------------
+  // Função de Sanitização
+  // ---------------------------------------------------------
+  /// Sanitiza entradas de texto removendo caracteres potencialmente perigosos,
+  /// prevenindo injeções de código e ataques de script.
+  /// Você pode adaptar a lógica para atender às necessidades específicas do seu projeto.
+  static String sanitizeInput(String input) {
+    // Exemplo simples: remove tags, aspas, e caracteres especiais comuns.
+    return input.replaceAll(RegExp(r'[<>\"\"%;()&+]'), '');
+  }
+
+  /// Exemplo de uso:
+  /// Ao tratar parâmetros de query ou dados do corpo da requisição,
+  /// chame `sanitizeInput` para limpar os inputs.
+  ///
+  ///   String sanitizedName = DartoBase.sanitizeInput(request.uri.queryParameters['name'] ?? '');
+  ///   // Use o sanitizedName para prosseguir com a lógica do seu app.
+
   void use(dynamic middlewareOrRouter) {
     if (middlewareOrRouter is Middleware) {
       _middlewares.add(middlewareOrRouter);

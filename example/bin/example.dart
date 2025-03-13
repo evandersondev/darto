@@ -8,10 +8,10 @@ void main() async {
   app.useCors(origin: '*');
 
   // Middleware global
-  app.use((req, res, next) async {
-    print('🔹 Nova requisição: ${req.method} ${req.uri}');
-    await next();
-  });
+  // app.use((req, res, next) async {
+  //   print('🔹 Nova requisição: ${req.method} ${req.uri}');
+  //   await next();
+  // });
 
   // Usa o roteador importado
   app.use(createRouter());
@@ -20,11 +20,20 @@ void main() async {
 
   app.get('/todos/:id', (Request req, Response res) async {
     final id = req.params['id'];
-    print('🔹 Handler executado para /todos/$id'); // Log de depuração
-    // Simulação de busca de item no banco de dados
     final todo = {'id': id, 'title': 'Sample Todo', 'completed': false};
-    print('🔹 Enviando resposta: $todo'); // Log de depuração
-    res.send(todo);
+    res.status(OK).send(todo);
+  });
+
+  app.get('/download', (Request req, Response res) async {
+    final filePath = 'test.pdf';
+    print(req.baseUrl);
+    print(await req.body);
+    print(req.cookies);
+    print(req.hostname);
+    print(req.host);
+    print(req.method);
+
+    res.download(filePath);
   });
 
   app.listen(3000, () {

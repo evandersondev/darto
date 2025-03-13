@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:darto/src/request.dart';
+import 'package:darto/src/response.dart';
 import 'package:path/path.dart' as p;
 
 typedef Handler = Future<void> Function(Request req, Response res);
@@ -8,6 +10,10 @@ typedef Middleware =
     Future<void> Function(Request req, Response res, Future<void> Function());
 
 class Darto {
+  final bool _logger;
+
+  Darto({bool? logger}) : _logger = logger ?? false;
+
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
   final List<Middleware> _middlewares = [];
   String? _staticFolder;
@@ -49,8 +55,6 @@ class Darto {
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
     callback?.call();
 
-    print('🚀 Servidor rodando em http://localhost:$port');
-
     await for (HttpRequest request in server) {
       final method = request.method;
       final path = request.uri.path;
@@ -63,20 +67,22 @@ class Darto {
       final routeEntries = _routes[method] ?? [];
       bool handled = false;
 
-      print('Request: $method $path'); // Log de depuração
+      if (_logger) print('Request: $method $path'); // Log de depuração
 
       for (var entry in routeEntries) {
-        print('Checking route: ${entry.key.pattern}'); // Log de depuração
+        if (_logger)
+          print('Checking route: ${entry.key.pattern}'); // Log de depuração
         final match = entry.key.firstMatch(path);
         if (match != null) {
-          print('Matched route: ${entry.key.pattern}'); // Log de depuração
+          if (_logger)
+            print('Matched route: ${entry.key.pattern}'); // Log de depuração
           final params = extractRouteParams(
             entry.key,
             entry.value['paramNames'] ??
                 [], // Garante que paramNames não seja nulo
             match,
           );
-          print('Params: $params'); // Log de depuração
+          if (_logger) print('Params: $params'); // Log de depuração
 
           final req = Request(request, params);
           final res = Response(request.response);
@@ -154,6 +160,8 @@ class Darto {
     for (var i = 0; i < paramNames.length; i++) {
       params[paramNames[i]] = match.group(i + 1) ?? '';
     }
+
+    if (_logger) print('Params: $params'); // Log de depuração
     return params;
   }
 
@@ -185,7 +193,7 @@ class Darto {
   /// 📌 **Aplica os cabeçalhos CORS na resposta**
   void _applyCors(Response res) {
     _corsOptions.forEach((key, value) {
-      res._res.headers.set(key, value);
+      res.res.headers.set(key, value);
     });
   }
 
@@ -229,28 +237,5 @@ class Router {
         .add(
           MapEntry(regexPath, {'handler': handler, 'paramNames': paramNames}),
         );
-  }
-}
-
-class Request {
-  final HttpRequest _req;
-  final Map<String, String> params;
-
-  Request(this._req, this.params);
-
-  Uri get uri => _req.uri;
-  String get method => _req.method;
-  Map<String, String> get query => _req.uri.queryParameters;
-}
-
-class Response {
-  final HttpResponse _res;
-
-  Response(this._res);
-
-  void send(dynamic data) {
-    _res.headers.contentType = ContentType.json;
-    _res.write(jsonEncode(data));
-    _res.close();
   }
 }

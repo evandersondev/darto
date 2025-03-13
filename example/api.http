@@ -1,9 +1,17 @@
 http://localhost:3000/search?name=Dart&age=20
 
 ###
-
 http://localhost:3000/todos/23
 
 ### 
-
 http://localhost:3000/user/23
+
+### 
+http://localhost:3000/download
+content-type: application/json
+
+{
+    "name": "Dart",
+    "age": 20,
+    "email": "dart@gmail.com"
+}

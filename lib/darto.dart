@@ -4,5 +4,8 @@
 library;
 
 export 'src/darto_base.dart';
+export 'src/http_status_code.dart';
+export 'src/request.dart';
+export 'src/response.dart';
 
 // TODO: Export any libraries intended for clients of this package.

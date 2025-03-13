@@ -4,7 +4,7 @@ version: 0.0.1
 homepage: https://github.com/evandersondev/darto
 
 environment:
-  sdk: ^3.7.1
+  sdk: ">=2.19.0 <4.0.0"
 
 dependencies:
   path: ^1.9.1

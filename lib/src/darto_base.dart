@@ -265,6 +265,9 @@ class Darto {
   }
 }
 
+/// 📌 **Classe Router**
+///
+/// Esta classe é responsável por gerenciar as rotas da aplicação.
 class Router {
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> routes = {};
 

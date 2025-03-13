@@ -1,16 +1,14 @@
 name: darto
-description: A starting point for Dart libraries or applications.
-version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+description: Darto is a lightweight and flexible microframework inspired by Express for building web applications in Dart.
+version: 0.0.1
+homepage: https://github.com/evandersondev/darto
 
 environment:
   sdk: ^3.7.1
 
-# Add regular dependencies here.
 dependencies:
   path: ^1.9.1
   mime: ^2.0.0
-  # path: ^1.8.0
 
 dev_dependencies:
   lints: ^5.0.0

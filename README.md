@@ -2,6 +2,10 @@
 
 Darto is a microframework inspired by Express and Fastify for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
 
+### Support 💖
+
+If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the framework and make it even better!
+
 ## Installation 📦
 
 Run the following command to install Darto:

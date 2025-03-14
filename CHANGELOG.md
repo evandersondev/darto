@@ -1,3 +1,7 @@
+## 0.0.4
+
+- Add buy me a coffee link.
+
 ## 0.0.3
 
 - Add serialization dynamic to json.

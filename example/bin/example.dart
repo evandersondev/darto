@@ -28,7 +28,15 @@ void main() async {
       Tweet(id: '3', text: 'Tweet 3'),
     ];
 
-    return res.json({'tweets': tweets});
+    return res.json(tweets);
+  });
+
+  app.get('/hello', (Request req, Response res) async {
+    return res.json({'message': 'Hello, World!', 'status': 'OK'});
+  });
+
+  app.get('/', (Request req, Response res) async {
+    return res.render('public/about.html');
   });
 
   app.listen(3000, () {

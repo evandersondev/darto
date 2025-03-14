@@ -1,3 +1,7 @@
+## 0.0.5
+
+- Add render method.
+
 ## 0.0.4
 
 - Add buy me a coffee link.

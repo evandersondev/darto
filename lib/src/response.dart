@@ -17,6 +17,47 @@ class Response {
     return this;
   }
 
+  /// Sends a file as the response.
+  void render(String filePath) {
+    final file = File(filePath);
+
+    if (!file.existsSync()) {
+      res.statusCode = HttpStatus.notFound;
+      res.write('File not found');
+      res.close();
+      return;
+    }
+
+    res.headers.contentType = _getContentType(filePath);
+    res.addStream(file.openRead()).then((_) {
+      res.close();
+    });
+  }
+
+  /// Determines the content type based on the file extension.
+  ContentType _getContentType(String filePath) {
+    final extension = filePath.split('.').last;
+    switch (extension) {
+      case 'html':
+        return ContentType.html;
+      case 'css':
+        return ContentType('text', 'css');
+      case 'js':
+        return ContentType('application', 'javascript');
+      case 'json':
+        return ContentType.json;
+      case 'png':
+        return ContentType('image', 'png');
+      case 'jpg':
+      case 'jpeg':
+        return ContentType('image', 'jpeg');
+      case 'gif':
+        return ContentType('image', 'gif');
+      default:
+        return ContentType.text;
+    }
+  }
+
   /// Envia os dados como resposta e encerra a resposta.
   void send(dynamic data) {
     res.headers.contentType = ContentType.text;
@@ -39,14 +80,20 @@ class Response {
   /// Converts custom objects to encodable Map.
   dynamic _toEncodable(dynamic item) {
     if (item is List) {
-      return item.map((element) => _mirrorToJson(element)).toList();
+      return item.map((element) {
+        if (_hasToJson(element)) {
+          return element.toJson();
+        }
+
+        return _mirrorToJson(element);
+      }).toList();
     } else if (item is Map) {
       return item.map((key, value) => MapEntry(key, _toEncodable(value)));
     } else if (_hasToJson(item)) {
       return item.toJson();
     }
 
-    return _mirrorToJson(item);
+    return item;
   }
 
   /// Checks if the object has a toJson method using reflection.

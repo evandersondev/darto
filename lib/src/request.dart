@@ -1,13 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:darto/darto.dart';
+import 'package:darto/src/darto_logger.dart';
+
 class Request {
   final HttpRequest _req;
   final Map<String, String> params;
   dynamic _cachedBody;
   bool _bodyRead = false;
+  final Logger logger;
 
-  Request(this._req, this.params);
+  Request(this._req, this.params, this.logger);
 
   Uri get uri => _req.uri;
   String get method => _req.method;
@@ -19,6 +23,14 @@ class Request {
     if (!_bodyRead) {
       _cachedBody = await utf8.decoder.bind(_req).join();
       _bodyRead = true;
+      if (_req.connectionInfo != null) {
+        if (logger.isActive(LogLevel.debug)) {
+          DartoLogger.log(
+            'Read request body from ${_req.connectionInfo!.remoteAddress.address}',
+            LogLevel.debug,
+          );
+        }
+      }
     }
     return _cachedBody;
   }
@@ -28,6 +40,12 @@ class Request {
     final Map<String, String> cookieMap = {};
     for (var cookie in _req.cookies) {
       cookieMap[cookie.name] = cookie.value;
+    }
+    if (logger.isActive(LogLevel.debug)) {
+      DartoLogger.log(
+        'Cookies: $cookieMap',
+        LogLevel.debug,
+      );
     }
     return cookieMap;
   }

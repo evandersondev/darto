@@ -2,18 +2,24 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:mirrors';
 
+import 'package:darto/src/darto_logger.dart';
+import 'package:darto/src/logger.dart'; // Importa a classe de log
 import 'package:path/path.dart' as p;
 
 class Response {
   final HttpResponse res;
+  final Logger logger;
+  final bool snakeCase; // Adiciona a propriedade snakeCase
 
-  Response(this.res);
+  Response(this.res, this.logger, this.snakeCase);
 
   /// Define o status da resposta.
   /// Aceita [statusCode] do tipo int ou um [HttpStatus] da biblioteca dart:io.
   Response status(int statusCode) {
     res.statusCode = statusCode;
-
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Response status set to $statusCode', LogLevel.info);
+    }
     return this;
   }
 
@@ -25,12 +31,23 @@ class Response {
       res.statusCode = HttpStatus.notFound;
       res.write('File not found');
       res.close();
+      if (logger.isActive(LogLevel.error)) {
+        DartoLogger.log('File not found: $filePath', LogLevel.error);
+      }
       return;
     }
 
     res.headers.contentType = _getContentType(filePath);
     res.addStream(file.openRead()).then((_) {
       res.close();
+      if (logger.isActive(LogLevel.info)) {
+        DartoLogger.log('File served: $filePath', LogLevel.info);
+      }
+    }).catchError((error) {
+      if (logger.isActive(LogLevel.error)) {
+        DartoLogger.log(
+            'Error serving file: $filePath - $error', LogLevel.error);
+      }
     });
   }
 
@@ -63,6 +80,9 @@ class Response {
     res.headers.contentType = ContentType.text;
     res.write(jsonEncode(data));
     res.close();
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Data sent: $data', LogLevel.info);
+    }
   }
 
   /// Envia os dados como resposta e encerra a resposta.
@@ -70,6 +90,9 @@ class Response {
     res.headers.contentType = ContentType.json;
     res.write(_toJson(data));
     res.close();
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('JSON data sent: $data', LogLevel.info);
+    }
   }
 
   /// Converts data to JSON, handling custom objects.
@@ -82,12 +105,26 @@ class Response {
     if (item is List) {
       return item.map((element) => _toEncodable(element)).toList();
     } else if (item is Map) {
-      return item.map((key, value) => MapEntry(key, _toEncodable(value)));
+      return item.map((key, value) =>
+          MapEntry(snakeCase ? toSnakeCase(key) : key, _toEncodable(value)));
     } else if (_isCustomModel(item)) {
       return _mirrorToJson(item);
     }
 
     return item;
+  }
+
+  /// Converts a string from camelCase to snake_case.
+  String toSnakeCase(String input) {
+    if (input.isEmpty) return input;
+    StringBuffer buffer = StringBuffer();
+    for (int i = 0; i < input.length; i++) {
+      if (i > 0 && input[i].toUpperCase() == input[i]) {
+        buffer.write('_');
+      }
+      buffer.write(input[i].toLowerCase());
+    }
+    return buffer.toString();
   }
 
   /// Checks if the object is a custom model using reflection.
@@ -105,16 +142,6 @@ class Response {
     }
   }
 
-  /// Checks if the object has a toJson method using reflection.
-  bool _hasToJson(dynamic item) {
-    try {
-      final instanceMirror = reflect(item);
-      return instanceMirror.type.instanceMembers.containsKey(Symbol('toJson'));
-    } catch (e) {
-      return false;
-    }
-  }
-
   /// Converts an object to JSON using mirrors.
   Map<String, dynamic> _mirrorToJson(dynamic instance) {
     var instanceMirror = reflect(instance);
@@ -125,7 +152,7 @@ class Response {
       if (declaration is VariableMirror && !declaration.isStatic) {
         var fieldName = MirrorSystem.getName(symbol);
         var fieldValue = instanceMirror.getField(symbol).reflectee;
-        data[fieldName] = fieldValue;
+        data[snakeCase ? toSnakeCase(fieldName) : fieldName] = fieldValue;
       }
     });
 
@@ -139,6 +166,9 @@ class Response {
       res.write(data);
     }
     res.close();
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Response ended with data: $data', LogLevel.info);
+    }
   }
 
   void download(String filePath, [dynamic filename, dynamic callback]) async {
@@ -178,6 +208,9 @@ class Response {
 
       // After completion, call the callback with null (if provided) indicating no error.
       if (cb != null) cb(null);
+      if (logger.isActive(LogLevel.info)) {
+        DartoLogger.log('File downloaded: $filePath', LogLevel.info);
+      }
     } catch (err) {
       // In case of any error, if a callback is provided invoke it with the error.
       if (cb != null) {
@@ -187,6 +220,10 @@ class Response {
         res.statusCode = HttpStatus.internalServerError;
         res.write('Error while sending file: $err');
         res.close();
+        if (logger.isActive(LogLevel.error)) {
+          DartoLogger.log(
+              'Error downloading file: $filePath - $err', LogLevel.error);
+        }
       }
     }
   }
@@ -233,6 +270,9 @@ class Response {
 
     // Add the Set-Cookie header (can be multiple)
     res.headers.add(HttpHeaders.setCookieHeader, buffer.toString());
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Set cookie: $name=$value', LogLevel.info);
+    }
   }
 
   /// Clears a cookie by setting it with an expired date.
@@ -245,6 +285,9 @@ class Response {
     opts['expires'] = DateTime.fromMillisecondsSinceEpoch(0);
     opts['maxAge'] = 0;
     cookie(name, '', opts);
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Cleared cookie: $name', LogLevel.info);
+    }
   }
 
   /// Redirects the request to a different URL.
@@ -257,5 +300,8 @@ class Response {
     res.statusCode = HttpStatus.found;
     res.headers.set(HttpHeaders.locationHeader, url);
     res.close();
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Redirected to: $url', LogLevel.info);
+    }
   }
 }

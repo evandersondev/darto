@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:darto/src/darto_logger.dart';
+import 'package:darto/src/logger.dart';
 import 'package:darto/src/request.dart';
 import 'package:darto/src/response.dart';
 import 'package:path/path.dart' as p;
@@ -10,12 +12,16 @@ typedef Middleware = Future<void> Function(
     Request req, Response res, Future<void> Function());
 
 class Darto {
-  final bool _logger;
+  final Logger _logger;
+  final bool _snackCase;
 
-  Darto({bool? logger}) : _logger = logger ?? false;
+  Darto({Logger? logger, bool? snackCase})
+      : _logger = logger ?? Logger(),
+        _snackCase = snackCase ?? false;
 
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
   final List<Middleware> _middlewares = [];
+
   String? _staticFolder;
   Map<String, String> _corsOptions = {}; // Configurações de CORS
 
@@ -52,6 +58,11 @@ class Darto {
         ..statusCode = HttpStatus.tooManyRequests
         ..write('Too many requests. Please try again later.')
         ..close();
+      if (Logger().isActive(LogLevel.access)) {
+        DartoLogger.log(
+            '[${request.method} ${request.uri.path}] - IP: $ip - Status: ${HttpStatus.tooManyRequests}',
+            LogLevel.access);
+      }
       return false;
     }
     // Registra a requisição e permite o processamento
@@ -105,39 +116,48 @@ class Darto {
 
   void listen(int port, [void Function()? callback]) async {
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
+    if (Logger.I.isActive(LogLevel.info)) {
+      DartoLogger.log('Server started on port $port', LogLevel.info);
+    }
     callback?.call();
 
     await for (HttpRequest request in server) {
       final method = request.method;
       final path = request.uri.path;
+      final startTime = DateTime.now();
+
+      if (_logger.isActive(LogLevel.access)) {
+        DartoLogger.log(
+            '[$method $path] - IP: ${request.connectionInfo?.remoteAddress.address}',
+            LogLevel.access);
+      }
 
       // Verifica se está servindo arquivos estáticos antes das rotas
       if (_staticFolder != null && await _serveFile(request, path)) {
+        if (_logger.isActive(LogLevel.info)) {
+          final duration = DateTime.now().difference(startTime).inMilliseconds;
+          DartoLogger.log(
+              '[$method $path] - Status: 200 - ${duration}ms - User-Agent: ${request.headers.value('user-agent')}',
+              LogLevel.info);
+        }
         continue;
       }
 
       final routeEntries = _routes[method] ?? [];
       bool handled = false;
 
-      if (_logger) print('Request: $method $path'); // Log de depuração
-
       for (var entry in routeEntries) {
-        if (_logger)
-          print('Checking route: ${entry.key.pattern}'); // Log de depuração
         final match = entry.key.firstMatch(path);
         if (match != null) {
-          if (_logger)
-            print('Matched route: ${entry.key.pattern}'); // Log de depuração
           final params = _extractRouteParams(
             entry.key,
             entry.value['paramNames'] ??
                 [], // Garante que paramNames não seja nulo
             match,
           );
-          if (_logger) print('Params: $params'); // Log de depuração
 
-          final req = Request(request, params);
-          final res = Response(request.response);
+          final req = Request(request, params, _logger);
+          final res = Response(request.response, _logger, _snackCase);
 
           if (entry.key.pattern.isNotEmpty) {
             int index = 0;
@@ -155,7 +175,8 @@ class Darto {
 
             await next();
           } else {
-            _applyCors(Response(request.response)); // Aplica CORS no erro 404
+            _applyCors(Response(request.response, _logger,
+                _snackCase)); // Aplica CORS no erro 404
             request.response
               ..statusCode = HttpStatus.notFound
               ..write(jsonEncode({'error': 'Rota não encontrada'}))
@@ -168,11 +189,18 @@ class Darto {
       }
 
       if (!handled) {
-        _applyCors(Response(request.response)); // Aplica CORS no erro 404
+        _applyCors(Response(
+            request.response, _logger, _snackCase)); // Aplica CORS no erro 404
         request.response
           ..statusCode = HttpStatus.notFound
           ..write(jsonEncode({'error': 'Rota não encontrada'}))
           ..close();
+        if (_logger.isActive(LogLevel.error)) {
+          final duration = DateTime.now().difference(startTime).inMilliseconds;
+          DartoLogger.log(
+              '[$method $path] - Status: 404 - ${duration}ms - User-Agent: ${request.headers.value('user-agent')}',
+              LogLevel.error);
+        }
       }
     }
   }
@@ -213,7 +241,9 @@ class Darto {
       params[paramNames[i]] = match.group(i + 1) ?? '';
     }
 
-    if (_logger) print('Params: $params'); // Log de depuração
+    if (_logger.isActive(LogLevel.debug)) {
+      DartoLogger.log('Params: $params', LogLevel.debug);
+    }
     return params;
   }
 
@@ -257,6 +287,14 @@ class Darto {
     if (await file.exists()) {
       request.response.headers.contentType = _getContentType(filePath);
       await file.openRead().pipe(request.response);
+      if (_logger.isActive(LogLevel.info)) {
+        final duration = DateTime.now()
+            .difference(request.headers.date ?? DateTime.now())
+            .inMilliseconds;
+        DartoLogger.log(
+            '[GET $filePath] - Status: 200 - ${duration}ms - User-Agent: ${request.headers.value('user-agent')}',
+            LogLevel.info);
+      }
       return true;
     }
 

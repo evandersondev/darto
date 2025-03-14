@@ -2,7 +2,7 @@ import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 
 void main() async {
-  final app = Darto();
+  final app = Darto(logger: Logger(debug: true), snackCase: true);
 
   app.useCors(origin: '*');
 

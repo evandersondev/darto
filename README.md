@@ -1,14 +1,22 @@
 # Darto 🚀
 
-Darto is a lightweight and flexible microframework inspired by Express for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
+Darto is a microframework inspired by Express and Fastify for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
 
 ## Installation 📦
+
+Run the following command to install Darto:
+
+```bash
+dart pub add darto
+```
+
+or
 
 Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.1
+  darto: ^0.0.3
 ```
 
 Then, run the following command:
@@ -34,7 +42,7 @@ void main() async {
   });
 
   // Serve static files from the "public" folder (using default options)
-  app.use(staticMiddleware('public'));
+  app.serveStatic('public');
 
   // Example route: Get user details by ID
   app.get('/user/:id', (req, res) async {

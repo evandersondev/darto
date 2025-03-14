@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:mirrors';
 
 import 'package:path/path.dart' as p;
 
@@ -26,8 +27,53 @@ class Response {
   /// Envia os dados como resposta e encerra a resposta.
   void json(dynamic data) {
     res.headers.contentType = ContentType.json;
-    res.write(jsonEncode(data));
+    res.write(_toJson(data));
     res.close();
+  }
+
+  /// Converts data to JSON, handling custom objects.
+  String _toJson(dynamic data) {
+    return jsonEncode(_toEncodable(data));
+  }
+
+  /// Converts custom objects to encodable Map.
+  dynamic _toEncodable(dynamic item) {
+    if (item is List) {
+      return item.map((element) => _mirrorToJson(element)).toList();
+    } else if (item is Map) {
+      return item.map((key, value) => MapEntry(key, _toEncodable(value)));
+    } else if (_hasToJson(item)) {
+      return item.toJson();
+    }
+
+    return _mirrorToJson(item);
+  }
+
+  /// Checks if the object has a toJson method using reflection.
+  bool _hasToJson(dynamic item) {
+    try {
+      final instanceMirror = reflect(item);
+      return instanceMirror.type.instanceMembers.containsKey(Symbol('toJson'));
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Converts an object to JSON using mirrors.
+  Map<String, dynamic> _mirrorToJson(dynamic instance) {
+    var instanceMirror = reflect(instance);
+    var data = <String, dynamic>{};
+
+    // Iterates over all fields of the class
+    instanceMirror.type.declarations.forEach((symbol, declaration) {
+      if (declaration is VariableMirror && !declaration.isStatic) {
+        var fieldName = MirrorSystem.getName(symbol);
+        var fieldValue = instanceMirror.getField(symbol).reflectee;
+        data[fieldName] = fieldValue;
+      }
+    });
+
+    return data;
   }
 
   /// Encerra a resposta.

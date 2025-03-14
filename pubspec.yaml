@@ -1,6 +1,6 @@
 name: darto
-description: Darto is a lightweight and flexible microframework inspired by Express for building web applications in Dart.
-version: 0.0.2
+description: Darto is a microframework inspired by Express and Fastify for building web applications in Dart.
+version: 0.0.3
 homepage: https://github.com/evandersondev/darto
 
 environment:

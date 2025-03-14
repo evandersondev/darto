@@ -6,8 +6,8 @@ import 'package:darto/src/response.dart';
 import 'package:path/path.dart' as p;
 
 typedef Handler = Future<void> Function(Request req, Response res);
-typedef Middleware =
-    Future<void> Function(Request req, Response res, Future<void> Function());
+typedef Middleware = Future<void> Function(
+    Request req, Response res, Future<void> Function());
 
 class Darto {
   final bool _logger;
@@ -42,10 +42,9 @@ class Darto {
 
     _ipRequestLog.putIfAbsent(ip, () => []);
     // Filtra as requisições feitas no intervalo de tempo definido
-    _ipRequestLog[ip] =
-        _ipRequestLog[ip]!
-            .where((time) => now.difference(time) < rateLimitInterval)
-            .toList();
+    _ipRequestLog[ip] = _ipRequestLog[ip]!
+        .where((time) => now.difference(time) < rateLimitInterval)
+        .toList();
 
     if (_ipRequestLog[ip]!.length >= maxRequestsPerInterval) {
       // Excede o limite, envia mensagem de erro 429.
@@ -129,7 +128,7 @@ class Darto {
         if (match != null) {
           if (_logger)
             print('Matched route: ${entry.key.pattern}'); // Log de depuração
-          final params = extractRouteParams(
+          final params = _extractRouteParams(
             entry.key,
             entry.value['paramNames'] ??
                 [], // Garante que paramNames não seja nulo
@@ -204,7 +203,7 @@ class Darto {
   }
 
   /// 📌 **Função para Extrair Parâmetros da Rota**
-  Map<String, String> extractRouteParams(
+  Map<String, String> _extractRouteParams(
     RegExp pattern,
     List<String> paramNames,
     Match match,
@@ -288,9 +287,7 @@ class Router {
           r'$',
     );
 
-    routes
-        .putIfAbsent(method, () => [])
-        .add(
+    routes.putIfAbsent(method, () => []).add(
           MapEntry(regexPath, {'handler': handler, 'paramNames': paramNames}),
         );
   }

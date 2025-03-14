@@ -80,20 +80,29 @@ class Response {
   /// Converts custom objects to encodable Map.
   dynamic _toEncodable(dynamic item) {
     if (item is List) {
-      return item.map((element) {
-        if (_hasToJson(element)) {
-          return element.toJson();
-        }
-
-        return _mirrorToJson(element);
-      }).toList();
+      return item.map((element) => _toEncodable(element)).toList();
     } else if (item is Map) {
       return item.map((key, value) => MapEntry(key, _toEncodable(value)));
-    } else if (_hasToJson(item)) {
-      return item.toJson();
+    } else if (_isCustomModel(item)) {
+      return _mirrorToJson(item);
     }
 
     return item;
+  }
+
+  /// Checks if the object is a custom model using reflection.
+  bool _isCustomModel(dynamic item) {
+    try {
+      final instanceMirror = reflect(item);
+      return instanceMirror.type.isSubclassOf(reflectClass(Object)) &&
+          !instanceMirror.type.isSubtypeOf(reflectClass(Map)) &&
+          !instanceMirror.type.isSubtypeOf(reflectClass(String)) &&
+          !instanceMirror.type.isSubtypeOf(reflectClass(int)) &&
+          !instanceMirror.type.isSubtypeOf(reflectClass(bool)) &&
+          !instanceMirror.type.isSubtypeOf(reflectClass(List));
+    } catch (e) {
+      return false;
+    }
   }
 
   /// Checks if the object has a toJson method using reflection.

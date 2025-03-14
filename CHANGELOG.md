@@ -1,3 +1,7 @@
+## 0.0.6
+
+- Update serialization.
+
 ## 0.0.5
 
 - Add render method.

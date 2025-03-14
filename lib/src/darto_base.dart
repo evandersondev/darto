@@ -5,7 +5,7 @@ import 'package:darto/src/request.dart';
 import 'package:darto/src/response.dart';
 import 'package:path/path.dart' as p;
 
-typedef Handler = Future<void> Function(Request req, Response res);
+typedef Handler = Function(Request req, Response res);
 typedef Middleware = Future<void> Function(
     Request req, Response res, Future<void> Function());
 

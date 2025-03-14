@@ -14,14 +14,14 @@ void main() async {
   /// example: GET /views/index.html
   app.serveStatic('public');
 
-  app.get('/todos/:id', (Request req, Response res) async {
+  app.get('/todos/:id', (Request req, Response res) {
     final id = req.params['id'];
     final todo = {'id': id, 'title': 'Sample Todo', 'completed': false};
 
     res.status(OK).send(todo);
   });
 
-  app.get('/tweets', (Request req, Response res) async {
+  app.get('/tweets', (Request req, Response res) {
     final tweets = [
       Tweet(id: '1', text: 'Tweet 1'),
       Tweet(id: '2', text: 'Tweet 2'),
@@ -31,11 +31,40 @@ void main() async {
     return res.json(tweets);
   });
 
-  app.get('/hello', (Request req, Response res) async {
+  app.get('/hello', (Request req, Response res) {
     return res.json({'message': 'Hello, World!', 'status': 'OK'});
   });
 
-  app.get('/', (Request req, Response res) async {
+  app.get('/users', (Request req, Response res) {
+    return res.json([
+      {
+        'id': 1,
+        'name': 'John Doe',
+        'email': 'john@example.com',
+        'age': 30,
+        'address': {
+          'street': '123 Main St',
+          'city': 'Anytown',
+          'state': 'CA',
+          'zip': '12345',
+        },
+      },
+      {
+        'id': 2,
+        'name': 'Jane Smith',
+        'email': 'jane@example.com',
+        'age': 25,
+        'address': {
+          'street': '456 Elm St',
+          'city': 'Othertown',
+          'state': 'NY',
+          'zip': '67890',
+        },
+      },
+    ]);
+  });
+
+  app.get('/', (Request req, Response res) {
     return res.render('public/about.html');
   });
 

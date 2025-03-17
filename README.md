@@ -20,7 +20,7 @@ Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.8
+  darto: ^0.0.9
 ```
 
 Then, run the following command:
@@ -40,27 +40,27 @@ void main() async {
   final app = Darto();
 
   // Global middleware to log incoming requests
-  app.use((req, res, next) async {
+  app.use((req, res, next) {
     print('📝 Request: ${req.method} ${req.originalUrl}');
-    await next();
+    next();
   });
 
   // Serve static files from the "public" folder (using default options)
   app.use('public');
 
   // Example route: Get user details by ID
-  app.get('/user/:id', (req, res) async {
+  app.get('/user/:id', (req, res) {
     final id = req.params['id'];
     res.send({'user': id});
   });
 
   // Example route: Redirect to an external URL
-  app.get('/go', (req, res) async {
+  app.get('/go', (req, res) {
     res.redirect('http://example.com');
   });
 
   // Example route: File download with a custom file name and error callback
-  app.get('/download', (req, res) async {
+  app.get('/download', (req, res) {
     res.download('public/report-12345.pdf', 'report.pdf', (err) {
       if (err != null) {
         print('❌ Download error: $err');
@@ -89,9 +89,9 @@ void main() {
   final app = Darto();
 
   // Global middleware to log incoming requests
-  app.use((req, res, next) async {
+  app.use((req, res, next) {
     print('📝 Request: ${req.method} ${req.originalUrl}');
-    await next();
+    next();
   });
 
   app.listen(3000, () {
@@ -109,59 +109,28 @@ void main() {
   final app = Darto();
 
   // Middleware specific to a route
-  app.use('/task/:id', req, res, next) async {
+  app.use('/task/:id', req, res, next) {
     print('Request Type: ${req.method}');
-    await next();
+    next();
   };
 
-  app.get('/task/:id', (req, res) async {
+  app.get('/task/:id', (req, res) {
     final id = req.params['id'];
     res.send({'task': id});
   });
 
-  // Or you can use the middleware directly in the route definition
-  // Creaate a middleware function
-  logMiddleware(req, res, next) async {
+  // You can use the middleware directly in the route definition
+  // Create a middleware function
+  logMiddleware(req, res, next) {
     print('Request Type: ${req.method}');
-    await next();
+    next();
   };
 
   // Example route with middleware
-  app.get('/user/:id', (req, res) async {
+  app.get('/user/:id', logMiddleware, (req, res) {
     final id = req.params['id'];
     res.send({'user': id});
-  }, [logMiddleware]);
-
-  app.listen(3000, () {
-    print('🔹 Server is running at http://localhost:3000');
   });
-}
-```
-
-### List of Middlewares
-
-You can also pass a list of middlewares to be executed in sequence before the route handler.
-
-```dart
-void main() {
-  final app = Darto();
-
-  // Middlewares
-  final middleware1 = (req, res, next) async {
-    print('Middleware 1');
-    await next();
-  };
-
-  final middleware2 = (req, res, next) async {
-    print('Middleware 2');
-    await next();
-  };
-
-  // Example route with a list of middlewares
-  app.get('/user/:id', (req, res) async {
-    final id = req.params['id'];
-    res.send({'user': id});
-  }, [middleware1, middleware2]);
 
   app.listen(3000, () {
     print('🔹 Server is running at http://localhost:3000');
@@ -206,13 +175,13 @@ Darto includes basic security measures:
 
 ```dart
 // Route to get user information by ID
-app.get('/user/:id', (req, res) async {
+app.get('/user/:id', (req, res) {
   final id = req.params['id'];
   res.send({'user': id});
 });
 
 // Route to redirect to an external site
-app.get('/go', (req, res) async {
+app.get('/go', (req, res) {
   res.redirect('http://example.com');
 });
 ```

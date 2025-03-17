@@ -1,3 +1,7 @@
+## 0.0.9
+
+- Update middlewares.
+
 ## 0.0.8
 
 - Add middlewares to routes.

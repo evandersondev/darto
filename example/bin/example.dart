@@ -93,15 +93,16 @@ void main() async {
     next();
   }
 
-  middleware2(req, res, next) async {
+  middleware2(Request req, Response res, Next next) async {
+    print(req.path);
     print('Middleware 2');
     next();
   }
 
   // Rotas
-  app.get('/user/:id', (req, res) {
+  app.get('/user/:id', middleware1, middleware2, (req, res) {
     res.json({'message': 'USER'});
-  }, [middleware1, middleware2]);
+  });
 
   app.listen(3000, () {
     print('🚀 Servidor rodando em http://localhost:3000');

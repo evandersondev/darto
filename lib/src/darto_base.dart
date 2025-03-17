@@ -4,10 +4,8 @@ import 'package:darto/src/darto_logger.dart';
 import 'package:darto/src/logger.dart';
 import 'package:darto/src/request.dart';
 import 'package:darto/src/response.dart';
+import 'package:darto/src/types.dart';
 import 'package:path/path.dart' as p;
-
-typedef Middleware = Function(Request req, Response res, Function() next);
-typedef RouteHandler = Function(Request req, Response res);
 
 class Darto {
   final Logger _logger;
@@ -22,18 +20,21 @@ class Darto {
   String? _staticFolder;
   Map<String, String> _corsOptions = {}; // Configurações de CORS
 
-  void get(String path, RouteHandler handler,
-          [List<Middleware>? middlewares]) =>
-      _addRoute('GET', path, handler, middlewares);
-  void post(String path, RouteHandler handler,
-          [List<Middleware>? middlewares]) =>
-      _addRoute('POST', path, handler, middlewares);
-  void put(String path, RouteHandler handler,
-          [List<Middleware>? middlewares]) =>
-      _addRoute('PUT', path, handler, middlewares);
-  void delete(String path, RouteHandler handler,
-          [List<Middleware>? middlewares]) =>
-      _addRoute('DELETE', path, handler, middlewares);
+  void get(String path, dynamic first, [dynamic second, dynamic third]) {
+    _addRoute('GET', path, first, second, third);
+  }
+
+  void post(String path, dynamic first, [dynamic second, dynamic third]) {
+    _addRoute('POST', path, first, second, third);
+  }
+
+  void put(String path, dynamic first, [dynamic second, dynamic third]) {
+    _addRoute('PUT', path, first, second, third);
+  }
+
+  void delete(String path, dynamic first, [dynamic second, dynamic third]) {
+    _addRoute('DELETE', path, first, second, third);
+  }
 
   void use(dynamic pathOrMiddleware, [Middleware? middleware]) {
     if (pathOrMiddleware is String && middleware != null) {
@@ -50,8 +51,8 @@ class Darto {
     }
   }
 
-  void _addRoute(String method, String path, RouteHandler handler,
-      [List<Middleware>? middlewares]) {
+  void _addRoute(String method, String path, dynamic first,
+      [dynamic second, dynamic third]) {
     final paramNames = <String>[];
     final regexPath = RegExp(
       '^' +
@@ -62,16 +63,24 @@ class Darto {
           r'$',
     );
 
-    final routeEntry = {
-      'handler': handler,
-      'paramNames': paramNames,
-    };
+    final List<dynamic> handlers = [];
 
-    if (middlewares != null) {
-      routeEntry['middlewares'] = middlewares;
+    if (first is Middleware || first is RouteHandler) {
+      handlers.add(first);
+    }
+    if (second != null) {
+      handlers.add(second);
+    }
+    if (third != null) {
+      handlers.add(third);
     }
 
-    _routes.putIfAbsent(method, () => []).add(MapEntry(regexPath, routeEntry));
+    if (handlers.isEmpty) {
+      throw ArgumentError("A rota deve ter pelo menos um handler.");
+    }
+
+    _routes.putIfAbsent(method, () => []).add(
+        MapEntry(regexPath, {'handlers': handlers, 'paramNames': paramNames}));
   }
 
   void _addRouteMiddleware(String path, Middleware middleware) {
@@ -85,12 +94,14 @@ class Darto {
           r'$',
     );
 
-    final routeEntry = MapEntry(regexPath, {
-      'middleware': middleware,
-      'paramNames': paramNames,
-    });
+    _routes.putIfAbsent('USE', () => []).add(MapEntry(regexPath, {
+          'handlers': [middleware],
+          'paramNames': paramNames
+        }));
+  }
 
-    _routes.putIfAbsent('USE', () => []).add(routeEntry);
+  void serveStatic(String folder) {
+    _staticFolder = folder;
   }
 
   void useCors({
@@ -144,22 +155,20 @@ class Darto {
       for (var entry in _routes['USE'] ?? []) {
         final match = entry.key.firstMatch(path);
         if (match != null) {
-          middlewares.add(entry.value['middleware']);
+          middlewares.addAll(entry.value['handlers'].cast<Middleware>());
         }
       }
 
       for (var entry in routeEntries) {
         final match = entry.key.firstMatch(path);
         if (match != null) {
-          final params = _extractRouteParams(
-              entry.key, entry.value['paramNames'] ?? [], match);
+          final params = _extractRouteParams(entry.value['paramNames'], match);
           req.params.addAll(params);
-          if (entry.value['middlewares'] != null) {
-            middlewares.addAll(entry.value['middlewares']);
-          }
-          middlewares.add((req, res, next) async {
-            await entry.value['handler'](req, res);
-            await next();
+          final handlers = entry.value['handlers'];
+          middlewares.addAll(handlers.whereType<Middleware>());
+          middlewares.add((req, res, next) {
+            final handler = handlers.last as RouteHandler;
+            handler(req, res);
           });
           handled = true;
           break;
@@ -172,26 +181,26 @@ class Darto {
         continue;
       }
 
-      await _executeMiddlewares(req, res, middlewares);
+      _executeMiddlewares(req, res, middlewares);
     }
   }
 
-  Future<void> _executeMiddlewares(
-      Request req, Response res, List<Middleware> middlewares) async {
+  void _executeMiddlewares(
+      Request req, Response res, List<Middleware> middlewares) {
     int index = 0;
 
-    Future<void> next() async {
+    void next() {
       if (index < middlewares.length) {
         final middleware = middlewares[index++];
-        await middleware(req, res, next);
+        middleware(req, res, next);
       }
     }
 
-    await next();
+    next();
   }
 
   Map<String, String> _extractRouteParams(
-      RegExp pattern, List<String> paramNames, Match match) {
+      List<String> paramNames, Match match) {
     final params = <String, String>{};
     for (var i = 0; i < paramNames.length; i++) {
       params[paramNames[i]] = match.group(i + 1) ?? '';
@@ -249,49 +258,5 @@ class Darto {
       default:
         return ContentType.text;
     }
-  }
-}
-
-/// 📌 **Classe Router**
-///
-/// Esta classe é responsável por gerenciar as rotas da aplicação.
-class Router {
-  final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> routes = {};
-
-  void get(String path, RouteHandler handler,
-          [List<Middleware>? middlewares]) =>
-      _addRoute('GET', path, handler, middlewares);
-  void post(String path, RouteHandler handler,
-          [List<Middleware>? middlewares]) =>
-      _addRoute('POST', path, handler, middlewares);
-  void put(String path, RouteHandler handler,
-          [List<Middleware>? middlewares]) =>
-      _addRoute('PUT', path, handler, middlewares);
-  void delete(String path, RouteHandler handler,
-          [List<Middleware>? middlewares]) =>
-      _addRoute('DELETE', path, handler, middlewares);
-
-  void _addRoute(String method, String path, RouteHandler handler,
-      [List<Middleware>? middlewares]) {
-    final paramNames = <String>[];
-    final regexPath = RegExp(
-      '^' +
-          path.replaceAllMapped(RegExp(r':(\w+)'), (match) {
-            paramNames.add(match.group(1)!);
-            return '([^/]+)';
-          }) +
-          r'$',
-    );
-
-    final routeEntry = {
-      'handler': handler,
-      'paramNames': paramNames,
-    };
-
-    if (middlewares != null) {
-      routeEntry['middlewares'] = middlewares;
-    }
-
-    routes.putIfAbsent(method, () => []).add(MapEntry(regexPath, routeEntry));
   }
 }

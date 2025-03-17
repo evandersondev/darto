@@ -1,6 +1,6 @@
 
 ###
-http://localhost:3000/todos/23
+http://localhost:3000/user/23
 
 
 ### 
@@ -14,3 +14,13 @@ http://localhost:3000/hello
 
 ###
 http://localhost:3000/users
+
+###
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+    "name": "John",
+    "age": 30,
+    "email": "john@example.com"
+}

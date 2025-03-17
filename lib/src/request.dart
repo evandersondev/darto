@@ -54,6 +54,9 @@ class Request {
   /// For simplicity, we assume the root path.
   String get baseUrl => '/';
 
+  /// Returns headers
+  HttpHeaders get headers => _req.headers;
+
   /// Returns the full host header (e.g., "example.com:3000").
   String get host => _req.headers.value(HttpHeaders.hostHeader) ?? '';
 

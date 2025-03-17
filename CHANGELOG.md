@@ -1,3 +1,7 @@
+## 0.0.8
+
+- Add middlewares to routes.
+
 ## 0.0.7
 
 - Update serialization.

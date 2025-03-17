@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 
 void main() async {
-  final app = Darto(logger: Logger(debug: true), snackCase: true);
+  final app = Darto(logger: Logger(debug: true), snakeCase: true);
 
   app.useCors(origin: '*');
 
@@ -12,16 +14,16 @@ void main() async {
   /// example: GET /css/style.css
   /// example: GET /js/script.js
   /// example: GET /views/index.html
-  app.serveStatic('public');
+  app.use('public');
 
-  app.get('/todos/:id', (Request req, Response res) {
+  app.get('/todos/:id', (req, res) {
     final id = req.params['id'];
     final todo = {'id': id, 'title': 'Sample Todo', 'completed': false};
 
     res.status(OK).send(todo);
   });
 
-  app.get('/tweets', (Request req, Response res) {
+  app.get('/tweets', (req, res) {
     final tweets = [
       Tweet(id: '1', text: 'Tweet 1'),
       Tweet(id: '2', text: 'Tweet 2'),
@@ -31,11 +33,11 @@ void main() async {
     return res.json(tweets);
   });
 
-  app.get('/hello', (Request req, Response res) {
-    return res.json({'message': 'Hello, World!', 'status': 'OK'});
+  app.get('/hello', (req, res) {
+    res.json({'message': 'Hello, World!', 'status': 'OK'});
   });
 
-  app.get('/users', (Request req, Response res) {
+  app.get('/users', (req, res) {
     return res.json([
       {
         'id': 1,
@@ -64,9 +66,42 @@ void main() async {
     ]);
   });
 
-  app.get('/', (Request req, Response res) {
+  app.get('/', (req, res) {
     return res.render('public/about.html');
   });
+
+  app.post('/users', (req, res) async {
+    final user = await req.body;
+    return res.json(jsonDecode(user));
+  });
+
+  // Middleware global
+  app.use((req, res, next) {
+    print('Time: ${DateTime.now()}');
+    next();
+  });
+
+  // // Middleware específico de rota
+  // app.use('/user/:id', (req, res, next) async {
+  //   print('Request Type: ${req.method}');
+  //   next();
+  // });
+
+  // Middlewares específicos de rota
+  middleware1(req, res, next) async {
+    print('Middleware 1');
+    next();
+  }
+
+  middleware2(req, res, next) async {
+    print('Middleware 2');
+    next();
+  }
+
+  // Rotas
+  app.get('/user/:id', (req, res) {
+    res.json({'message': 'USER'});
+  }, [middleware1, middleware2]);
 
   app.listen(3000, () {
     print('🚀 Servidor rodando em http://localhost:3000');

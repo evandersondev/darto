@@ -10,9 +10,9 @@ class Response {
   final HttpResponse res;
   final Logger logger;
   final bool snakeCase; // Adiciona a propriedade snakeCase
-  final String? staticFolder; // Adiciona a propriedade staticFolder
+  final List<String> staticFolders; // Adiciona a propriedade staticFolder
 
-  Response(this.res, this.logger, this.snakeCase, [this.staticFolder]);
+  Response(this.res, this.logger, this.snakeCase, this.staticFolders);
 
   /// Define o status da resposta.
   /// Aceita [statusCode] do tipo int ou um [HttpStatus] da biblioteca dart:io.
@@ -36,10 +36,8 @@ class Response {
   }
 
   /// Sends a file as the response.
-  void render(String filePath) {
-    print('Rendering file: $filePath');
-    final file =
-        File(staticFolder != null ? p.join(staticFolder!, filePath) : filePath);
+  void sendFile(String filePath) {
+    final file = File(filePath);
 
     if (!file.existsSync()) {
       res.statusCode = HttpStatus.notFound;
@@ -67,7 +65,7 @@ class Response {
 
   /// Determines the content type based on the file extension.
   ContentType _getContentType(String filePath) {
-    final extension = filePath.split('.').last;
+    final extension = filePath.split('.').last.toLowerCase();
     switch (extension) {
       case 'html':
         return ContentType.html;
@@ -84,6 +82,14 @@ class Response {
         return ContentType('image', 'jpeg');
       case 'gif':
         return ContentType('image', 'gif');
+      case 'svg':
+        return ContentType('image', 'svg+xml');
+      case 'pdf':
+        return ContentType('application', 'pdf');
+      case 'xml':
+        return ContentType('application', 'xml');
+      case 'ico':
+        return ContentType('image', 'x-icon');
       default:
         return ContentType.text;
     }

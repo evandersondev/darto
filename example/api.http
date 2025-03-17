@@ -7,7 +7,7 @@ http://localhost:3000/user/23
 
 
 ### 
-GET http://localhost:3000/public/index.html
+http://localhost:3000/public/test.pdf
 
 ###
 http://localhost:3000/tweets

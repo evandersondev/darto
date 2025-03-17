@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 class Darto {
   final Logger _logger;
   final bool _snakeCase;
+  final List<String> _staticFolders = [];
 
   Darto({Logger? logger, bool? snakeCase})
       : _logger = logger ?? Logger(),
@@ -17,7 +18,6 @@ class Darto {
 
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
   final List<Middleware> _globalMiddlewares = [];
-  String? _staticFolder;
   Map<String, String> _corsOptions = {}; // Configurações de CORS
 
   void get(String path, dynamic first, [dynamic second, dynamic third]) {
@@ -37,18 +37,20 @@ class Darto {
   }
 
   void use(dynamic pathOrMiddleware, [Middleware? middleware]) {
-    if (pathOrMiddleware is String && middleware != null) {
-      // Middleware específico de rota
-      _addRouteMiddleware(pathOrMiddleware, middleware);
-    } else if (pathOrMiddleware is Middleware) {
+    if (pathOrMiddleware is Middleware) {
       // Middleware global
       _globalMiddlewares.add(pathOrMiddleware);
-    } else if (pathOrMiddleware is String) {
-      // Configurar arquivos estáticos
-      _staticFolder = pathOrMiddleware;
+    } else if (pathOrMiddleware is String && middleware != null) {
+      // Middleware específico de rota
+      _addRouteMiddleware(pathOrMiddleware, middleware);
     } else {
       throw ArgumentError('Invalid arguments for use method');
     }
+  }
+
+  void static(String path) {
+    _staticFolders.add(path);
+    _addStaticRoute(path);
   }
 
   void _addRoute(String method, String path, dynamic first,
@@ -100,8 +102,25 @@ class Darto {
         }));
   }
 
-  void serveStatic(String folder) {
-    _staticFolder = folder;
+  void _addStaticRoute(String folder) {
+    final regexPath = RegExp('^/$folder/(.*)');
+    _routes.putIfAbsent('GET', () => []).add(MapEntry(regexPath, {
+          'handlers': [
+            (Request req, Response res) async {
+              final relativePath = req.uri.path.replaceFirst('/$folder/', '');
+              final filePath = p.normalize(p.absolute(folder, relativePath));
+
+              if (await File(filePath).exists()) {
+                res.sendFile(filePath);
+              } else {
+                res
+                    .status(HttpStatus.notFound)
+                    .send({'error': 'File not found'});
+              }
+            }
+          ],
+          'paramNames': <String>[]
+        }));
   }
 
   void useCors({
@@ -126,7 +145,6 @@ class Darto {
     await for (HttpRequest request in server) {
       final method = request.method;
       final path = request.uri.path;
-      final startTime = DateTime.now();
 
       if (_logger.isActive(LogLevel.access)) {
         DartoLogger.log(
@@ -134,24 +152,9 @@ class Darto {
             LogLevel.access);
       }
 
-      // Verifica se está servindo arquivos estáticos antes das rotas
-      if (_staticFolder != null && path.startsWith('/$_staticFolder/')) {
-        final staticFilePath = path.replaceFirst('/$_staticFolder', '');
-        if (await _serveFile(request, staticFilePath)) {
-          if (_logger.isActive(LogLevel.info)) {
-            final duration =
-                DateTime.now().difference(startTime).inMilliseconds;
-            DartoLogger.log(
-                '[$method $path] - Status: 200 - ${duration}ms - User-Agent: ${request.headers.value('user-agent')}',
-                LogLevel.info);
-          }
-          continue;
-        }
-      }
-
       final req = Request(request, {}, _logger);
       final res =
-          Response(request.response, _logger, _snakeCase, _staticFolder);
+          Response(request.response, _logger, _snakeCase, _staticFolders);
 
       final middlewares = _globalMiddlewares.toList();
       final routeEntries = _routes[method] ?? [];
@@ -167,7 +170,9 @@ class Darto {
       for (var entry in routeEntries) {
         final match = entry.key.firstMatch(path);
         if (match != null) {
-          final params = _extractRouteParams(entry.value['paramNames'], match);
+          // Cast paramNames to List<String> to avoid type errors.
+          final params = _extractRouteParams(
+              (entry.value['paramNames'] as List).cast<String>(), match);
           req.params.addAll(params);
           final handlers = entry.value['handlers'];
           middlewares.addAll(handlers.whereType<Middleware>());
@@ -217,51 +222,5 @@ class Darto {
     _corsOptions.forEach((key, value) {
       res.res.headers.set(key, value);
     });
-  }
-
-  Future<bool> _serveFile(HttpRequest request, String path) async {
-    final filePath = p.join(_staticFolder!, path);
-    final file = File(filePath);
-
-    if (await file.exists()) {
-      request.response.headers.contentType = _getContentType(filePath);
-      await file.openRead().pipe(request.response);
-      if (_logger.isActive(LogLevel.info)) {
-        final duration = DateTime.now()
-            .difference(request.headers.date ?? DateTime.now())
-            .inMilliseconds;
-        DartoLogger.log(
-            '[GET $filePath] - Status: 200 - ${duration}ms - User-Agent: ${request.headers.value('user-agent')}',
-            LogLevel.info);
-      }
-      return true;
-    }
-
-    return false;
-  }
-
-  ContentType _getContentType(String filePath) {
-    final extension = p.extension(filePath).toLowerCase();
-    switch (extension) {
-      case '.html':
-        return ContentType.html;
-      case '.css':
-        return ContentType('text', 'css');
-      case '.js':
-        return ContentType('application', 'javascript');
-      case '.png':
-        return ContentType('image', 'png');
-      case '.jpg':
-      case '.jpeg':
-        return ContentType('image', 'jpeg');
-      case '.gif':
-        return ContentType('image', 'gif');
-      case '.svg':
-        return ContentType('image', 'svg+xml');
-      case '.json':
-        return ContentType.json;
-      default:
-        return ContentType.text;
-    }
   }
 }

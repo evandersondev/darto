@@ -11,7 +11,7 @@ void main() async {
   // app.useCors(origin: '*');
 
   /// Serve static files from the 'public' directory.
-  app.use('public');
+  app.static('public');
 
   app.get('/todos/:id', (req, res) {
     final id = req.params['id'];
@@ -64,8 +64,8 @@ void main() async {
     ]);
   });
 
-  app.get('/', (req, res) {
-    return res.render('index.html');
+  app.get('/', (Request req, Response res) {
+    return res.sendFile('public/test.pdf');
   });
 
   app.post('/users', (req, res) async {

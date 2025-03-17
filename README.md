@@ -1,6 +1,6 @@
 # Darto 🛠️
 
-Darto is a microframework inspired by Express and Fastify for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
+Darto is a microframework inspired by Express for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
 
 <br>
 
@@ -44,7 +44,7 @@ void main() {
   final app = Darto();
 
   // Example route
-  app.get('/ping', (req, res) {
+  app.get('/ping', (Request req, Response res) {
     res.send('pong');
   });
 
@@ -61,16 +61,13 @@ To upload files, you can use the class Upload. Here's an example:
 ```dart
 void main() {
   // Serve static files from the "public" folder (using default options)
-  app.use('public');
-
   // You can access the static files in browser using the following URL:
   // http://localhost:3000/public/index.html
+  app.static('public');
 
-  // Or use render method to render a view
-
-  app.get('/users', (req, res) {
-    final id = req.params['id'];
-    res.render('index.html');
+  // Or you can send  the file as a response
+  app.get('/images', (Request req, Response res) {
+    res.sendFile('public/image.png');
   });
 }
 ```
@@ -112,8 +109,9 @@ void main() {
   final app = Darto();
 
   // Global middleware to log incoming requests
-  app.use((req, res, next) {
+  app.use((Request req, Response res, Next next) {
     print('📝 Request: ${req.method} ${req.originalUrl}');
+
     next();
   });
 
@@ -134,26 +132,30 @@ void main() {
   final app = Darto();
 
   // Middleware specific to a route
-  app.use('/task/:id', req, res, next) {
+  app.use('/task/:id', (Request req, Response res, Next next) {
     print('Request Type: ${req.method}');
-    next();
-  };
 
-  app.get('/task/:id', (req, res) {
+    next();
+  });
+
+  app.get('/task/:id', (Request req, Response res) {
     final id = req.params['id'];
+
     res.send({'task': id});
   });
 
   // You can use the middleware directly in the route definition
   // Create a middleware function
-  logMiddleware(req, res, next) {
+  logMiddleware(Request req, Response res, Next next) {
     print('Request Type: ${req.method}');
+
     next();
   };
 
   // Example route with middleware
-  app.get('/user/:id', logMiddleware, (req, res) {
+  app.get('/user/:id', logMiddleware, (Request req, Response res) {
     final id = req.params['id'];
+
     res.send({'user': id});
   });
 
@@ -165,59 +167,56 @@ void main() {
 
 <br>
 
-## Available Methods ✨
-
-### Response Methods
-
-- **`status(dynamic statusCode)`**: Sets the HTTP status for the response. Accepts an `int` or an `HttpStatus` from Dart's `dart:io`.
-- **`send(dynamic data)`**: Sends JSON data in the response and closes it.
-- **`end([dynamic data])`**: Writes optional data and ends the response.
-- **`download(String filePath, [dynamic filename, dynamic callback])`**: Sends a file as an attachment for download. Optionally accepts a custom file name and an error callback.
-- **`cookie(String name, String value, [Map<String, dynamic>? options])`**: Sets a cookie on the response.
-- **`clearCookie(String name, [Map<String, dynamic>? options])**: Clears a cookie.
-- **`redirect(String url)`**: Redirects to the specified URL.
-
-<br>
-
-### Request Methods
-
-- **`body`**: Returns the parsed request body.
-- **`cookies`**: Returns a map of cookies from the request.
-- **`baseUrl`**: The base URL on which the router was mounted.
-- **`host`**: The host header (e.g., "example.com:3000").
-- **`hostname`**: The host name without the port.
-- **`method`**: The HTTP method of the request.
-- **`originalUrl`**: The original URL of the request.
-- **`path`**: The path portion of the request URL.
-- **`ip`**: The client's IP address.
-- **`ips`**: A list of IP addresses (using the `x-forwarded-for` header if available).
-- **`protocol`**: The protocol used (e.g., "http" or "https").
-
-<br>
-
-## Security Features 🔒
-
-Darto includes basic security measures:
-
-- **Input Sanitization:** Use `DartoBase.sanitizeInput` to clean user inputs and prevent code injection.
-- **DoS Protection:** Apply `DartoBase.rateLimit` in your middleware chain to limit the rate of requests and avoid denial-of-service attacks.
-
-<br>
-
 ## Example Routes 📡
 
 ```dart
 // Route to get user information by ID
-app.get('/user/:id', (req, res) {
+app.get('/user/:id', (Request req, Response res) {
   final id = req.params['id'];
+
   res.send({'user': id});
 });
 
 // Route to redirect to an external site
-app.get('/go', (req, res) {
+app.get('/go', (Request req, Response res) {
   res.redirect('http://example.com');
 });
+
+// Route to get a body
+app.get('/file', (Request req, Response res) async {
+  final body = await req.body;
+
+  res.send(body);
+});
 ```
+
+<br>
+
+## Main Features
+
+- **Middlewares**  
+  Easily apply both global and route-specific middlewares to process requests, manage authentication, logging, data manipulation, and more.
+
+- **File Uploads**  
+  Supports file uploads natively using the `Upload` class, allowing the seamless handling and storage of files sent by clients.
+
+- **File Downloads**  
+  With the `download` method, you can send files as attachments, specify custom file names, and set up error callbacks for a controlled download experience.
+
+- **Static File Serving**  
+  Serve static files from designated directories using the `static` method, making folders (e.g., "public") accessible directly via URL.
+
+- **Send Files (sendFile)**  
+  Automatically handles the correct Content-Type based on file extensions to ensure files such as HTML, CSS, JavaScript, images, PDFs, etc., are served with the proper headers.
+
+- **Flexible Routing**  
+  Define routes with dynamic parameters (e.g., `/user/:id`) similar to Express.js, allowing easy extraction of parameters for RESTful API design.
+
+- **CORS and Custom Headers**  
+  Configure CORS and set custom HTTP headers to adhere to security policies and enhance communication.
+
+- **Input Sanitization and Basic Security**  
+  Incorporates input sanitization mechanisms along with basic protections to avoid injection attacks and mitigate denial-of-service (DoS) scenarios.
 
 <br>
 

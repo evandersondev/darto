@@ -10,8 +10,9 @@ class Response {
   final HttpResponse res;
   final Logger logger;
   final bool snakeCase; // Adiciona a propriedade snakeCase
+  final String? staticFolder; // Adiciona a propriedade staticFolder
 
-  Response(this.res, this.logger, this.snakeCase);
+  Response(this.res, this.logger, this.snakeCase, [this.staticFolder]);
 
   /// Define o status da resposta.
   /// Aceita [statusCode] do tipo int ou um [HttpStatus] da biblioteca dart:io.
@@ -23,9 +24,22 @@ class Response {
     return this;
   }
 
+  /// Set the response header field to value.
+  /// Multiple calls to this method will append values to the header field.
+  /// Example:
+  /// res.set('Content-Type', 'text/plain');
+  void set(String field, String value) {
+    res.headers.set(field, value);
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Response header set: $field: $value', LogLevel.info);
+    }
+  }
+
   /// Sends a file as the response.
   void render(String filePath) {
-    final file = File(filePath);
+    print('Rendering file: $filePath');
+    final file =
+        File(staticFolder != null ? p.join(staticFolder!, filePath) : filePath);
 
     if (!file.existsSync()) {
       res.statusCode = HttpStatus.notFound;

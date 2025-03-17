@@ -1,19 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
+import 'package:path/path.dart';
 
 void main() async {
-  final app = Darto(logger: Logger(debug: true), snakeCase: true);
+  final app = Darto();
 
-  app.useCors(origin: '*');
+  // app.useCors(origin: '*');
 
   /// Serve static files from the 'public' directory.
-  ///
-  /// example: GET /images/logo.png
-  /// example: GET /css/style.css
-  /// example: GET /js/script.js
-  /// example: GET /views/index.html
   app.use('public');
 
   app.get('/todos/:id', (req, res) {
@@ -37,7 +34,8 @@ void main() async {
     res.json({'message': 'Hello, World!', 'status': 'OK'});
   });
 
-  app.get('/users', (req, res) {
+  app.get('/users', (Request req, Response res) {
+    res.set('X-Custom-Header', 'CustomValue');
     return res.json([
       {
         'id': 1,
@@ -67,7 +65,7 @@ void main() async {
   });
 
   app.get('/', (req, res) {
-    return res.render('public/about.html');
+    return res.render('index.html');
   });
 
   app.post('/users', (req, res) async {
@@ -76,7 +74,8 @@ void main() async {
   });
 
   // Middleware global
-  app.use((req, res, next) {
+  app.use((Request req, Response res, Next next) {
+    // print('Request Authorization: ${req.headers.authorization}');
     print('Time: ${DateTime.now()}');
     next();
   });
@@ -104,7 +103,19 @@ void main() async {
     res.json({'message': 'USER'});
   });
 
+  // Instance of Upload class
+  final upload = Upload(join(Directory.current.path, 'uploads'));
+
+  // Route to handle file upload
+  app.post('/upload', upload.single('file'), (Request req, Response res) {
+    if (req.file != null) {
+      res.json(req.file);
+    } else {
+      res.status(BAD_REQUEST).json({'error': 'No file uploaded'});
+    }
+  });
+
   app.listen(3000, () {
-    print('🚀 Servidor rodando em http://localhost:3000');
+    print('🚀 Server is running http://localhost:3000');
   });
 }

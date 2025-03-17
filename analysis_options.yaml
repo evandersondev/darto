@@ -18,6 +18,7 @@ analyzer:
     curly_braces_in_flow_control_structures: ignore
     file_names: ignore
     prefer_interpolation_to_compose_strings: ignore
+    unintended_html_in_doc_comment: ignore
 # Uncomment the following section to specify additional rules.
 
 # linter:

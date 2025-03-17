@@ -2,9 +2,13 @@
 
 Darto is a microframework inspired by Express and Fastify for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
 
+<br>
+
 ### Support 💖
 
 If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the framework and make it even better!
+
+<br>
 
 ## Installation 📦
 
@@ -29,52 +33,71 @@ Then, run the following command:
 flutter pub get
 ```
 
-## Basic Usage 🚀
+<br>
 
-Create a file (e.g., `example/bin/main.dart`) with the following content:
+## Basic Usage 🚀
 
 ```dart
 import 'package:darto/darto.dart';
 
-void main() async {
+void main() {
   final app = Darto();
 
-  // Global middleware to log incoming requests
-  app.use((req, res, next) {
-    print('📝 Request: ${req.method} ${req.originalUrl}');
-    next();
+  // Example route
+  app.get('/ping', (req, res) {
+    res.send('pong');
   });
 
+  app.listen(3000);
+}
+```
+
+<br>
+
+### Config static files
+
+To upload files, you can use the class Upload. Here's an example:
+
+```dart
+void main() {
   // Serve static files from the "public" folder (using default options)
   app.use('public');
 
-  // Example route: Get user details by ID
-  app.get('/user/:id', (req, res) {
+  // You can access the static files in browser using the following URL:
+  // http://localhost:3000/public/index.html
+
+  // Or use render method to render a view
+
+  app.get('/users', (req, res) {
     final id = req.params['id'];
-    res.send({'user': id});
-  });
-
-  // Example route: Redirect to an external URL
-  app.get('/go', (req, res) {
-    res.redirect('http://example.com');
-  });
-
-  // Example route: File download with a custom file name and error callback
-  app.get('/download', (req, res) {
-    res.download('public/report-12345.pdf', 'report.pdf', (err) {
-      if (err != null) {
-        print('❌ Download error: $err');
-      } else {
-        print('✅ Download successful!');
-      }
-    });
-  });
-
-  app.listen(3000, () {
-    print('🔹 Server is running at http://localhost:3000');
+    res.render('index.html');
   });
 }
 ```
+
+<br>
+
+### Upload Files
+
+To upload files, you can use the class Upload. Here's an example:
+
+```dart
+void main() {
+  // Instance of Upload class
+  final upload = Upload(join(Directory.current.path, 'uploads'));
+
+  // Route to handle file upload
+  app.post('/upload', upload.single('file'), (Request req, Response res) {
+    if (req.file != null) {
+      res.json(req.file);
+    } else {
+      res.status(BAD_REQUEST).json({'error': 'No file uploaded'});
+    }
+  });
+}
+```
+
+<br>
 
 ## Middleware Usage 🛠️
 
@@ -99,6 +122,8 @@ void main() {
   });
 }
 ```
+
+<br>
 
 ### Route-Specific Middleware
 
@@ -138,6 +163,8 @@ void main() {
 }
 ```
 
+<br>
+
 ## Available Methods ✨
 
 ### Response Methods
@@ -149,6 +176,8 @@ void main() {
 - **`cookie(String name, String value, [Map<String, dynamic>? options])`**: Sets a cookie on the response.
 - **`clearCookie(String name, [Map<String, dynamic>? options])**: Clears a cookie.
 - **`redirect(String url)`**: Redirects to the specified URL.
+
+<br>
 
 ### Request Methods
 
@@ -164,12 +193,16 @@ void main() {
 - **`ips`**: A list of IP addresses (using the `x-forwarded-for` header if available).
 - **`protocol`**: The protocol used (e.g., "http" or "https").
 
+<br>
+
 ## Security Features 🔒
 
 Darto includes basic security measures:
 
 - **Input Sanitization:** Use `DartoBase.sanitizeInput` to clean user inputs and prevent code injection.
 - **DoS Protection:** Apply `DartoBase.rateLimit` in your middleware chain to limit the rate of requests and avoid denial-of-service attacks.
+
+<br>
 
 ## Example Routes 📡
 
@@ -185,6 +218,8 @@ app.get('/go', (req, res) {
   res.redirect('http://example.com');
 });
 ```
+
+<br>
 
 ---
 

@@ -135,18 +135,23 @@ class Darto {
       }
 
       // Verifica se está servindo arquivos estáticos antes das rotas
-      if (_staticFolder != null && await _serveFile(request, path)) {
-        if (_logger.isActive(LogLevel.info)) {
-          final duration = DateTime.now().difference(startTime).inMilliseconds;
-          DartoLogger.log(
-              '[$method $path] - Status: 200 - ${duration}ms - User-Agent: ${request.headers.value('user-agent')}',
-              LogLevel.info);
+      if (_staticFolder != null && path.startsWith('/$_staticFolder/')) {
+        final staticFilePath = path.replaceFirst('/$_staticFolder', '');
+        if (await _serveFile(request, staticFilePath)) {
+          if (_logger.isActive(LogLevel.info)) {
+            final duration =
+                DateTime.now().difference(startTime).inMilliseconds;
+            DartoLogger.log(
+                '[$method $path] - Status: 200 - ${duration}ms - User-Agent: ${request.headers.value('user-agent')}',
+                LogLevel.info);
+          }
+          continue;
         }
-        continue;
       }
 
       final req = Request(request, {}, _logger);
-      final res = Response(request.response, _logger, _snakeCase);
+      final res =
+          Response(request.response, _logger, _snakeCase, _staticFolder);
 
       final middlewares = _globalMiddlewares.toList();
       final routeEntries = _routes[method] ?? [];
@@ -215,7 +220,7 @@ class Darto {
   }
 
   Future<bool> _serveFile(HttpRequest request, String path) async {
-    final filePath = p.join('$_staticFolder$path');
+    final filePath = p.join(_staticFolder!, path);
     final file = File(filePath);
 
     if (await file.exists()) {

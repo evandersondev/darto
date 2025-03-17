@@ -1,10 +1,13 @@
 
 ###
+http://localhost:3000/
+
+###
 http://localhost:3000/user/23
 
 
 ### 
-http://localhost:3000/index.html
+GET http://localhost:3000/public/index.html
 
 ###
 http://localhost:3000/tweets
@@ -24,3 +27,11 @@ Content-Type: application/json
     "age": 30,
     "email": "john@example.com"
 }
+
+// Set Bearer token in Authorization header
+###
+GET http://localhost:3000/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNjg0NjQzMzU2LCJleHAiOjE2ODQ2NDMzNjZ9.1z83d338383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383
+
+
+

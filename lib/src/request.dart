@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:darto/darto.dart';
+import 'package:darto/src/darto_header.dart';
 import 'package:darto/src/darto_logger.dart';
 
 class Request {
@@ -10,6 +11,9 @@ class Request {
   dynamic _cachedBody;
   bool _bodyRead = false;
   final Logger logger;
+
+  // Propriedade para armazenar informações do arquivo carregado
+  Map<String, dynamic>? file;
 
   Request(this._req, this.params, this.logger);
 
@@ -55,7 +59,7 @@ class Request {
   String get baseUrl => '/';
 
   /// Returns headers
-  HttpHeaders get headers => _req.headers;
+  DartoHeader get headers => DartoHeader(_req.headers);
 
   /// Returns the full host header (e.g., "example.com:3000").
   String get host => _req.headers.value(HttpHeaders.hostHeader) ?? '';
@@ -94,4 +98,7 @@ class Request {
     // requestedUri.scheme is expected to provide the proper scheme.
     return _req.requestedUri.scheme;
   }
+
+  /// Permite fazer cast para List<int>
+  Stream<List<int>> cast<T>() => _req.cast<List<int>>();
 }

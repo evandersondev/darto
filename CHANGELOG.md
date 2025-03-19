@@ -1,3 +1,7 @@
+## 0.0.10
+
+- Add subroutes and web sockets.
+
 ## 0.0.9
 
 - Update middlewares.

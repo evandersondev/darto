@@ -3,12 +3,16 @@ import 'dart:io';
 
 import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
+import 'package:example/routes/app_router.dart';
+import 'package:example/routes/auth_router.dart';
 import 'package:path/path.dart';
 
 void main() async {
-  final app = Darto();
+  final app = Darto(logger: Logger(debug: true));
 
-  // app.useCors(origin: '*');
+  // Router
+  app.use('/app', appRouter());
+  app.use('/auth', authRouter());
 
   /// Serve static files from the 'public' directory.
   app.static('public');
@@ -64,9 +68,9 @@ void main() async {
     ]);
   });
 
-  app.get('/', (Request req, Response res) {
-    return res.sendFile('public/test.pdf');
-  });
+  // app.get('/', (Request req, Response res) {
+  //   return res.sendFile('public/test.pdf');
+  // });
 
   app.post('/users', (req, res) async {
     final user = await req.body;
@@ -115,7 +119,25 @@ void main() async {
     }
   });
 
+  // Route to test web socket server
+  app.get('/websocket-test', (req, res) {
+    res.sendFile('public/websocket_test.html');
+  });
+
+  // Instance of WebSocket server
+  final server = DartoWebsocket();
+
+  // Register a handler for the 'connection' event
+  server.on('connection', (DartoSocketChannel socket) {
+    // Handle incoming messages from the client
+    socket.stream.listen((message) {
+      socket.sink.add('Echo: $message');
+    });
+  });
+
   app.listen(3000, () {
+    // This will start the WebSocket server on port 3001
+    // server.listen('0.0.0.0', 3001);
     print('🚀 Server is running http://localhost:3000');
   });
 }

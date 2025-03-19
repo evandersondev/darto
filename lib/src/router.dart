@@ -44,6 +44,7 @@ class Router {
     }
 
     routes.putIfAbsent(method, () => []).add(
-        MapEntry(regexPath, {'handlers': handlers, 'paramNames': paramNames}));
+          MapEntry(regexPath, {'handlers': handlers, 'paramNames': paramNames}),
+        );
   }
 }

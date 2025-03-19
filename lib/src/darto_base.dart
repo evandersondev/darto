@@ -1,9 +1,7 @@
 import 'dart:io';
 
+import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
-import 'package:darto/src/logger.dart';
-import 'package:darto/src/request.dart';
-import 'package:darto/src/response.dart';
 import 'package:darto/src/types.dart';
 import 'package:path/path.dart' as p;
 
@@ -36,13 +34,19 @@ class Darto {
     _addRoute('DELETE', path, first, second, third);
   }
 
-  void use(dynamic pathOrMiddleware, [Middleware? middleware]) {
+  void use(dynamic pathOrMiddleware, [dynamic second]) {
     if (pathOrMiddleware is Middleware) {
       // Middleware global
       _globalMiddlewares.add(pathOrMiddleware);
-    } else if (pathOrMiddleware is String && middleware != null) {
+    } else if (pathOrMiddleware is Router && second == null) {
+      // Adiciona todas as rotas do Router sem prefixo
+      _addRouterRoutes('', pathOrMiddleware);
+    } else if (pathOrMiddleware is String && second is Middleware) {
       // Middleware específico de rota
-      _addRouteMiddleware(pathOrMiddleware, middleware);
+      _addRouteMiddleware(pathOrMiddleware, second);
+    } else if (pathOrMiddleware is String && second is Router) {
+      // Prefixo de rota e um Router: todas as rotas deste Router terão o prefixo
+      _addRouterRoutes(pathOrMiddleware, second);
     } else {
       throw ArgumentError('Invalid arguments for use method');
     }
@@ -82,7 +86,8 @@ class Darto {
     }
 
     _routes.putIfAbsent(method, () => []).add(
-        MapEntry(regexPath, {'handlers': handlers, 'paramNames': paramNames}));
+          MapEntry(regexPath, {'handlers': handlers, 'paramNames': paramNames}),
+        );
   }
 
   void _addRouteMiddleware(String path, Middleware middleware) {
@@ -96,31 +101,76 @@ class Darto {
           r'$',
     );
 
-    _routes.putIfAbsent('USE', () => []).add(MapEntry(regexPath, {
-          'handlers': [middleware],
-          'paramNames': paramNames
-        }));
+    _routes.putIfAbsent('USE', () => []).add(
+          MapEntry(regexPath, {
+            'handlers': [middleware],
+            'paramNames': paramNames
+          }),
+        );
   }
 
   void _addStaticRoute(String folder) {
     final regexPath = RegExp('^/$folder/(.*)');
-    _routes.putIfAbsent('GET', () => []).add(MapEntry(regexPath, {
-          'handlers': [
-            (Request req, Response res) async {
-              final relativePath = req.uri.path.replaceFirst('/$folder/', '');
-              final filePath = p.normalize(p.absolute(folder, relativePath));
+    _routes.putIfAbsent('GET', () => []).add(
+          MapEntry(regexPath, {
+            'handlers': [
+              (Request req, Response res) async {
+                final relativePath = req.uri.path.replaceFirst('/$folder/', '');
+                final filePath = p.normalize(p.absolute(folder, relativePath));
 
-              if (await File(filePath).exists()) {
-                res.sendFile(filePath);
-              } else {
-                res
-                    .status(HttpStatus.notFound)
-                    .send({'error': 'File not found'});
+                if (await File(filePath).exists()) {
+                  res.sendFile(filePath);
+                } else {
+                  res
+                      .status(HttpStatus.notFound)
+                      .send({'error': 'File not found'});
+                }
               }
+            ],
+            'paramNames': <String>[]
+          }),
+        );
+  }
+
+  // Updated _addRouterRoutes to remove leading slash from the route pattern before concatenating.
+  void _addRouterRoutes(String prefix, Router router) {
+    router.routes.forEach((method, routeEntries) {
+      for (final entry in routeEntries) {
+        final RegExp originalRegex = entry.key;
+        String pattern = originalRegex.pattern;
+
+        // Remove beginning '^' and ending '$'
+        if (pattern.startsWith('^')) pattern = pattern.substring(1);
+        if (pattern.endsWith(r'$'))
+          pattern = pattern.substring(0, pattern.length - 1);
+
+        String newPattern;
+        if (pattern == '/' || pattern.trim() == '') {
+          if (prefix.isEmpty) {
+            newPattern = r'^/?$';
+          } else {
+            String base = prefix;
+            if (base.endsWith('/')) {
+              base = base.substring(0, base.length - 1);
             }
-          ],
-          'paramNames': <String>[]
-        }));
+            newPattern = '^' + base + r'/?$';
+          }
+        } else {
+          // Remove the leading slash from the pattern if it exists
+          if (pattern.startsWith('/')) pattern = pattern.substring(1);
+          String normalizedPrefix = prefix;
+          if (normalizedPrefix.isNotEmpty && !normalizedPrefix.endsWith('/')) {
+            normalizedPrefix += '/';
+          }
+          newPattern = '^' + normalizedPrefix + pattern + r'$';
+        }
+
+        final newRegex = RegExp(newPattern);
+        _routes.putIfAbsent(method, () => []).add(
+              MapEntry(newRegex, entry.value),
+            );
+      }
+    });
   }
 
   void useCors({
@@ -148,8 +198,9 @@ class Darto {
 
       if (_logger.isActive(LogLevel.access)) {
         DartoLogger.log(
-            '[$method $path] - IP: ${request.connectionInfo?.remoteAddress.address}',
-            LogLevel.access);
+          '[$method $path] - IP: ${request.connectionInfo?.remoteAddress.address}',
+          LogLevel.access,
+        );
       }
 
       final req = Request(request, {}, _logger);
@@ -172,7 +223,9 @@ class Darto {
         if (match != null) {
           // Cast paramNames to List<String> to avoid type errors.
           final params = _extractRouteParams(
-              (entry.value['paramNames'] as List).cast<String>(), match);
+            (entry.value['paramNames'] as List).cast<String>(),
+            match,
+          );
           req.params.addAll(params);
           final handlers = entry.value['handlers'];
           middlewares.addAll(handlers.whereType<Middleware>());
@@ -198,7 +251,6 @@ class Darto {
   void _executeMiddlewares(
       Request req, Response res, List<Middleware> middlewares) {
     int index = 0;
-
     void next() {
       if (index < middlewares.length) {
         final middleware = middlewares[index++];

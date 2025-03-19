@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Teste de WebSocket</title>
+</head>
+<body>
+  <h1>Teste de WebSocket</h1>
+  <div id="status"></div>
+  <script>
+    const statusDiv = document.getElementById('status');
+    const ws = new WebSocket('ws://localhost:3001');
+
+    ws.onopen = () => {
+      statusDiv.innerHTML += '<p>Conectado ao servidor WebSocket.</p>';
+      ws.send('Olá, servidor!');
+    };
+
+    ws.onmessage = (event) => {
+      statusDiv.innerHTML += '<p>Recebido: ' + event.data + '</p>';
+    };
+
+    ws.onclose = () => {
+      statusDiv.innerHTML += '<p>Conexão fechada.</p>';
+    };
+
+    ws.onerror = (error) => {
+      statusDiv.innerHTML += '<p>Erro: ' + error + '</p>';
+    };
+  </script>
+</body>
+</html>

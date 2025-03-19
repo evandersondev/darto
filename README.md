@@ -24,7 +24,7 @@ Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.9
+  darto: ^0.0.10
 ```
 
 Then, run the following command:
@@ -80,7 +80,7 @@ To upload files, you can use the class Upload. Here's an example:
 
 ```dart
 void main() {
-  // Instance of Upload class
+  // Instance of Upload class and define the upload directory
   final upload = Upload(join(Directory.current.path, 'uploads'));
 
   // Route to handle file upload
@@ -192,6 +192,65 @@ app.get('/file', (Request req, Response res) async {
 
 <br>
 
+---
+
+## Sub-Routes 🚦
+
+Darto also supports the creation of sub-routes so you can better organize your application. By mounting a router on a specific path prefix, all the routes defined in the sub-router will be grouped under that prefix. This makes it easy to modularize your code and maintain clarity in your route definitions. For example, you can create an authentication router that handles all routes under `/auth`:
+
+```dart
+Router authRouter() {
+  final router = Router();
+
+  router.get('/login', (req, res) {
+    res.send('Login page');
+  });
+
+  return router;
+}
+
+void main() {
+  final app = Darto();
+
+  // Mount the authRouter on the "/auth" prefix:
+  app.use('/auth', authRouter);
+}
+```
+
+This enables clear separation of concerns and enhances the reusability of your routing logic. 🚀
+
+<br>
+
+## WebSocket Integration 🔌
+
+Darto integrates with WebSockets to facilitate real-time communication in your applications. With WebSocket support, you can easily create interactive features like live chats, notifications, or interactive dashboards. The framework provides a simple API to handle WebSocket events:
+
+```dart
+import 'package:darto/darto.dart';
+
+void main() {
+  final app = Darto();
+
+  // Initialize WebSocket server
+  final server = WebSocketServer();
+
+  // Handle new WebSocket connections
+  server.on('connection', (WebSocketChannel socket) {
+    socket.stream.listen((message) {
+      socket.sink.add('Echo: $message');
+    });
+  });
+
+  // Start the HTTP and WebSocket servers
+  app.listen(3000, () {
+    server.listen('0.0.0.0', 3001);
+    print('HTTP server running on http://localhost:3000');
+  });
+}
+```
+
+<br>
+
 ## Main Features
 
 - **Middlewares**  
@@ -212,13 +271,21 @@ app.get('/file', (Request req, Response res) async {
 - **Flexible Routing**  
   Define routes with dynamic parameters (e.g., `/user/:id`) similar to Express.js, allowing easy extraction of parameters for RESTful API design.
 
+- **Sub-Routes**
+  Organize your routes into sub-routes for better modularity and maintainability.
+
 - **CORS and Custom Headers**  
   Configure CORS and set custom HTTP headers to adhere to security policies and enhance communication.
 
 - **Input Sanitization and Basic Security**  
   Incorporates input sanitization mechanisms along with basic protections to avoid injection attacks and mitigate denial-of-service (DoS) scenarios.
 
+- **WebSocket Support**
+  Integrates WebSocket support to facilitate real-time communication and interactive features in your applications.
+
 <br>
+
+This setup allows you to test your WebSocket connections by either using a WebSocket client directly or by creating an HTML page that connects to the server, enabling rich real-time interactions within your Dart web applications. 🎉
 
 ---
 

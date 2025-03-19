@@ -4,10 +4,12 @@
 library;
 
 export 'src/darto_base.dart';
+export 'src/darto_websocket.dart';
 export 'src/http_status_code.dart';
 export 'src/logger.dart';
 export 'src/request.dart';
 export 'src/response.dart';
+export 'src/router.dart';
 export 'src/types.dart' show Next;
 export 'src/upload.dart';
 

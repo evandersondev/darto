@@ -17,7 +17,14 @@ class Request {
 
   Request(this._req, this.params, this.logger);
 
+  /// Returns the original URL of the request.
+  /// This is the same as [originalUrl].
+  /// Example:  http://example.com/foo/bar?a=b
   Uri get uri => _req.uri;
+
+  /// Returns the HTTP method of the request.
+  /// This is the same as [method].
+  /// Example: GET, POST, PUT, DELETE, etc.
   String get method => _req.method;
   Map<String, String> get query => _req.uri.queryParameters;
 
@@ -39,7 +46,8 @@ class Request {
     return _cachedBody;
   }
 
-  /// Returns cookies as a Map with cookie name as key and value as value.
+  /// Returns all cookies sent by the client.
+  /// Example: {'name': 'value'}
   Map<String, String> get cookies {
     final Map<String, String> cookieMap = {};
     for (var cookie in _req.cookies) {
@@ -54,8 +62,8 @@ class Request {
     return cookieMap;
   }
 
-  /// In Express, baseUrl is the URL path on which a router was mounted.
-  /// For simplicity, we assume the root path.
+  /// Returns the full URL of the request.
+  /// Example: '/'
   String get baseUrl => '/';
 
   /// Returns headers
@@ -76,15 +84,26 @@ class Request {
   /// Returns the original URL of the request.
   String get originalUrl => _req.uri.toString();
 
-  /// Returns the path portion of the request URL.
+  /// Returns the path of the request URL.
+  /// Example: '/foo/bar'
   String get path => _req.uri.path;
 
-  /// Returns the client's IP address.
+  /// Returns IP address of the client.
+  /// If the 'x-forwarded-for' header is present, it will be used.
+  /// Otherwise, the remote address of the request is used.
+  /// Example: '127.0.0.1'
   String get ip {
     return _req.connectionInfo?.remoteAddress.address ?? '';
   }
 
-  /// Returns a list of IP addresses, using 'x-forwarded-for' header if available.
+  /// Returns a list of IP addresses of the client.
+  /// If the 'x-forwarded-for' header is present, it will be used.
+  /// Otherwise, the remote address of the request is used.
+  /// Example: ['
+  /// '127.0.0.1',
+  /// '192.168.1.1',
+  /// '10.0.0.1',
+  /// ]
   List<String> get ips {
     final forwarded = _req.headers.value('x-forwarded-for');
     if (forwarded != null && forwarded.isNotEmpty) {
@@ -93,12 +112,17 @@ class Request {
     return [ip];
   }
 
-  /// Returns the protocol used, for example 'http' or 'https'.
+  /// Returns the request protocol.
+  /// Example: 'http'
+  /// 'https'
+  /// 'ws'
+  /// 'wss'
+  /// 'ftp'
+  /// 'ftps'
+  /// 'file'
   String get protocol {
-    // requestedUri.scheme is expected to provide the proper scheme.
     return _req.requestedUri.scheme;
   }
 
-  /// Permite fazer cast para List<int>
   Stream<List<int>> cast<T>() => _req.cast<List<int>>();
 }

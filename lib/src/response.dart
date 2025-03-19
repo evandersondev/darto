@@ -14,8 +14,11 @@ class Response {
 
   Response(this.res, this.logger, this.snakeCase, this.staticFolders);
 
-  /// Define o status da resposta.
-  /// Aceita [statusCode] do tipo int ou um [HttpStatus] da biblioteca dart:io.
+  /// Define status code da resposta.
+  /// Exemplo:
+  ///  res.status(404).end();
+  /// You can also use named status codes like below:
+  /// res.stats(NOT_FOUND).end();;
   Response status(int statusCode) {
     res.statusCode = statusCode;
     if (logger.isActive(LogLevel.info)) {
@@ -35,7 +38,9 @@ class Response {
     }
   }
 
-  /// Sends a file as the response.
+  /// Return a staticc file.
+  /// Example:
+  /// res.sendFile('public/images/logo.png');
   void sendFile(String filePath) {
     final file = File(filePath);
 
@@ -95,7 +100,9 @@ class Response {
     }
   }
 
-  /// Envia os dados como resposta e encerra a resposta.
+  /// Send data with content type text/plain.
+  /// Example:
+  /// res.send('Hello, World!');
   void send(dynamic data) {
     res.headers.contentType = ContentType.text;
     res.write(jsonEncode(data));
@@ -105,7 +112,9 @@ class Response {
     }
   }
 
-  /// Envia os dados como resposta e encerra a resposta.
+  /// Send data with content type application/json.
+  /// Example:
+  /// res.json({'message': 'Hello, World!'});
   void json(dynamic data) {
     res.headers.contentType = ContentType.json;
     res.write(_toJson(data));
@@ -179,8 +188,13 @@ class Response {
     return data;
   }
 
-  /// Encerra a resposta.
-  /// Se [data] for passado, ele será escrito antes de fechar a conexão.
+  /// Ends the response process.
+  /// This method should be called to finish the response.
+  /// Example:
+  /// res.end();
+  /// res.end('Hello, World!');
+  /// res.end({'message': 'Hello, World!'});
+  /// res.status(201).end();
   void end([dynamic data]) {
     if (data != null) {
       res.write(data);
@@ -191,6 +205,7 @@ class Response {
     }
   }
 
+  /// Sends a file as an attachment.
   void download(String filePath, [dynamic filename, dynamic callback]) async {
     // Determine if a custom filename is provided and assign callback accordingly.
     String? downloadName;
@@ -251,7 +266,7 @@ class Response {
   /// Sets a cookie on the response.
   ///
   /// Example:
-  ///   res.cookie('name', 'tobi', { path: '/admin' });
+  /// res.cookie('name', 'tobi', { path: '/admin' });
   void cookie(String name, String value, [Map<String, dynamic>? options]) {
     final opts = options ?? {};
     final buffer = StringBuffer();
@@ -298,7 +313,7 @@ class Response {
   /// Clears a cookie by setting it with an expired date.
   ///
   /// Example:
-  ///   res.clearCookie('name', { path: '/admin' });
+  /// res.clearCookie('name', { path: '/admin' });
   void clearCookie(String name, [Map<String, dynamic>? options]) {
     // Merge any provided options with the required expiration date in the past.
     final opts = Map<String, dynamic>.from(options ?? {});
@@ -313,8 +328,8 @@ class Response {
   /// Redirects the request to a different URL.
   ///
   /// Usage examples:
-  ///   res.redirect('/foo/bar')
-  ///   res.redirect('http://example.com')
+  /// res.redirect('/foo/bar')
+  /// res.redirect('http://example.com')
   void redirect(String url) {
     // Set status code to 302 Found by default
     res.statusCode = HttpStatus.found;

@@ -18,22 +18,76 @@ class Darto {
   final List<Middleware> _globalMiddlewares = [];
   Map<String, String> _corsOptions = {}; // Configurações de CORS
 
+  /// Method GET format
+  /// get(String, Function(Request, Response))
+  /// get(String, Middleware, Function(Request, Response))
+  /// get(String, Middleware, Middleware, Function(Request, Response))
+  ///
+  /// Example":
+  /// ```dart
+  /// app.get('/hello', (Request req, Response res) {
+  ///  res.send('Hello, World!');
+  /// });
   void get(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('GET', path, first, second, third);
   }
 
+  /// Method POST format
+  /// post(String, Function(Request, Response))
+  /// post(String, Middleware, Function(Request, Response))
+  /// post(String, Middleware, Middleware, Function(Request, Response))
+  ///
+  /// Example:
+  /// ```dart
+  /// app.post('/hello', (Request req, Response res) {
+  /// res.send('Hello, World!');
+  /// });
   void post(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('POST', path, first, second, third);
   }
 
+  /// Method PUT format
+  /// put(String, Function(Request, Response))
+  /// put(String, Middleware, Function(Request, Response))
+  /// put(String, Middleware, Middleware, Function(Request, Response))
+  ///
+  /// Example:
+  /// ```dart
+  /// app.put('/hello', (Request req, Response res) {
+  /// res.send('Hello, World!');
+  /// });
   void put(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('PUT', path, first, second, third);
   }
 
+  /// Method DELETE format
+  /// delete(String, Function(Request, Response))
+  /// delete(String, Middleware, Function(Request, Response))
+  /// delete(String, Middleware, Middleware, Function(Request, Response))
+  ///
+  /// Example:
+  /// ```dart
+  /// app.delete('/hello', (Request req, Response res) {
+  /// res.send('Hello, World!');
+  /// });
   void delete(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('DELETE', path, first, second, third);
   }
 
+  /// Method Use format
+  /// ```md
+  /// - Define routes
+  /// use(Router)
+  ///
+  /// - Define sub-routes
+  /// use(String, Router)
+  ///
+  /// - Define global middleware
+  /// use(Function(Request, Response, Next))
+  ///
+  /// - Define static folder
+  /// use(String)
+  ///
   void use(dynamic pathOrMiddleware, [dynamic second]) {
     if (pathOrMiddleware is Middleware) {
       // Middleware global
@@ -52,6 +106,13 @@ class Darto {
     }
   }
 
+  /// Method static format
+  /// static(String)
+  ///
+  /// Example:
+  /// ```dart
+  /// app.static('public');
+  /// ```
   void static(String path) {
     _staticFolders.add(path);
     _addStaticRoute(path);
@@ -132,7 +193,6 @@ class Darto {
         );
   }
 
-  // Updated _addRouterRoutes to remove leading slash from the route pattern before concatenating.
   void _addRouterRoutes(String prefix, Router router) {
     router.routes.forEach((method, routeEntries) {
       for (final entry in routeEntries) {
@@ -185,6 +245,15 @@ class Darto {
     };
   }
 
+  ///  Method listen
+  /// listen(int, [void Function()])
+  ///
+  /// Example:
+  /// ```dart
+  /// app.listen(3000, () {
+  /// print('Server started on port 3000');
+  /// });
+  /// ```
   void listen(int port, [void Function()? callback]) async {
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
     if (_logger.isActive(LogLevel.info)) {

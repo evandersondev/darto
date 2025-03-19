@@ -18,7 +18,7 @@ class Response {
   /// Exemplo:
   ///  res.status(404).end();
   /// You can also use named status codes like below:
-  /// res.stats(NOT_FOUND).end();;
+  /// res.stats(NOT_FOUND).end();
   Response status(int statusCode) {
     res.statusCode = statusCode;
     if (logger.isActive(LogLevel.info)) {
@@ -38,7 +38,7 @@ class Response {
     }
   }
 
-  /// Return a staticc file.
+  /// Return a static file.
   /// Example:
   /// res.sendFile('public/images/logo.png');
   void sendFile(String filePath) {
@@ -131,6 +131,9 @@ class Response {
 
   /// Converts custom objects to encodable Map.
   dynamic _toEncodable(dynamic item) {
+    // Se o item for null, retorna null direto.
+    if (item == null) return null;
+
     if (item is List) {
       return item.map((element) => _toEncodable(element)).toList();
     } else if (item is Map) {
@@ -158,6 +161,7 @@ class Response {
 
   /// Checks if the object is a custom model using reflection.
   bool _isCustomModel(dynamic item) {
+    if (item == null) return false; // Não trata null como modelo customizado.
     try {
       final instanceMirror = reflect(item);
       return instanceMirror.type.isSubclassOf(reflectClass(Object)) &&

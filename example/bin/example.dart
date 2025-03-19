@@ -42,28 +42,9 @@ void main() async {
     res.set('X-Custom-Header', 'CustomValue');
     return res.json([
       {
-        'id': 1,
-        'name': 'John Doe',
-        'email': 'john@example.com',
-        'age': 30,
-        'address': {
-          'street': '123 Main St',
-          'city': 'Anytown',
-          'state': 'CA',
-          'zip': '12345',
-        },
-      },
-      {
-        'id': 2,
-        'name': 'Jane Smith',
-        'email': 'jane@example.com',
-        'age': 25,
-        'address': {
-          'street': '456 Elm St',
-          'city': 'Othertown',
-          'state': 'NY',
-          'zip': '67890',
-        },
+        'title': 'New Task',
+        'description': null,
+        'id': '19e742c3-ccae-4832-addc-5d418d7da3ca',
       },
     ]);
   });

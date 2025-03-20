@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:darto/darto.dart';
@@ -9,6 +10,7 @@ class Darto {
   final Logger _logger;
   final bool _snakeCase;
   final List<String> _staticFolders = [];
+  final Map<String, dynamic> _settings = {};
 
   Darto({Logger? logger, bool? snakeCase})
       : _logger = logger ?? Logger(),
@@ -16,106 +18,115 @@ class Darto {
 
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
   final List<Middleware> _globalMiddlewares = [];
-  Map<String, String> _corsOptions = {}; // Configurações de CORS
+  Map<String, String> _corsOptions = {};
 
-  /// Method GET format
-  /// get(String, Function(Request, Response))
-  /// get(String, Middleware, Function(Request, Response))
-  /// get(String, Middleware, Middleware, Function(Request, Response))
-  ///
-  /// Example":
-  /// ```dart
-  /// app.get('/hello', (Request req, Response res) {
-  ///  res.send('Hello, World!');
-  /// });
-  void get(String path, dynamic first, [dynamic second, dynamic third]) {
-    _addRoute('GET', path, first, second, third);
+  // Lista de middlewares de erro (incluindo os de timeout)
+  final List<Timeout> _errorMiddlewares = [];
+
+  /// Armazena um valor global de configuração.
+  void set(String key, dynamic value) {
+    _settings[key] = value;
   }
 
-  /// Method POST format
-  /// post(String, Function(Request, Response))
-  /// post(String, Middleware, Function(Request, Response))
-  /// post(String, Middleware, Middleware, Function(Request, Response))
+  /// Método GET com comportamento duplo:
+  /// - Se chamado com apenas uma string, pode ser estendido para buscar configurações.
+  /// - Se chamado com handlers, registra uma rota GET.
   ///
   /// Example:
   /// ```dart
-  /// app.post('/hello', (Request req, Response res) {
-  /// res.send('Hello, World!');
+  /// app.get('/hello', (Request req, Response res) {
+  ///   res.send('Hello, World!');
   /// });
+  /// ```
+  dynamic get(String path, [dynamic first, dynamic second, dynamic third]) {
+    if (first == null) {
+      return _settings[path];
+    } else {
+      _addRoute('GET', path, first, second, third);
+    }
+  }
+
+  /// Registra uma rota POST.
   void post(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('POST', path, first, second, third);
   }
 
-  /// Method PUT format
-  /// put(String, Function(Request, Response))
-  /// put(String, Middleware, Function(Request, Response))
-  /// put(String, Middleware, Middleware, Function(Request, Response))
-  ///
-  /// Example:
-  /// ```dart
-  /// app.put('/hello', (Request req, Response res) {
-  /// res.send('Hello, World!');
-  /// });
+  /// Registra uma rota PUT.
   void put(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('PUT', path, first, second, third);
   }
 
-  /// Method DELETE format
-  /// delete(String, Function(Request, Response))
-  /// delete(String, Middleware, Function(Request, Response))
-  /// delete(String, Middleware, Middleware, Function(Request, Response))
-  ///
-  /// Example:
-  /// ```dart
-  /// app.delete('/hello', (Request req, Response res) {
-  /// res.send('Hello, World!');
-  /// });
+  /// Registra uma rota DELETE.
   void delete(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('DELETE', path, first, second, third);
   }
 
-  /// Method Use format
-  /// ```md
-  /// - Define routes
-  /// use(Router)
+  /// Registra middlewares, sub-rotas ou arquivos estáticos.
   ///
-  /// - Define sub-routes
-  /// use(String, Router)
+  /// Se o primeiro parâmetro for uma função compatível com [Timeout],
+  /// ela é registrada como um middleware de tratamento de erros (ex.: timeout).
   ///
-  /// - Define global middleware
-  /// use(Function(Request, Response, Next))
-  ///
-  /// - Define static folder
-  /// use(String)
-  ///
+  /// Além disso, se for passado apenas um parâmetro do tipo String, este é tratado
+  /// como uma pasta estática.
   void use(dynamic pathOrMiddleware, [dynamic second]) {
-    if (pathOrMiddleware is Middleware) {
-      // Middleware global
+    if (pathOrMiddleware is Timeout && second == null) {
+      // Trata como middleware de erro (timeout e outros)
+      _errorMiddlewares.add(pathOrMiddleware);
+    } else if (pathOrMiddleware is Middleware) {
       _globalMiddlewares.add(pathOrMiddleware);
     } else if (pathOrMiddleware is Router && second == null) {
-      // Adiciona todas as rotas do Router sem prefixo
       _addRouterRoutes('', pathOrMiddleware);
+    } else if (pathOrMiddleware is String && second == null) {
+      // Se for apenas uma string, chame static() explicitamente.
+      static(pathOrMiddleware);
     } else if (pathOrMiddleware is String && second is Middleware) {
-      // Middleware específico de rota
       _addRouteMiddleware(pathOrMiddleware, second);
     } else if (pathOrMiddleware is String && second is Router) {
-      // Prefixo de rota e um Router: todas as rotas deste Router terão o prefixo
       _addRouterRoutes(pathOrMiddleware, second);
     } else {
       throw ArgumentError('Invalid arguments for use method');
     }
   }
 
-  /// Method static format
-  /// static(String)
-  ///
-  /// Example:
-  /// ```dart
-  /// app.static('public');
-  /// ```
+  /// Define pasta para arquivos estáticos.
   void static(String path) {
     _staticFolders.add(path);
     _addStaticRoute(path);
+  }
+
+  /// Define um timeout global para as requisições em milissegundos.
+  ///
+  /// Exemplo:
+  /// ```dart
+  /// app.timeout(5000);
+  /// ```
+  void timeout(int milliseconds) {
+    // Armazena o valor de timeout nas configurações
+    set('timeout', milliseconds);
+
+    // Middleware que seta o valor de timeout em req.timeout e dispara erro caso ultrapasse o tempo.
+    timeoutMiddleware(Request req, Response res, Next next) {
+      // Atribui o valor de timeout à requisição
+      req.timeout = milliseconds;
+
+      Timer timer = Timer(Duration(milliseconds: milliseconds), () {
+        // Ao disparar o timeout, marcamos a requisição como "timedOut"
+        req.timedOut = true;
+        if (!res.finished) {
+          _executeErrorMiddlewares(Exception("Request timed out"), req, res);
+        }
+      });
+
+      // Quando a resposta for finalizada, cancela o timer para evitar disparos indevidos
+      req.onResponseFinished = () {
+        timer.cancel();
+      };
+
+      next();
+    }
+
+    // Adiciona o middleware de timeout ao início dos middlewares globais
+    _globalMiddlewares.insert(0, timeoutMiddleware);
   }
 
   void _addRoute(String method, String path, dynamic first,
@@ -131,7 +142,6 @@ class Darto {
     );
 
     final List<dynamic> handlers = [];
-
     if (first is Middleware || first is RouteHandler) {
       handlers.add(first);
     }
@@ -161,7 +171,6 @@ class Darto {
           }) +
           r'$',
     );
-
     _routes.putIfAbsent('USE', () => []).add(
           MapEntry(regexPath, {
             'handlers': [middleware],
@@ -175,10 +184,9 @@ class Darto {
     _routes.putIfAbsent('GET', () => []).add(
           MapEntry(regexPath, {
             'handlers': [
-              (Request req, Response res) async {
+              (Request req, Response res, Next next) async {
                 final relativePath = req.uri.path.replaceFirst('/$folder/', '');
                 final filePath = p.normalize(p.absolute(folder, relativePath));
-
                 if (await File(filePath).exists()) {
                   res.sendFile(filePath);
                 } else {
@@ -198,25 +206,15 @@ class Darto {
       for (final entry in routeEntries) {
         final RegExp originalRegex = entry.key;
         String pattern = originalRegex.pattern;
-
-        // Remove beginning '^' and ending '$'
         if (pattern.startsWith('^')) pattern = pattern.substring(1);
         if (pattern.endsWith(r'$'))
           pattern = pattern.substring(0, pattern.length - 1);
-
         String newPattern;
         if (pattern == '/' || pattern.trim() == '') {
-          if (prefix.isEmpty) {
-            newPattern = r'^/?$';
-          } else {
-            String base = prefix;
-            if (base.endsWith('/')) {
-              base = base.substring(0, base.length - 1);
-            }
-            newPattern = '^' + base + r'/?$';
-          }
+          newPattern = prefix.isEmpty
+              ? r'^/?$'
+              : '^' + prefix.replaceAll(RegExp(r'/$'), '') + r'/?$';
         } else {
-          // Remove the leading slash from the pattern if it exists
           if (pattern.startsWith('/')) pattern = pattern.substring(1);
           String normalizedPrefix = prefix;
           if (normalizedPrefix.isNotEmpty && !normalizedPrefix.endsWith('/')) {
@@ -224,7 +222,6 @@ class Darto {
           }
           newPattern = '^' + normalizedPrefix + pattern + r'$';
         }
-
         final newRegex = RegExp(newPattern);
         _routes.putIfAbsent(method, () => []).add(
               MapEntry(newRegex, entry.value),
@@ -233,11 +230,10 @@ class Darto {
     });
   }
 
-  void useCors({
-    String origin = '*',
-    String methods = 'GET, POST, PUT, DELETE, OPTIONS',
-    String headers = 'Content-Type',
-  }) {
+  void useCors(
+      {String origin = '*',
+      String methods = 'GET, POST, PUT, DELETE, OPTIONS',
+      String headers = 'Content-Type'}) {
     _corsOptions = {
       'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': methods,
@@ -245,13 +241,12 @@ class Darto {
     };
   }
 
-  ///  Method listen
-  /// listen(int, [void Function()])
+  /// Inicia o servidor e processa as requisições.
   ///
   /// Example:
   /// ```dart
   /// app.listen(3000, () {
-  /// print('Server started on port 3000');
+  ///   print('Server started on port 3000');
   /// });
   /// ```
   void listen(int port, [void Function()? callback]) async {
@@ -264,7 +259,6 @@ class Darto {
     await for (HttpRequest request in server) {
       final method = request.method;
       final path = request.uri.path;
-
       if (_logger.isActive(LogLevel.access)) {
         DartoLogger.log(
           '[$method $path] - IP: ${request.connectionInfo?.remoteAddress.address}',
@@ -276,7 +270,7 @@ class Darto {
       final res =
           Response(request.response, _logger, _snakeCase, _staticFolders);
 
-      final middlewares = _globalMiddlewares.toList();
+      final List<Middleware> middlewares = List.from(_globalMiddlewares);
       final routeEntries = _routes[method] ?? [];
       bool handled = false;
 
@@ -286,19 +280,15 @@ class Darto {
           middlewares.addAll(entry.value['handlers'].cast<Middleware>());
         }
       }
-
       for (var entry in routeEntries) {
         final match = entry.key.firstMatch(path);
         if (match != null) {
-          // Cast paramNames to List<String> to avoid type errors.
           final params = _extractRouteParams(
-            (entry.value['paramNames'] as List).cast<String>(),
-            match,
-          );
+              (entry.value['paramNames'] as List).cast<String>(), match);
           req.params.addAll(params);
           final handlers = entry.value['handlers'];
           middlewares.addAll(handlers.whereType<Middleware>());
-          middlewares.add((req, res, next) {
+          middlewares.add((Request req, Response res, Next next) {
             final handler = handlers.last as RouteHandler;
             handler(req, res);
           });
@@ -306,13 +296,11 @@ class Darto {
           break;
         }
       }
-
       if (!handled) {
         _applyCors(res);
         res.status(HttpStatus.notFound).send({'error': 'Route not found'});
         continue;
       }
-
       _executeMiddlewares(req, res, middlewares);
     }
   }
@@ -321,13 +309,36 @@ class Darto {
       Request req, Response res, List<Middleware> middlewares) {
     int index = 0;
     void next() {
+      if (req.timedOut || res.finished) return;
       if (index < middlewares.length) {
-        final middleware = middlewares[index++];
-        middleware(req, res, next);
+        try {
+          final middleware = middlewares[index++];
+          middleware(req, res, next);
+        } catch (e) {
+          _executeErrorMiddlewares(e, req, res);
+        }
       }
     }
 
     next();
+  }
+
+  void _executeErrorMiddlewares(dynamic err, Request req, Response res) {
+    int index = 0;
+    void nextError() {
+      if (index < _errorMiddlewares.length) {
+        final errorMiddleware = _errorMiddlewares[index++];
+        errorMiddleware(err, req, res, nextError);
+      } else {
+        if (!res.finished) {
+          res
+              .status(HttpStatus.internalServerError)
+              .send({'error': err.toString()});
+        }
+      }
+    }
+
+    nextError();
   }
 
   Map<String, String> _extractRouteParams(

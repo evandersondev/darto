@@ -10,7 +10,7 @@ export 'src/logger.dart';
 export 'src/request.dart';
 export 'src/response.dart';
 export 'src/router.dart';
-export 'src/types.dart' show Next;
+export 'src/types.dart' show Next, Err;
 export 'src/upload.dart';
 
 // TODO: Export any libraries intended for clients of this package.

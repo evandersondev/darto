@@ -2,15 +2,19 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:mirrors';
 
+import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
-import 'package:darto/src/logger.dart'; // Importa a classe de log
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart';
 
 class Response {
   final HttpResponse res;
   final Logger logger;
   final bool snakeCase; // Adiciona a propriedade snakeCase
   final List<String> staticFolders; // Adiciona a propriedade staticFolder
+
+  // Propriedade para indicar se a resposta já foi finalizada.
+  bool _finished = false;
+  bool get finished => _finished;
 
   Response(this.res, this.logger, this.snakeCase, this.staticFolders);
 
@@ -48,6 +52,7 @@ class Response {
       res.statusCode = HttpStatus.notFound;
       res.write('File not found');
       res.close();
+      _finished = true;
       if (logger.isActive(LogLevel.error)) {
         DartoLogger.log('File not found: $filePath', LogLevel.error);
       }
@@ -57,6 +62,7 @@ class Response {
     res.headers.contentType = _getContentType(filePath);
     res.addStream(file.openRead()).then((_) {
       res.close();
+      _finished = true;
       if (logger.isActive(LogLevel.info)) {
         DartoLogger.log('File served: $filePath', LogLevel.info);
       }
@@ -103,10 +109,17 @@ class Response {
   /// Send data with content type text/plain.
   /// Example:
   /// res.send('Hello, World!');
-  void send(dynamic data) {
+  void send([dynamic data]) {
+    if (data == null) {
+      end();
+      _finished = true;
+      return;
+    }
+
     res.headers.contentType = ContentType.text;
     res.write(jsonEncode(data));
     res.close();
+    _finished = true;
     if (logger.isActive(LogLevel.info)) {
       DartoLogger.log('Data sent: $data', LogLevel.info);
     }
@@ -119,6 +132,7 @@ class Response {
     res.headers.contentType = ContentType.json;
     res.write(_toJson(data));
     res.close();
+    _finished = true;
     if (logger.isActive(LogLevel.info)) {
       DartoLogger.log('JSON data sent: $data', LogLevel.info);
     }
@@ -180,7 +194,7 @@ class Response {
     var instanceMirror = reflect(instance);
     var data = <String, dynamic>{};
 
-    // Iterates over all fields of the class
+    // Itera sobre todos os campos da classe.
     instanceMirror.type.declarations.forEach((symbol, declaration) {
       if (declaration is VariableMirror && !declaration.isStatic) {
         var fieldName = MirrorSystem.getName(symbol);
@@ -204,6 +218,7 @@ class Response {
       res.write(data);
     }
     res.close();
+    _finished = true;
     if (logger.isActive(LogLevel.info)) {
       DartoLogger.log('Response ended with data: $data', LogLevel.info);
     }
@@ -211,7 +226,6 @@ class Response {
 
   /// Sends a file as an attachment.
   void download(String filePath, [dynamic filename, dynamic callback]) async {
-    // Determine if a custom filename is provided and assign callback accordingly.
     String? downloadName;
     Function? cb;
     if (filename is String) {
@@ -224,41 +238,36 @@ class Response {
       downloadName = null;
     }
 
-    // Resolve file path (you might want to adjust this depending on your static folder configuration)
     final file = File(filePath);
     try {
-      // Check if the file exists.
       if (!await file.exists()) {
         throw HttpException('File not found');
       }
 
-      // Set the content type to binary and specify the Content-Disposition header for attachment.
       res.headers.contentType = ContentType.binary;
-      String dispositionFile = downloadName ?? p.basename(filePath);
+      String dispositionFile = downloadName ?? basename(filePath);
       res.headers.set(
         'Content-Disposition',
         'attachment; filename="$dispositionFile"',
       );
 
-      // Pipe the file stream to the response.
       await file.openRead().pipe(res).catchError((err) {
         if (cb != null) cb(err);
       });
 
-      // After completion, call the callback with null (if provided) indicating no error.
       if (cb != null) cb(null);
       if (logger.isActive(LogLevel.info)) {
         DartoLogger.log('File downloaded: $filePath', LogLevel.info);
       }
+      _finished = true;
     } catch (err) {
-      // In case of any error, if a callback is provided invoke it with the error.
       if (cb != null) {
         cb(err);
       } else {
-        // Otherwise, send an internal server error response.
         res.statusCode = HttpStatus.internalServerError;
         res.write('Error while sending file: $err');
         res.close();
+        _finished = true;
         if (logger.isActive(LogLevel.error)) {
           DartoLogger.log(
               'Error downloading file: $filePath - $err', LogLevel.error);
@@ -275,10 +284,8 @@ class Response {
     final opts = options ?? {};
     final buffer = StringBuffer();
 
-    // Base cookie: name=value
     buffer.write('$name=$value');
 
-    // Optional attributes
     if (opts.containsKey('path')) {
       buffer.write('; Path=${opts['path']}');
     } else {
@@ -286,7 +293,6 @@ class Response {
     }
 
     if (opts.containsKey('expires')) {
-      // expects a DateTime or a valid cookie date string.
       final expires = opts['expires'];
       if (expires is DateTime) {
         buffer.write('; Expires=${HttpDate.format(expires)}');
@@ -307,7 +313,6 @@ class Response {
       buffer.write('; SameSite=${opts['sameSite']}');
     }
 
-    // Add the Set-Cookie header (can be multiple)
     res.headers.add(HttpHeaders.setCookieHeader, buffer.toString());
     if (logger.isActive(LogLevel.info)) {
       DartoLogger.log('Set cookie: $name=$value', LogLevel.info);
@@ -319,7 +324,6 @@ class Response {
   /// Example:
   /// res.clearCookie('name', { path: '/admin' });
   void clearCookie(String name, [Map<String, dynamic>? options]) {
-    // Merge any provided options with the required expiration date in the past.
     final opts = Map<String, dynamic>.from(options ?? {});
     opts['expires'] = DateTime.fromMillisecondsSinceEpoch(0);
     opts['maxAge'] = 0;
@@ -335,10 +339,10 @@ class Response {
   /// res.redirect('/foo/bar')
   /// res.redirect('http://example.com')
   void redirect(String url) {
-    // Set status code to 302 Found by default
     res.statusCode = HttpStatus.found;
     res.headers.set(HttpHeaders.locationHeader, url);
     res.close();
+    _finished = true;
     if (logger.isActive(LogLevel.info)) {
       DartoLogger.log('Redirected to: $url', LogLevel.info);
     }

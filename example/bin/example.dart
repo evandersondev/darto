@@ -17,6 +17,25 @@ void main() async {
   /// Serve static files from the 'public' directory.
   app.static('public');
 
+  app.timeout(2000);
+
+  app.use((err, Request req, Response res, void Function() next) {
+    print("Error captured in error middleware: ${err.toString()}");
+    if (!res.finished) {
+      res.status(SERVICE_UNAVAILABLE).send({
+        'error': 'Request timed out or internal error occurred.',
+      });
+    }
+  });
+
+  app.get('/delay', (Request req, Response res) {
+    Future.delayed(Duration(milliseconds: 5000), () {
+      if (!req.timedOut && !res.finished) {
+        res.json({'message': 'Delayed response'});
+      }
+    });
+  });
+
   app.get('/todos/:id', (req, res) {
     final id = req.params['id'];
     final todo = {'id': id, 'title': 'Sample Todo', 'completed': false};
@@ -60,6 +79,7 @@ void main() async {
 
   // Middleware global
   app.use((Request req, Response res, Next next) {
+    app.set('title', 'Tweets');
     // print('Request Authorization: ${req.headers.authorization}');
     print('Time: ${DateTime.now()}');
     next();
@@ -85,7 +105,8 @@ void main() async {
 
   // Rotas
   app.get('/user/:id', middleware1, middleware2, (req, res) {
-    res.json({'message': 'USER'});
+    final title = app.get('title');
+    res.json({'message': title});
   });
 
   // Instance of Upload class

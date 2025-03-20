@@ -17,20 +17,19 @@ void main() async {
   /// Serve static files from the 'public' directory.
   app.static('public');
 
-  app.timeout(2000);
+  app.timeout(5000);
 
-  app.use((err, Request req, Response res, void Function() next) {
-    print("Error captured in error middleware: ${err.toString()}");
+  app.use((Err err, Request req, Response res, void Function() next) {
     if (!res.finished) {
-      res.status(SERVICE_UNAVAILABLE).send({
+      res.status(SERVICE_UNAVAILABLE).json({
         'error': 'Request timed out or internal error occurred.',
       });
     }
   });
 
   app.get('/delay', (Request req, Response res) {
-    Future.delayed(Duration(milliseconds: 5000), () {
-      if (!req.timedOut && !res.finished) {
+    Future.delayed(Duration(milliseconds: 6000), () {
+      if (!req.timedOut) {
         res.json({'message': 'Delayed response'});
       }
     });
@@ -77,14 +76,6 @@ void main() async {
     return res.json(jsonDecode(user));
   });
 
-  // Middleware global
-  app.use((Request req, Response res, Next next) {
-    app.set('title', 'Tweets');
-    // print('Request Authorization: ${req.headers.authorization}');
-    print('Time: ${DateTime.now()}');
-    next();
-  });
-
   // // Middleware específico de rota
   // app.use('/user/:id', (req, res, next) async {
   //   print('Request Type: ${req.method}');
@@ -103,7 +94,12 @@ void main() async {
     next();
   }
 
-  // Rotas
+  // Middleware global
+  app.use((Request req, Response res, Next next) {
+    app.set('title', 'Tweets');
+    next();
+  });
+
   app.get('/user/:id', middleware1, middleware2, (req, res) {
     final title = app.get('title');
     res.json({'message': title});

@@ -1,3 +1,7 @@
+## 0.0.11
+
+- Add timeout global middleware and error global middleware.
+
 ## 0.0.10
 
 - Add subroutes and web sockets.

@@ -1,3 +1,7 @@
+## 0.0.12
+
+- Add send email support.
+
 ## 0.0.11
 
 - Add timeout global middleware and error global middleware.

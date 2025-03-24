@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
 import 'package:path/path.dart';
-
-import 'package:darto/darto.dart';
 
 void main() async {
   final app = Darto(logger: Logger(debug: true));
@@ -15,8 +14,39 @@ void main() async {
   app.use('/app', appRouter());
   app.use('/auth', authRouter());
 
-  /// Serve static files from the 'public' directory.
   app.static('public');
+
+  // Get instance of DartoMailer
+  final mailer = DartoMailer();
+
+  // Create a transporter instance
+  final transporter = mailer.createTransport(
+    host: 'sandbox.smtp.mailtrap.io',
+    port: 2525,
+    ssl: false,
+    auth: {'username': 'seu-username', 'password': 'sua-password'},
+  );
+
+  // Send an email using the transporter
+  app.post('/send-email', (Request req, Response res) async {
+    final success = await transporter.sendMail(
+      from: 'seu-email@gmail.com',
+      to: 'destinatario@exemplo.com',
+      subject: 'Teste de Email via Gmail',
+      html: '''
+        <h1>Bem-vindo ao Darto Mailer!</h1>
+        <p>Este é um email de teste usando Darto Mailer.</p>
+      ''',
+    );
+
+    if (success) {
+      return res.json({'message': 'Email enviado com sucesso!'});
+    } else {
+      return res.status(500).json({'error': 'Falha ao enviar email'});
+    }
+  });
+
+  /// Serve static files from the 'public' directory.
 
   // app.timeout(5000);
 

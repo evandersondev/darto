@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
 import 'package:path/path.dart';
+
+import 'package:darto/darto.dart';
 
 void main() async {
   final app = Darto(logger: Logger(debug: true));
@@ -17,15 +18,15 @@ void main() async {
   /// Serve static files from the 'public' directory.
   app.static('public');
 
-  app.timeout(5000);
+  // app.timeout(5000);
 
-  app.use((Err err, Request req, Response res, void Function() next) {
-    if (!res.finished) {
-      res.status(SERVICE_UNAVAILABLE).json({
-        'error': 'Request timed out or internal error occurred.',
-      });
-    }
-  });
+  // app.use((Err err, Request req, Response res, Next next) {
+  //   if (!res.finished) {
+  //     res.status(SERVICE_UNAVAILABLE).json({
+  //       'error': 'Request timed out or internal error occurred.',
+  //     });
+  //   }
+  // });
 
   app.get('/delay', (Request req, Response res) {
     Future.delayed(Duration(milliseconds: 6000), () {
@@ -37,7 +38,14 @@ void main() async {
 
   app.get('/todos/:id', (req, res) {
     final id = req.params['id'];
-    final todo = {'id': id, 'title': 'Sample Todo', 'completed': false};
+
+    final todo = {
+      'id': id,
+      'title': 'Sample Todo',
+      'completed': false,
+      'real': 2.301,
+      'createdAt': DateTime.now(),
+    };
 
     res.status(OK).send(todo);
   });

@@ -14,6 +14,9 @@ http://localhost:3000/app/profile
 ###
 http://localhost:3000/user/23
 
+###
+http://localhost:3000/todos/23
+
 
 ### 
 http://localhost:3000/public/test.pdf

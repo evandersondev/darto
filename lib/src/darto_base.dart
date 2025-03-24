@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
 import 'package:darto/src/types.dart';
-import 'package:path/path.dart' as p;
 
 class Darto {
   final Logger _logger;

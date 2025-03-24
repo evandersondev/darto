@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:mirrors';
 
+import 'package:path/path.dart';
+
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
-import 'package:path/path.dart';
 
 class Response {
   final HttpResponse res;
@@ -117,7 +118,7 @@ class Response {
     }
 
     res.headers.contentType = ContentType.text;
-    res.write(jsonEncode(data));
+    res.write(_toJson(data));
     res.close();
     _finished = true;
     if (logger.isActive(LogLevel.info)) {
@@ -153,6 +154,10 @@ class Response {
     } else if (item is Map) {
       return item.map((key, value) =>
           MapEntry(snakeCase ? toSnakeCase(key) : key, _toEncodable(value)));
+    } else if (item is DateTime) {
+      return item.toIso8601String();
+    } else if (item is double) {
+      return item;
     } else if (_isCustomModel(item)) {
       return _mirrorToJson(item);
     }
@@ -173,9 +178,8 @@ class Response {
     return buffer.toString();
   }
 
-  /// Checks if the object is a custom model using reflection.
   bool _isCustomModel(dynamic item) {
-    if (item == null) return false; // Não trata null como modelo customizado.
+    if (item == null) return false;
     try {
       final instanceMirror = reflect(item);
       return instanceMirror.type.isSubclassOf(reflectClass(Object)) &&
@@ -183,6 +187,7 @@ class Response {
           !instanceMirror.type.isSubtypeOf(reflectClass(String)) &&
           !instanceMirror.type.isSubtypeOf(reflectClass(int)) &&
           !instanceMirror.type.isSubtypeOf(reflectClass(bool)) &&
+          !instanceMirror.type.isSubtypeOf(reflectClass(DateTime)) &&
           !instanceMirror.type.isSubtypeOf(reflectClass(List));
     } catch (e) {
       return false;
@@ -198,7 +203,9 @@ class Response {
     instanceMirror.type.declarations.forEach((symbol, declaration) {
       if (declaration is VariableMirror && !declaration.isStatic) {
         var fieldName = MirrorSystem.getName(symbol);
-        var fieldValue = instanceMirror.getField(symbol).reflectee;
+        // Converte o campo usando _toEncodable para tratar DateTime e outros tipos personalizados
+        var fieldValue =
+            _toEncodable(instanceMirror.getField(symbol).reflectee);
         data[snakeCase ? toSnakeCase(fieldName) : fieldName] = fieldValue;
       }
     });

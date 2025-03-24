@@ -50,4 +50,4 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6I
 GET http://localhost:3000/delay
 
 ###
-POST http://localhost:3000/mailer
+POST http://localhost:3000/send-email

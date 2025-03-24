@@ -8,7 +8,6 @@ import 'package:example/routes/auth_router.dart';
 import 'package:path/path.dart';
 
 void main() async {
-  final mailer = DartoMailer();
   final app = Darto(logger: Logger(debug: true));
 
   // Router
@@ -17,32 +16,33 @@ void main() async {
 
   app.static('public');
 
+  // Get instance of DartoMailer
+  final mailer = DartoMailer();
+
+  // Create a transporter instance
   final transporter = mailer.createTransport(
     host: 'sandbox.smtp.mailtrap.io',
     port: 2525,
-    secure: false,
-    auth: {'user': '460425540bced6', 'pass': '99ef852c7e876b'},
+    ssl: false,
+    auth: {'username': 'seu-username', 'password': 'sua-password'},
   );
 
-  app.post('/mailer', (req, res) async {
-    try {
-      final success = await transporter.sendMail(
-        from: 'test@yourdomain.com',
-        to: 'recipient@example.com',
-        subject: 'Teste de Email',
-        html: '''
-          <h1>Bem-vindo ao Darto Mailer!</h1>
-          <p>Este é um email de teste usando Mailtrap.</p>
-        ''',
-      );
+  // Send an email using the transporter
+  app.post('/send-email', (Request req, Response res) async {
+    final success = await transporter.sendMail(
+      from: 'seu-email@gmail.com',
+      to: 'destinatario@exemplo.com',
+      subject: 'Teste de Email via Gmail',
+      html: '''
+        <h1>Bem-vindo ao Darto Mailer!</h1>
+        <p>Este é um email de teste usando Darto Mailer.</p>
+      ''',
+    );
 
-      if (success) {
-        res.json({'message': 'Email enviado com sucesso!'});
-      } else {
-        res.status(500).json({'error': 'Falha ao enviar email'});
-      }
-    } catch (e) {
-      res.status(500).json({'error': 'Erro ao enviar email: ${e.toString()}'});
+    if (success) {
+      return res.json({'message': 'Email enviado com sucesso!'});
+    } else {
+      return res.status(500).json({'error': 'Falha ao enviar email'});
     }
   });
 

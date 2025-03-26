@@ -8,7 +8,11 @@ Router appRouter() {
   });
 
   router.get('/profile', (req, res) {
-    res.send('Profile Page');
+    throw Exception('Error in profile route');
+  });
+
+  router.get('/events/:id/attendees', (Request req, Response res) {
+    return res.send('Attendees for event ${req.params['id']}');
   });
 
   return router;

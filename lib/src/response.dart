@@ -2,10 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:mirrors';
 
-import 'package:path/path.dart';
-
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
+import 'package:path/path.dart';
 
 class Response {
   final HttpResponse res;
@@ -20,10 +19,6 @@ class Response {
   Response(this.res, this.logger, this.snakeCase, this.staticFolders);
 
   /// Define status code da resposta.
-  /// Exemplo:
-  ///  res.status(404).end();
-  /// You can also use named status codes like below:
-  /// res.stats(NOT_FOUND).end();
   Response status(int statusCode) {
     res.statusCode = statusCode;
     if (logger.isActive(LogLevel.info)) {
@@ -33,9 +28,6 @@ class Response {
   }
 
   /// Set the response header field to value.
-  /// Multiple calls to this method will append values to the header field.
-  /// Example:
-  /// res.set('Content-Type', 'text/plain');
   void set(String field, String value) {
     res.headers.set(field, value);
     if (logger.isActive(LogLevel.info)) {
@@ -44,8 +36,6 @@ class Response {
   }
 
   /// Return a static file.
-  /// Example:
-  /// res.sendFile('public/images/logo.png');
   void sendFile(String filePath) {
     final file = File(filePath);
 
@@ -108,15 +98,12 @@ class Response {
   }
 
   /// Send data with content type text/plain.
-  /// Example:
-  /// res.send('Hello, World!');
   void send([dynamic data]) {
     if (data == null) {
       end();
       _finished = true;
       return;
     }
-
     res.headers.contentType = ContentType.text;
     res.write(_toJson(data));
     res.close();
@@ -127,8 +114,6 @@ class Response {
   }
 
   /// Send data with content type application/json.
-  /// Example:
-  /// res.json({'message': 'Hello, World!'});
   void json(dynamic data) {
     res.headers.contentType = ContentType.json;
     res.write(_toJson(data));
@@ -139,6 +124,24 @@ class Response {
     }
   }
 
+  /// Método para tratar erros e enviar um JSON padrão.
+  void error([dynamic e]) {
+    res.statusCode = HttpStatus.internalServerError;
+    final errorMessage = e != null ? e.toString() : 'Internal server error';
+    final jsonResponse = {
+      "status": HttpStatus.internalServerError,
+      "error": "Internal server error",
+      "message": errorMessage,
+    };
+    res.headers.contentType = ContentType.json;
+    res.write(jsonEncode(jsonResponse));
+    res.close();
+    _finished = true;
+    if (logger.isActive(LogLevel.error)) {
+      DartoLogger.log('Error response sent: $errorMessage', LogLevel.error);
+    }
+  }
+
   /// Converts data to JSON, handling custom objects.
   String _toJson(dynamic data) {
     return jsonEncode(_toEncodable(data));
@@ -146,9 +149,7 @@ class Response {
 
   /// Converts custom objects to encodable Map.
   dynamic _toEncodable(dynamic item) {
-    // Se o item for null, retorna null direto.
     if (item == null) return null;
-
     if (item is List) {
       return item.map((element) => _toEncodable(element)).toList();
     } else if (item is Map) {
@@ -161,7 +162,6 @@ class Response {
     } else if (_isCustomModel(item)) {
       return _mirrorToJson(item);
     }
-
     return item;
   }
 
@@ -198,28 +198,18 @@ class Response {
   Map<String, dynamic> _mirrorToJson(dynamic instance) {
     var instanceMirror = reflect(instance);
     var data = <String, dynamic>{};
-
-    // Itera sobre todos os campos da classe.
     instanceMirror.type.declarations.forEach((symbol, declaration) {
       if (declaration is VariableMirror && !declaration.isStatic) {
         var fieldName = MirrorSystem.getName(symbol);
-        // Converte o campo usando _toEncodable para tratar DateTime e outros tipos personalizados
         var fieldValue =
             _toEncodable(instanceMirror.getField(symbol).reflectee);
         data[snakeCase ? toSnakeCase(fieldName) : fieldName] = fieldValue;
       }
     });
-
     return data;
   }
 
   /// Ends the response process.
-  /// This method should be called to finish the response.
-  /// Example:
-  /// res.end();
-  /// res.end('Hello, World!');
-  /// res.end({'message': 'Hello, World!'});
-  /// res.status(201).end();
   void end([dynamic data]) {
     if (data != null) {
       res.write(data);
@@ -244,24 +234,18 @@ class Response {
       cb = filename;
       downloadName = null;
     }
-
     final file = File(filePath);
     try {
       if (!await file.exists()) {
         throw HttpException('File not found');
       }
-
       res.headers.contentType = ContentType.binary;
       String dispositionFile = downloadName ?? basename(filePath);
       res.headers.set(
-        'Content-Disposition',
-        'attachment; filename="$dispositionFile"',
-      );
-
+          'Content-Disposition', 'attachment; filename="$dispositionFile"');
       await file.openRead().pipe(res).catchError((err) {
         if (cb != null) cb(err);
       });
-
       if (cb != null) cb(null);
       if (logger.isActive(LogLevel.info)) {
         DartoLogger.log('File downloaded: $filePath', LogLevel.info);
@@ -284,21 +268,15 @@ class Response {
   }
 
   /// Sets a cookie on the response.
-  ///
-  /// Example:
-  /// res.cookie('name', 'tobi', { path: '/admin' });
   void cookie(String name, String value, [Map<String, dynamic>? options]) {
     final opts = options ?? {};
     final buffer = StringBuffer();
-
     buffer.write('$name=$value');
-
     if (opts.containsKey('path')) {
       buffer.write('; Path=${opts['path']}');
     } else {
       buffer.write('; Path=/');
     }
-
     if (opts.containsKey('expires')) {
       final expires = opts['expires'];
       if (expires is DateTime) {
@@ -319,7 +297,6 @@ class Response {
     if (opts.containsKey('sameSite')) {
       buffer.write('; SameSite=${opts['sameSite']}');
     }
-
     res.headers.add(HttpHeaders.setCookieHeader, buffer.toString());
     if (logger.isActive(LogLevel.info)) {
       DartoLogger.log('Set cookie: $name=$value', LogLevel.info);
@@ -327,9 +304,6 @@ class Response {
   }
 
   /// Clears a cookie by setting it with an expired date.
-  ///
-  /// Example:
-  /// res.clearCookie('name', { path: '/admin' });
   void clearCookie(String name, [Map<String, dynamic>? options]) {
     final opts = Map<String, dynamic>.from(options ?? {});
     opts['expires'] = DateTime.fromMillisecondsSinceEpoch(0);
@@ -341,10 +315,6 @@ class Response {
   }
 
   /// Redirects the request to a different URL.
-  ///
-  /// Usage examples:
-  /// res.redirect('/foo/bar')
-  /// res.redirect('http://example.com')
   void redirect(String url) {
     res.statusCode = HttpStatus.found;
     res.headers.set(HttpHeaders.locationHeader, url);

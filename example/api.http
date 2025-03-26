@@ -12,6 +12,9 @@ http://localhost:3000/app
 http://localhost:3000/app/profile
 
 ###
+http://localhost:3000/app/events/1/attendees
+
+###
 http://localhost:3000/user/23
 
 ###

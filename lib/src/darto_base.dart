@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:path/path.dart' as p;
-
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
 import 'package:darto/src/types.dart';
+import 'package:path/path.dart' as p;
 
 class Darto {
   final Logger _logger;
@@ -289,6 +288,7 @@ class Darto {
           req.params.addAll(params);
           final handlers = entry.value['handlers'];
           middlewares.addAll(handlers.whereType<Middleware>());
+          // Envolvendo o handler final com a execução do route handler
           middlewares.add((Request req, Response res, Next next) {
             final handler = handlers.last as RouteHandler;
             handler(req, res);
@@ -324,6 +324,7 @@ class Darto {
     next();
   }
 
+  // Atualizado para capturar erros e chamar res.error(), que retorna o JSON padrão
   void _executeErrorMiddlewares(dynamic err, Request req, Response res) {
     int index = 0;
     void nextError() {
@@ -332,9 +333,7 @@ class Darto {
         errorMiddleware(err, req, res, nextError);
       } else {
         if (!res.finished) {
-          res
-              .status(HttpStatus.internalServerError)
-              .send({'error': err.toString()});
+          res.error(err);
         }
       }
     }

@@ -3,8 +3,9 @@ import 'dart:io';
 
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
-import 'package:darto/src/types.dart';
 import 'package:path/path.dart' as p;
+
+import 'types.dart';
 
 class Darto {
   final Logger _logger;
@@ -59,6 +60,26 @@ class Darto {
   /// Registra uma rota DELETE.
   void delete(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('DELETE', path, first, second, third);
+  }
+
+  /// Registra uma rota HEAD.
+  void head(String path, dynamic first, [dynamic second, dynamic third]) {
+    _addRoute('HEAD', path, first, second, third);
+  }
+
+  /// Registra uma rota TRACE.
+  void trace(String path, dynamic first, [dynamic second, dynamic third]) {
+    _addRoute('TRACE', path, first, second, third);
+  }
+
+  /// Registra uma rota OPTIONS.
+  void options(String path, dynamic first, [dynamic second, dynamic third]) {
+    _addRoute('OPTIONS', path, first, second, third);
+  }
+
+  /// Registra uma rota PATCH.
+  void patch(String path, dynamic first, [dynamic second, dynamic third]) {
+    _addRoute('PATCH', path, first, second, third);
   }
 
   /// Registra middlewares, sub-rotas ou arquivos estáticos.
@@ -290,8 +311,21 @@ class Darto {
           middlewares.addAll(handlers.whereType<Middleware>());
           // Envolvendo o handler final com a execução do route handler
           middlewares.add((Request req, Response res, Next next) {
-            final handler = handlers.last as RouteHandler;
-            handler(req, res);
+            try {
+              final handler = handlers.last as RouteHandler;
+              dynamic result = handler(req, res);
+              if (result != null) {
+                if (result is String) {
+                  res.send(result);
+                } else if (result is Map) {
+                  res.json(result);
+                } else {
+                  res.send(result.toString());
+                }
+              }
+            } catch (e) {
+              _executeErrorMiddlewares(e, req, res);
+            }
           });
           handled = true;
           break;
@@ -314,7 +348,16 @@ class Darto {
       if (index < middlewares.length) {
         try {
           final middleware = middlewares[index++];
-          middleware(req, res, next);
+          dynamic result = middleware(req, res, next);
+          if (result != null) {
+            if (result is String) {
+              res.send(result);
+            } else if (result is Map) {
+              res.json(result);
+            } else {
+              res.send(result.toString());
+            }
+          }
         } catch (e) {
           _executeErrorMiddlewares(e, req, res);
         }

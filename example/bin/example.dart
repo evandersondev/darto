@@ -171,6 +171,39 @@ void main() async {
     });
   });
 
+  app.get('/home', (req, res) {
+    return {
+      'message': 'Hello, World!',
+      'status': 'OK',
+      'data': {
+        'name': 'John Doe',
+        'age': 30,
+        'address': {
+          'street': '123 Main St',
+          'city': 'Anytown',
+          'state': 'CA',
+          'zip': '12345',
+        },
+      },
+    };
+  });
+
+  app.head('/head-test', (req, res) {
+    return 'HEAD request!';
+  });
+
+  app.trace('/trace-test', (req, res) {
+    return 'TRACE request!';
+  });
+
+  app.options('/options-test', (req, res) {
+    return 'OPTIONS request!';
+  });
+
+  app.patch('/patch-test', (req, res) {
+    return 'PATCH request!';
+  });
+
   app.listen(3000, () {
     // This will start the WebSocket server on port 3001
     // server.listen('0.0.0.0', 3001);

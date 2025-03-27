@@ -54,3 +54,20 @@ GET http://localhost:3000/delay
 
 ###
 POST http://localhost:3000/send-email
+
+
+###
+GET http://localhost:3000/home
+
+
+###
+HEAD http://localhost:3000/head-test
+
+###
+TRACE http://localhost:3000/trace-test
+
+###
+OPTIONS http://localhost:3000/options-test
+
+###
+PATCH http://localhost:3000/patch-test

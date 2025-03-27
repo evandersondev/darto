@@ -1,12 +1,28 @@
-# Darto 🛠️
+<p align="center">
+  <img src="./assets/logo.png" width="200px" align="center" alt="Darto logo" />
+  <h1 align="center">Darto</h1>
+  <br>
+  <p align="center">
+  <a href="https://github.com/evandersondev/darto">🐶 Darto Github</a>
+  <br/>
+    Darto is a microframework inspired by <a href="https://expressjs.com/">Express</a> for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
+  </p>
+</p>
 
-Darto is a microframework inspired by Express for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
+<br/>
+
+---
 
 <br>
 
 ### Support 💖
 
 If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the framework and make it even better!
+
+<br>
+<br>
+
+> ### **Note:** If you want data persistence, you can use the 🍷[Dartonic](https://pub.dev/packages/dartonic) package. It is a simple queryy builder for Dart to work with databases like MySQL, PostgreSQL, SQLite.
 
 <br>
 
@@ -24,7 +40,7 @@ Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.12
+  darto: ^0.0.13
 ```
 
 Then, run the following command:
@@ -49,6 +65,45 @@ void main() {
   });
 
   app.listen(3000);
+}
+```
+
+<br>
+
+## Route Parameters and Query Parameters 📝
+
+```dart
+void main() {
+  final app = Darto();
+
+  // Example route with route parameters
+  app.get('/user/:id', (Request req, Response res) {
+    final id = req.params['id'];
+
+    res.send('User ID: $id');
+  });
+
+  // Example route with query parameters
+  app.get('/search?name=John&age=20', (Request req, Response res) {
+    final name = req.query['name'];
+    final age = req.query['age'];
+
+    res.send('Name: $name, Age: $age');
+  });
+}
+```
+
+<br>
+
+### Returning implicit responses
+
+```dart
+void main() {
+  final app = Darto();
+
+  app.get('/hello', (Request req, Response res) {
+    return 'Hello, World!';
+  });
 }
 ```
 
@@ -202,7 +257,7 @@ Darto also supports the creation of sub-routes so you can better organize your a
 Router authRouter() {
   final router = Router();
 
-  router.get('/login', (req, res) {
+  router.get('/login', (Request req, Response res) {
     res.send('Login page');
   });
 
@@ -232,10 +287,10 @@ void main() {
   final app = Darto();
 
   // Initialize WebSocket server
-  final server = WebSocketServer();
+  final server = DartoWebsocket();
 
   // Handle new WebSocket connections
-  server.on('connection', (WebSocketChannel socket) {
+  server.on('connection', (DartoSocketChannel socket) {
     socket.stream.listen((message) {
       socket.sink.add('Echo: $message');
     });
@@ -290,6 +345,105 @@ void main() {
 
 <br>
 
+## HTTP Methods 🌐
+
+Darto supports the following HTTP methods:
+
+- **GET**
+  Retrieves data from the server.
+  - Example: `app.get('/users', (Request req, Response res) => res.send('Get users'));`
+- **POST**
+  Sends data to the server to create a new resource.
+
+  - Example: `app.post('/users', (Request req, Response res) => res.send('Create user'));`
+
+- **PUT**
+  Updates an existing resource on the server.
+
+  - Example: `app.put('/users/:id', (Request req, Response res) => res.send('Update user'));`
+
+- **DELETE**
+  Deletes a resource from the server.
+
+  - Example: `app.delete('/users/:id', (Request req, Response res) => res.send('Delete user'));`
+
+- **PATCH**
+  Updates a specific field of a resource on the server.
+
+  - Example: `app.patch('/users/:id', (Request req, Response res) => res.send('Update user'));`
+
+- **HEAD**
+  Retrieves the headers of a resource without the body.
+
+  - Example: `app.head('/users/:id', (Request req, Response res) => res.send('Get user'));`
+
+- **OPTIONS**
+  Retrieves the supported HTTP methods for a resource.
+
+  - Example: `app.options('/users/:id', (Request req, Response res) => res.send('Get user'));`
+
+- **TRACE**
+  Performs a message loop-back test along the path to the resource.
+  - Example: `app.trace('/users/:id', (Request req, Response res) => res.send('Get user'));`
+
+<br>
+
+## Response Methods 📤
+
+Darto provides several methods to control the response sent to the client:
+
+- **send**
+  Sends a response with the specified data.
+
+  - Example: `res.send('Hello, World!');`
+
+- **json**
+  Sends a JSON response with the specified data.
+
+  - Example: `res.json({'message': 'Hello, World!'});`
+
+- **end**
+  Ends the response and sends it to the client.
+
+  - Example: `res.end();`
+  - Example: `res.end('Hello, World!');`
+
+- **status**
+  Sets the HTTP status code for the response.
+
+  - Example: `res.status(200).send('OK');`
+
+- **redirect**
+  Redirects the client to a new URL.
+
+  - Example: `res.redirect('https://example.com');`
+
+- **download**
+  Initiates a file download by specifying the file path and optional options.
+
+  - Example: `res.download('path/to/file.txt', { filename: 'custom-filename.txt' });`
+
+- **sendFile**
+  Sends a file as a response.
+
+  - Example: `res.sendFile('path/to/file.txt');`
+
+- **error**
+  Sends an error response with the specified error message.
+
+  - Example: `res.error('An error occurred.');`
+
+- **cookie**
+  Sets a cookie in the response.
+
+  - Example: `res.cookie('cookieName', 'cookieValue');`
+
+- **clearCookie**
+  Clears a cookie from the response.
+  - Example: `res.clearCookie('cookieName');`
+
+<br>
+
 ## Main Features
 
 - **Middlewares**  
@@ -328,4 +482,4 @@ This setup allows you to test your WebSocket connections by either using a WebSo
 
 ---
 
-Made with ❤️ for Dart/Flutter developers! 🎯
+Made by evendersondev with ❤️ for Dart/Flutter developers! 🎯

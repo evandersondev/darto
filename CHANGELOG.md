@@ -1,3 +1,7 @@
+## 0.0.13
+
+- Add generic error handler and add more http methods.
+
 ## 0.0.12
 
 - Add send email support.

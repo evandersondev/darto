@@ -34,15 +34,17 @@ void main() async {
       to: 'destinatario@exemplo.com',
       subject: 'Teste de Email via Gmail',
       html: '''
-        <h1>Bem-vindo ao Darto Mailer!</h1>
-        <p>Este é um email de teste usando Darto Mailer.</p>
-      ''',
+      <h1>Bem-vindo ao Darto Mailer!</h1>
+      <p>Este é um email de teste usando Darto Mailer.</p>
+    ''',
     );
 
-    if (success) {
-      return res.json({'message': 'Email enviado com sucesso!'});
-    } else {
-      return res.status(500).json({'error': 'Falha ao enviar email'});
+    if (!res.finished) {
+      if (success) {
+        return res.json({'message': 'Email enviado com sucesso!'});
+      } else {
+        return res.status(500).json({'error': 'Falha ao enviar email'});
+      }
     }
   });
 

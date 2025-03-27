@@ -51,16 +51,11 @@ class Response {
     }
 
     res.headers.contentType = _getContentType(filePath);
-    res.addStream(file.openRead()).then((_) {
-      res.close();
+    // Use pipe para enviar o conteúdo do arquivo pela resposta.
+    file.openRead().pipe(res).whenComplete(() {
       _finished = true;
       if (logger.isActive(LogLevel.info)) {
         DartoLogger.log('File served: $filePath', LogLevel.info);
-      }
-    }).catchError((error) {
-      if (logger.isActive(LogLevel.error)) {
-        DartoLogger.log(
-            'Error serving file: $filePath - $error', LogLevel.error);
       }
     });
   }
@@ -126,17 +121,42 @@ class Response {
 
   /// Método para tratar erros e enviar um JSON padrão.
   void error([dynamic e]) {
-    res.statusCode = HttpStatus.internalServerError;
+    if (_finished) return;
+
+    try {
+      res.statusCode = HttpStatus.internalServerError;
+    } catch (err) {
+      // Ignorar erro se os headers já foram enviados
+    }
+
     final errorMessage = e != null ? e.toString() : 'Internal server error';
     final jsonResponse = {
       "status": HttpStatus.internalServerError,
       "error": "Internal server error",
       "message": errorMessage,
     };
-    res.headers.contentType = ContentType.json;
-    res.write(jsonEncode(jsonResponse));
-    res.close();
+
+    try {
+      res.headers.contentType = ContentType.json;
+    } catch (err) {
+      // Ignorar erro se os headers não puderem ser modificados
+    }
+
+    try {
+      // Utilize res.add com a codificação para bytes em vez de res.write.
+      res.add(utf8.encode(jsonEncode(jsonResponse)));
+    } catch (err) {
+      // Ignorar erro se o StreamSink já estiver vinculado a um stream
+    }
+
+    try {
+      res.close();
+    } catch (err) {
+      // Ignorar erro se a resposta já estiver sendo fechada ou fechada
+    }
+
     _finished = true;
+
     if (logger.isActive(LogLevel.error)) {
       DartoLogger.log('Error response sent: $errorMessage', LogLevel.error);
     }

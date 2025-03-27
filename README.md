@@ -22,7 +22,7 @@ If you find Darto useful, please consider supporting its development 🌟[Buy Me
 <br>
 <br>
 
-> ### **Note:** If you want data persistence, you can use the 🍷[Dartonic](https://pub.dev/packages/dartonic) package. It is a simple queryy builder for Dart to work with databases like MySQL, PostgreSQL, SQLite.
+> #### **Note:** If you want data persistence, you can use the 🍷[Dartonic](https://pub.dev/packages/dartonic) package. It is a simple Query Builder for Dart inspired by Drizzle to work with databases like MySQL, PostgreSQL, SQLite.
 
 <br>
 
@@ -40,7 +40,7 @@ Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.13
+  darto: ^0.0.14
 ```
 
 Then, run the following command:

@@ -203,22 +203,27 @@ class Darto {
   void _addStaticRoute(String folder) {
     final regexPath = RegExp('^/$folder/(.*)');
     _routes.putIfAbsent('GET', () => []).add(
-          MapEntry(regexPath, {
-            'handlers': [
-              (Request req, Response res, Next next) async {
-                final relativePath = req.uri.path.replaceFirst('/$folder/', '');
-                final filePath = p.normalize(p.absolute(folder, relativePath));
-                if (await File(filePath).exists()) {
-                  res.sendFile(filePath);
-                } else {
-                  res
-                      .status(HttpStatus.notFound)
-                      .send({'error': 'File not found'});
+          MapEntry(
+            regexPath,
+            {
+              'handlers': [
+                (Request req, Response res, Next next) async {
+                  final relativePath =
+                      req.uri.path.replaceFirst('/$folder/', '');
+                  final filePath = p.normalize(
+                      p.join(Directory.current.path, folder, relativePath));
+                  if (await File(filePath).exists()) {
+                    res.sendFile(filePath);
+                  } else {
+                    res
+                        .status(HttpStatus.notFound)
+                        .send({'error': 'File not found'});
+                  }
                 }
-              }
-            ],
-            'paramNames': <String>[]
-          }),
+              ],
+              'paramNames': <String>[]
+            },
+          ),
         );
   }
 
@@ -305,16 +310,29 @@ class Darto {
         final match = entry.key.firstMatch(path);
         if (match != null) {
           final params = _extractRouteParams(
-              (entry.value['paramNames'] as List).cast<String>(), match);
+            (entry.value['paramNames'] as List).cast<String>(),
+            match,
+          );
           req.params.addAll(params);
           final handlers = entry.value['handlers'];
           middlewares.addAll(handlers.whereType<Middleware>());
-          // Envolvendo o handler final com a execução do route handler
-          middlewares.add((Request req, Response res, Next next) {
+
+          // Envolvendo o handler final com a execução do route handler de forma assíncrona
+          middlewares.add((Request req, Response res, Next next) async {
             try {
-              final handler = handlers.last as RouteHandler;
-              dynamic result = handler(req, res);
-              if (result != null) {
+              final handler = handlers.last;
+              dynamic result;
+              // Se o handler é do tipo RouteHandler (dois parâmetros) ou é um middleware (três parâmetros)
+              if (handler is RouteHandler) {
+                result = handler(req, res);
+              } else if (handler is Middleware) {
+                result = await handler(req, res, next);
+              }
+              // Se o resultado for uma Future, aguarde sua conclusão
+              if (result is Future) {
+                result = await result;
+              }
+              if (result != null && !res.finished) {
                 if (result is String) {
                   res.send(result);
                 } else if (result is Map) {
@@ -343,21 +361,15 @@ class Darto {
   void _executeMiddlewares(
       Request req, Response res, List<Middleware> middlewares) {
     int index = 0;
+
     void next() {
       if (req.timedOut || res.finished) return;
+
       if (index < middlewares.length) {
         try {
           final middleware = middlewares[index++];
-          dynamic result = middleware(req, res, next);
-          if (result != null) {
-            if (result is String) {
-              res.send(result);
-            } else if (result is Map) {
-              res.json(result);
-            } else {
-              res.send(result.toString());
-            }
-          }
+
+          middleware(req, res, next);
         } catch (e) {
           _executeErrorMiddlewares(e, req, res);
         }

@@ -1,3 +1,7 @@
+## 0.0.14
+
+- Fix implicit return.
+
 ## 0.0.13
 
 - Add generic error handler and add more http methods.

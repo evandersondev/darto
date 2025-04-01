@@ -11,7 +11,7 @@ class Darto {
   final Logger _logger;
   final bool _snakeCase;
   final List<String> _staticFolders = [];
-  final Map<String, dynamic> _settings = {};
+  static final Map<String, dynamic> settings = {};
 
   Darto({Logger? logger, bool? snakeCase})
       : _logger = logger ?? Logger(),
@@ -26,7 +26,7 @@ class Darto {
 
   /// Armazena um valor global de configuração.
   void set(String key, dynamic value) {
-    _settings[key] = value;
+    settings[key] = value;
   }
 
   /// Método GET com comportamento duplo:
@@ -41,7 +41,7 @@ class Darto {
   /// ```
   dynamic get(String path, [dynamic first, dynamic second, dynamic third]) {
     if (first == null) {
-      return _settings[path];
+      return settings[path];
     } else {
       _addRoute('GET', path, first, second, third);
     }

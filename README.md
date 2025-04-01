@@ -11,10 +11,6 @@
 
 <br/>
 
----
-
-<br>
-
 ### Support 💖
 
 If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the framework and make it even better!
@@ -23,6 +19,30 @@ If you find Darto useful, please consider supporting its development 🌟[Buy Me
 <br>
 
 > #### **Note:** If you want data persistence, you can use the 🍷[Dartonic](https://pub.dev/packages/dartonic) package. It is a simple Query Builder for Dart inspired by Drizzle to work with databases like MySQL, PostgreSQL, SQLite.
+
+<br/>
+
+## Table of Contents 🗒️
+
+- [Installation 📦](#installation-📦)
+- [Basic Usage 🚀](#basic-usage-🚀)
+- [Route Parameters and Query Parameters 📝](#route-parameters-and-query-parameters-📝)
+- [Returning implicit responses](#returning-implicit-responses)
+- [Config static files](#config-static-files)
+- [Upload Files](#upload-files)
+- [Middleware Usage 🛠️](#middleware-usage-🛠️)
+- [Example Routes 📡](#example-routes-📡)
+- [Sub-Routes 🚦](#sub-routes-🚦)
+- [WebSocket Integration 🔌](#websocket-integration-🔌)
+- [Send email 📧](#send-email-📧)
+- [HTTP Methods 🌐](#http-methods-🌐)
+- [Template Engine Configuration 🎨](#template-engine-configuration-🎨)
+- [Response Methods 📤](#response-methods-📤)
+- [Main Features](#main-features)
+
+<br/>
+
+---
 
 <br>
 
@@ -40,7 +60,7 @@ Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.14
+  darto: ^0.0.15
 ```
 
 Then, run the following command:
@@ -345,6 +365,56 @@ void main() {
 
 <br>
 
+## Template Engine Configuration 🎨
+
+Darto supports server-side rendering using a template engine. By default, it integrates with the Mustache template engine. You can configure the engine globally in your application as shown below:
+
+```dart
+import 'dart:io';
+import 'package:path/path.dart';
+import 'package:darto/darto.dart';
+
+void main() {
+  final app = Darto();
+
+  // Set the directory where your template files are located
+  app.set('views', join(Directory.current.path, 'lib', 'pages'));
+  // Specify the view engine extension (e.g., "mustache")
+  app.set('view engine', 'mustache');
+
+  // Define a route to render a template (without the extension)
+  app.get('/', (Request req, Response res) {
+    res.render('index', {
+      'title': 'Welcome to Server Side Rendering',
+      'header': 'Hello from Darto!',
+      'message': 'This demonstrates how to configure a template engine in Darto using Mustache.'
+    });
+  });
+
+  app.listen(3000, () {
+    print('HTTP server running on http://localhost:3000');
+  });
+}
+```
+
+Create your template file at `lib/pages/index.mustache`:
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{title}}</title>
+  </head>
+  <body>
+    <h1>{{header}}</h1>
+    <p>{{message}}</p>
+  </body>
+</html>
+```
+
+<br>
+
 ## HTTP Methods 🌐
 
 Darto supports the following HTTP methods:
@@ -354,34 +424,22 @@ Darto supports the following HTTP methods:
   - Example: `app.get('/users', (Request req, Response res) => res.send('Get users'));`
 - **POST**
   Sends data to the server to create a new resource.
-
   - Example: `app.post('/users', (Request req, Response res) => res.send('Create user'));`
-
 - **PUT**
   Updates an existing resource on the server.
-
   - Example: `app.put('/users/:id', (Request req, Response res) => res.send('Update user'));`
-
 - **DELETE**
   Deletes a resource from the server.
-
   - Example: `app.delete('/users/:id', (Request req, Response res) => res.send('Delete user'));`
-
 - **PATCH**
   Updates a specific field of a resource on the server.
-
   - Example: `app.patch('/users/:id', (Request req, Response res) => res.send('Update user'));`
-
 - **HEAD**
   Retrieves the headers of a resource without the body.
-
   - Example: `app.head('/users/:id', (Request req, Response res) => res.send('Get user'));`
-
 - **OPTIONS**
   Retrieves the supported HTTP methods for a resource.
-
   - Example: `app.options('/users/:id', (Request req, Response res) => res.send('Get user'));`
-
 - **TRACE**
   Performs a message loop-back test along the path to the resource.
   - Example: `app.trace('/users/:id', (Request req, Response res) => res.send('Get user'));`
@@ -394,53 +452,38 @@ Darto provides several methods to control the response sent to the client:
 
 - **send**
   Sends a response with the specified data.
-
   - Example: `res.send('Hello, World!');`
-
 - **json**
   Sends a JSON response with the specified data.
-
   - Example: `res.json({'message': 'Hello, World!'});`
-
 - **end**
   Ends the response and sends it to the client.
-
   - Example: `res.end();`
   - Example: `res.end('Hello, World!');`
-
 - **status**
   Sets the HTTP status code for the response.
-
   - Example: `res.status(200).send('OK');`
-
 - **redirect**
   Redirects the client to a new URL.
-
   - Example: `res.redirect('https://example.com');`
-
 - **download**
   Initiates a file download by specifying the file path and optional options.
-
   - Example: `res.download('path/to/file.txt', { filename: 'custom-filename.txt' });`
-
 - **sendFile**
   Sends a file as a response.
-
   - Example: `res.sendFile('path/to/file.txt');`
-
 - **error**
   Sends an error response with the specified error message.
-
   - Example: `res.error('An error occurred.');`
-
 - **cookie**
   Sets a cookie in the response.
-
   - Example: `res.cookie('cookieName', 'cookieValue');`
-
 - **clearCookie**
   Clears a cookie from the response.
   - Example: `res.clearCookie('cookieName');`
+- **render**
+  Renders a template with the specified data and sends it as a response.
+  - Example: `res.render('template', { data: 'Hello, World!' });`
 
 <br>
 
@@ -476,9 +519,13 @@ Darto provides several methods to control the response sent to the client:
 - **WebSocket Support**
   Integrates WebSocket support to facilitate real-time communication and interactive features in your applications.
 
-<br>
+- **Error Handling**
+  Implement robust error handling mechanisms to gracefully manage errors and provide meaningful feedback to users.
 
-This setup allows you to test your WebSocket connections by either using a WebSocket client directly or by creating an HTML page that connects to the server, enabling rich real-time interactions within your Dart web applications. 🎉
+- **Template Engine Integration**
+  Integrate popular template engines Mustache to create dynamic and interactive web pages.
+
+<br>
 
 ---
 

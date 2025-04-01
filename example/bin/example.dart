@@ -16,6 +16,18 @@ void main() async {
 
   app.static('public');
 
+  // Config template engine
+  app.set('views', join(Directory.current.path, 'lib', 'pages'));
+  app.set('view engine', 'mustache');
+
+  app.get('/', (Request req, Response res) {
+    res.render('index', {
+      'title': 'Welcome to My App',
+      'header': 'Hello, World!',
+      'message': 'This is a sample mustache template rendered with Darto.',
+    });
+  });
+
   // Get instance of DartoMailer
   final mailer = DartoMailer();
 

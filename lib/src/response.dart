@@ -4,6 +4,7 @@ import 'dart:mirrors';
 
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
+import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart';
 
 class Response {
@@ -159,6 +160,42 @@ class Response {
 
     if (logger.isActive(LogLevel.error)) {
       DartoLogger.log('Error response sent: $errorMessage', LogLevel.error);
+    }
+  }
+
+  /// Método render para templates Mustache.
+  ///
+  /// Utiliza as configurações definidas em Darto:
+  ///   - 'views': diretório raiz das views
+  ///   - 'view engine': extensão dos arquivos de template (ex.: "mustache")
+  ///
+  /// The data parameter is optional.
+  Future<void> render(String viewName, [Map<String, dynamic>? data]) async {
+    // Recupera as configurações globais
+    final viewsDir = Darto.settings['views'] ?? 'views';
+    final viewEngine = Darto.settings['view engine'] ?? 'mustache';
+
+    // Constrói o caminho completo do template
+    final filePath = join(viewsDir, '$viewName.$viewEngine');
+    final file = File(filePath);
+    if (!await file.exists()) {
+      res.statusCode = HttpStatus.notFound;
+      res.write('Template not found: $filePath');
+      await res.close();
+      _finished = true;
+      return;
+    }
+
+    try {
+      final templateContent = await file.readAsString();
+      final template = Template(templateContent, name: viewName);
+      final output = template.renderString(data ?? {});
+      res.headers.contentType = ContentType.html;
+      res.write(output);
+      await res.close();
+      _finished = true;
+    } catch (e) {
+      error(e);
     }
   }
 

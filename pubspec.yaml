@@ -15,6 +15,7 @@ dependencies:
   web_socket_channel: ^3.0.2
   mailer: ^6.4.1
   mustache_template: ^2.0.0
+  markdown: ^7.3.0
 
 dev_dependencies:
   lints: ^5.0.0

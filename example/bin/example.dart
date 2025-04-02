@@ -18,13 +18,21 @@ void main() async {
 
   // Config template engine
   app.set('views', join(Directory.current.path, 'lib', 'pages'));
-  app.set('view engine', 'mustache');
+  // app.set('view engine', 'mustache');
+  app.set('view engine', 'md');
+
+  // app.get('/', (Request req, Response res) {
+  //   res.render('index', {
+  //     'title': 'Welcome to My App',
+  //     'header': 'Hello, World!',
+  //     'message': 'This is a sample mustache template rendered with Darto.',
+  //   });
+  // });
 
   app.get('/', (Request req, Response res) {
     res.render('index', {
-      'title': 'Welcome to My App',
-      'header': 'Hello, World!',
-      'message': 'This is a sample mustache template rendered with Darto.',
+      'title': 'Welcome',
+      'message': 'Hello World from the Markdown Template Engine!',
     });
   });
 

@@ -246,7 +246,10 @@ class Darto {
           if (normalizedPrefix.isNotEmpty && !normalizedPrefix.endsWith('/')) {
             normalizedPrefix += '/';
           }
-          newPattern = '^' + normalizedPrefix + pattern + r'$';
+
+          newPattern = prefix.isEmpty
+              ? '^/' + pattern + r'$'
+              : '^' + normalizedPrefix + pattern + r'$';
         }
         final newRegex = RegExp(newPattern);
         _routes.putIfAbsent(method, () => []).add(

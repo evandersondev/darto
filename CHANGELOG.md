@@ -1,3 +1,7 @@
+## 0.0.16
+
+- Fix path when router not have prefix.
+
 ## 0.0.15
 
 - Add suport for template engine mustache.

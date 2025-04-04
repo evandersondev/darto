@@ -3,7 +3,13 @@
 http://localhost:3000/auth
 
 ###
-http://localhost:3000/auth/resgiter
+POST http://localhost:3000/auth/resgiter
+Content-Type: application/json
+
+{
+    "username": "John Doe",
+    "password": "passwords"
+}
 
 ###
 http://localhost:3000/

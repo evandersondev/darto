@@ -10,6 +10,7 @@ dependencies:
   darto:
     path: ../
   path: ^1.9.1
+  zard: ^0.0.6
 
 dev_dependencies:
   lints: ^5.0.0

@@ -1,3 +1,7 @@
+## 0.0.17
+
+- Update request body auto conversion.
+
 ## 0.0.16
 
 - Fix path when router not have prefix.

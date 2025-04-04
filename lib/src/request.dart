@@ -30,10 +30,26 @@ class Request {
   String get method => _req.method;
   Map<String, String> get query => _req.uri.queryParameters;
 
-  Future<String> get body async {
+  Future<dynamic> get body async {
     if (!_bodyRead) {
-      _cachedBody = await utf8.decoder.bind(_req).join();
+      String rawBody = await utf8.decoder.bind(_req).join();
       _bodyRead = true;
+
+      final contentType = _req.headers.contentType?.mimeType;
+      if (contentType != null) {
+        if (contentType == 'application/json') {
+          _cachedBody = jsonDecode(rawBody);
+        } else if (contentType == 'application/x-www-form-urlencoded') {
+          _cachedBody = Uri.splitQueryString(rawBody);
+        } else if (contentType == 'text/plain') {
+          _cachedBody = rawBody;
+        } else {
+          _cachedBody = rawBody;
+        }
+      } else {
+        _cachedBody = rawBody;
+      }
+
       if (_req.connectionInfo != null && logger.isActive(LogLevel.debug)) {
         DartoLogger.log(
           'Read request body from ${_req.connectionInfo!.remoteAddress.address}',

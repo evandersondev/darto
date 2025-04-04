@@ -1,3 +1,7 @@
+## 0.0.18
+
+- Update send method response.
+
 ## 0.0.17
 
 - Update request body auto conversion.

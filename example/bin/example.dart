@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
 import 'package:path/path.dart';
+
+import 'package:darto/darto.dart';
 
 void main() async {
   final app = Darto(logger: Logger(debug: true));
@@ -58,6 +59,10 @@ void main() async {
         return res.status(500).json({'error': 'Falha ao enviar email'});
       }
     }
+  });
+
+  app.get('/hello2', (Request req, Response res) {
+    res.send('hello2');
   });
 
   /// Serve static files from the 'public' directory.

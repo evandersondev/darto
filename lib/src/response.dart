@@ -2,24 +2,23 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:mirrors';
 
-import 'package:darto/darto.dart';
-import 'package:darto/src/darto_logger.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart';
+
+import 'package:darto/darto.dart';
+import 'package:darto/src/darto_logger.dart';
 
 class Response {
   final HttpResponse res;
   final Logger logger;
-  final bool snakeCase; // Adiciona a propriedade snakeCase
-  final List<String> staticFolders; // Adiciona a propriedade staticFolder
+  final bool snakeCase;
+  final List<String> staticFolders;
 
-  // Propriedade para indicar se a resposta já foi finalizada.
   bool _finished = false;
   bool get finished => _finished;
 
   Response(this.res, this.logger, this.snakeCase, this.staticFolders);
 
-  /// Define status code da resposta.
   Response status(int statusCode) {
     res.statusCode = statusCode;
     if (logger.isActive(LogLevel.info)) {
@@ -28,7 +27,6 @@ class Response {
     return this;
   }
 
-  /// Set the response header field to value.
   void set(String field, String value) {
     res.headers.set(field, value);
     if (logger.isActive(LogLevel.info)) {
@@ -36,7 +34,6 @@ class Response {
     }
   }
 
-  /// Return a static file.
   void sendFile(String filePath) {
     final file = File(filePath);
 
@@ -52,7 +49,6 @@ class Response {
     }
 
     res.headers.contentType = _getContentType(filePath);
-    // Use pipe para enviar o conteúdo do arquivo pela resposta.
     file.openRead().pipe(res).whenComplete(() {
       _finished = true;
       if (logger.isActive(LogLevel.info)) {
@@ -61,7 +57,6 @@ class Response {
     });
   }
 
-  /// Determines the content type based on the file extension.
   ContentType _getContentType(String filePath) {
     final extension = filePath.split('.').last.toLowerCase();
     switch (extension) {
@@ -93,15 +88,22 @@ class Response {
     }
   }
 
-  /// Send data with content type text/plain.
   void send([dynamic data]) {
     if (data == null) {
       end();
       _finished = true;
       return;
     }
-    res.headers.contentType = ContentType.text;
-    res.write(_toJson(data));
+
+    if (res.headers.contentType == null) {
+      if (data is String && data.trim().startsWith('<')) {
+        res.headers.contentType = ContentType.html;
+      } else {
+        res.headers.contentType = ContentType.text;
+      }
+    }
+
+    res.write(data);
     res.close();
     _finished = true;
     if (logger.isActive(LogLevel.info)) {
@@ -109,7 +111,6 @@ class Response {
     }
   }
 
-  /// Send data with content type application/json.
   void json(dynamic data) {
     res.headers.contentType = ContentType.json;
     res.write(_toJson(data));
@@ -120,7 +121,6 @@ class Response {
     }
   }
 
-  /// Método para tratar erros e enviar um JSON padrão.
   void error([dynamic e]) {
     if (_finished) return;
 
@@ -144,7 +144,6 @@ class Response {
     }
 
     try {
-      // Utilize res.add com a codificação para bytes em vez de res.write.
       res.add(utf8.encode(jsonEncode(jsonResponse)));
     } catch (err) {
       // Ignorar erro se o StreamSink já estiver vinculado a um stream
@@ -163,19 +162,10 @@ class Response {
     }
   }
 
-  /// Método render para templates Mustache.
-  ///
-  /// Utiliza as configurações definidas em Darto:
-  ///   - 'views': diretório raiz das views
-  ///   - 'view engine': extensão dos arquivos de template (ex.: "mustache")
-  ///
-  /// The data parameter is optional.
   Future<void> render(String viewName, [Map<String, dynamic>? data]) async {
-    // Recupera as configurações globais
     final viewsDir = Darto.settings['views'] ?? 'views';
     final viewEngine = Darto.settings['view engine'] ?? 'mustache';
 
-    // Constrói o caminho completo do template
     final filePath = join(viewsDir, '$viewName.$viewEngine');
     final file = File(filePath);
     if (!await file.exists()) {
@@ -199,12 +189,10 @@ class Response {
     }
   }
 
-  /// Converts data to JSON, handling custom objects.
   String _toJson(dynamic data) {
     return jsonEncode(_toEncodable(data));
   }
 
-  /// Converts custom objects to encodable Map.
   dynamic _toEncodable(dynamic item) {
     if (item == null) return null;
     if (item is List) {
@@ -222,7 +210,6 @@ class Response {
     return item;
   }
 
-  /// Converts a string from camelCase to snake_case.
   String toSnakeCase(String input) {
     if (input.isEmpty) return input;
     StringBuffer buffer = StringBuffer();
@@ -251,7 +238,6 @@ class Response {
     }
   }
 
-  /// Converts an object to JSON using mirrors.
   Map<String, dynamic> _mirrorToJson(dynamic instance) {
     var instanceMirror = reflect(instance);
     var data = <String, dynamic>{};
@@ -266,7 +252,6 @@ class Response {
     return data;
   }
 
-  /// Ends the response process.
   void end([dynamic data]) {
     if (data != null) {
       res.write(data);
@@ -278,7 +263,6 @@ class Response {
     }
   }
 
-  /// Sends a file as an attachment.
   void download(String filePath, [dynamic filename, dynamic callback]) async {
     String? downloadName;
     Function? cb;
@@ -324,7 +308,6 @@ class Response {
     }
   }
 
-  /// Sets a cookie on the response.
   void cookie(String name, String value, [Map<String, dynamic>? options]) {
     final opts = options ?? {};
     final buffer = StringBuffer();
@@ -360,7 +343,6 @@ class Response {
     }
   }
 
-  /// Clears a cookie by setting it with an expired date.
   void clearCookie(String name, [Map<String, dynamic>? options]) {
     final opts = Map<String, dynamic>.from(options ?? {});
     opts['expires'] = DateTime.fromMillisecondsSinceEpoch(0);
@@ -371,7 +353,6 @@ class Response {
     }
   }
 
-  /// Redirects the request to a different URL.
   void redirect(String url) {
     res.statusCode = HttpStatus.found;
     res.headers.set(HttpHeaders.locationHeader, url);

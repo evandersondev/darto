@@ -1,3 +1,7 @@
+## 0.0.19
+
+- Expose Middleware type.
+
 ## 0.0.18
 
 - Update send method response.

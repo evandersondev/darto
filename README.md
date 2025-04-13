@@ -3,7 +3,7 @@
   <h1 align="center">Darto</h1>
   <br>
   <p align="center">
-  <a href="https://github.com/evandersondev/darto">🐶 Darto Github</a>
+  <a href="https://darto-docs.vercel.app/">🐶 Oficial Darto Documentation</a>
   <br/>
     Darto is a microframework inspired by <a href="https://expressjs.com/">Express</a> for building web applications in Dart. It offers a simple API with familiar middleware patterns that make it easy to get started with web development!
   </p>
@@ -60,7 +60,7 @@ Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.18
+  darto: ^0.0.19
 ```
 
 Then, run the following command:

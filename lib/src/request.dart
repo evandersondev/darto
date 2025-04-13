@@ -21,6 +21,9 @@ class Request {
   // Indica se a requisição já expirou.
   bool timedOut = false;
 
+  // Context shared for all requests.
+  final Map<String, dynamic> context = {};
+
   /// Callback para ser executado quando a resposta é finalizada.
   void Function()? onResponseFinished;
 

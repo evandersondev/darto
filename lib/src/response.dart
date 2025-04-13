@@ -2,11 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:mirrors';
 
-import 'package:mustache_template/mustache.dart';
-import 'package:path/path.dart';
-
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
+import 'package:mustache_template/mustache.dart';
+import 'package:path/path.dart';
 
 class Response {
   final HttpResponse res;
@@ -304,6 +303,19 @@ class Response {
           DartoLogger.log(
               'Error downloading file: $filePath - $err', LogLevel.error);
         }
+      }
+    }
+  }
+
+  void removeHeader(String field) {
+    try {
+      res.headers.removeAll(field); // remove todas as ocorrências do header
+      if (logger.isActive(LogLevel.info)) {
+        DartoLogger.log('Header removed: $field', LogLevel.info);
+      }
+    } catch (e) {
+      if (logger.isActive(LogLevel.error)) {
+        DartoLogger.log('Error removing header $field: $e', LogLevel.error);
       }
     }
   }

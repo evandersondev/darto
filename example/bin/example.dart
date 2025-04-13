@@ -17,6 +17,10 @@ void main() async {
 
   app.static('public');
 
+  app.get('/about', (Request req, Response res) {
+    res.sendFile('public/about.html');
+  });
+
   // Config template engine
   app.set('views', join(Directory.current.path, 'lib', 'pages'));
   app.set('view engine', 'mustache');

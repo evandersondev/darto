@@ -1,3 +1,7 @@
+## 0.0.21
+
+- Add more methods from response.
+
 ## 0.0.20
 
 - Add context from request and remove header from response.

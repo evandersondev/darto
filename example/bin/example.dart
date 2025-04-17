@@ -1,15 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
 import 'package:path/path.dart';
 
-import 'package:darto/darto.dart';
-
 void main() async {
-  final app = Darto(logger: Logger(debug: true));
+  final app = Darto(logger: Logger(info: true), gzip: true, snakeCase: true);
 
   // Router
   app.use('/app', appRouter());
@@ -89,7 +88,7 @@ void main() async {
     });
   });
 
-  app.get('/todos/:id', (req, res) {
+  app.get('/todos/:id', (Request req, Response res) {
     final id = req.params['id'];
 
     final todo = {

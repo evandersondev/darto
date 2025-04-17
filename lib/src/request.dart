@@ -24,6 +24,8 @@ class Request {
   // Context shared for all requests.
   final Map<String, dynamic> context = {};
 
+  final Map<String, dynamic> session = {};
+
   /// Callback para ser executado quando a resposta é finalizada.
   void Function()? onResponseFinished;
 

@@ -12,10 +12,12 @@ class Darto {
   final bool _snakeCase;
   final List<String> _staticFolders = [];
   static final Map<String, dynamic> settings = {};
+  final bool _enableGzip;
 
-  Darto({Logger? logger, bool? snakeCase})
+  Darto({Logger? logger, bool? snakeCase, bool gzip = false})
       : _logger = logger ?? Logger(),
-        _snakeCase = snakeCase ?? false;
+        _snakeCase = snakeCase ?? false,
+        _enableGzip = gzip;
 
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
   final List<Middleware> _globalMiddlewares = [];
@@ -296,8 +298,13 @@ class Darto {
       }
 
       final req = Request(request, {}, _logger);
-      final res =
-          Response(request.response, _logger, _snakeCase, _staticFolders);
+      final res = Response(
+        request.response,
+        _logger,
+        _snakeCase,
+        _staticFolders,
+        enableGzip: _enableGzip,
+      );
 
       final List<Middleware> middlewares = List.from(_globalMiddlewares);
       final routeEntries = _routes[method] ?? [];

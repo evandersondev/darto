@@ -12,11 +12,15 @@ class Response {
   final Logger logger;
   final bool snakeCase;
   final List<String> staticFolders;
+  final bool _enableGzip;
 
   bool _finished = false;
   bool get finished => _finished;
+  final Map<String, dynamic> locals = {};
 
-  Response(this.res, this.logger, this.snakeCase, this.staticFolders);
+  Response(this.res, this.logger, this.snakeCase, this.staticFolders,
+      {bool enableGzip = false})
+      : _enableGzip = enableGzip;
 
   Response status(int statusCode) {
     res.statusCode = statusCode;
@@ -33,13 +37,13 @@ class Response {
     }
   }
 
-  void sendFile(String filePath) {
+  void sendFile(String filePath) async {
     final file = File(filePath);
 
-    if (!file.existsSync()) {
+    if (!await file.exists()) {
       res.statusCode = HttpStatus.notFound;
       res.write('File not found');
-      res.close();
+      await res.close();
       _finished = true;
       if (logger.isActive(LogLevel.error)) {
         DartoLogger.log('File not found: $filePath', LogLevel.error);
@@ -47,13 +51,33 @@ class Response {
       return;
     }
 
-    res.headers.contentType = _getContentType(filePath);
-    file.openRead().pipe(res).whenComplete(() {
-      _finished = true;
-      if (logger.isActive(LogLevel.info)) {
-        DartoLogger.log('File served: $filePath', LogLevel.info);
-      }
-    });
+    final contentType = _getContentType(filePath);
+    res.headers.contentType = contentType;
+
+    final enableGzip = Darto.settings['gzip'] == true;
+    final acceptsGzip = _acceptsGzip();
+    final compressibleTypes = [
+      ContentType.text.mimeType,
+      ContentType.html.mimeType,
+      ContentType.json.mimeType,
+      ContentType('application', 'javascript').mimeType,
+      ContentType('text', 'css').mimeType,
+    ];
+
+    if (enableGzip &&
+        acceptsGzip &&
+        compressibleTypes.contains(contentType.mimeType)) {
+      res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+      final gzipStream = file.openRead().transform(gzip.encoder);
+      await gzipStream.pipe(res);
+    } else {
+      await file.openRead().pipe(res);
+    }
+
+    _finished = true;
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('File served: $filePath', LogLevel.info);
+    }
   }
 
   ContentType _getContentType(String filePath) {
@@ -87,36 +111,62 @@ class Response {
     }
   }
 
-  void send([dynamic data]) {
+  void send([dynamic data]) async {
     if (data == null) {
       end();
       _finished = true;
       return;
     }
 
-    if (res.headers.contentType == null) {
+    if (res.headers.contentType != null) {
       if (data is String && data.trim().startsWith('<')) {
         res.headers.contentType = ContentType.html;
+      } else if (res.headers.contentType!.value.contains('json')) {
+        return json(data);
       } else {
         res.headers.contentType = ContentType.text;
       }
     }
 
-    res.write(data);
-    res.close();
+    final acceptsGzip = _acceptsGzip();
+
+    if (_enableGzip &&
+        acceptsGzip &&
+        res.headers.contentType?.mimeType == ContentType.text.mimeType) {
+      res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+      final gzipSink = gzip.encoder.startChunkedConversion(res);
+      gzipSink.add(utf8.encode(data.toString()));
+      gzipSink.close();
+    } else {
+      res.write(data);
+      await res.close();
+    }
+
     _finished = true;
     if (logger.isActive(LogLevel.info)) {
       DartoLogger.log('Data sent: $data', LogLevel.info);
     }
   }
 
-  void json(dynamic data) {
+  void json(dynamic data) async {
+    final jsonData = _toJson(data);
     res.headers.contentType = ContentType.json;
-    res.write(_toJson(data));
-    res.close();
+
+    final acceptsGzip = _acceptsGzip();
+
+    if (_enableGzip && acceptsGzip) {
+      res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+      final gzipSink = gzip.encoder.startChunkedConversion(res);
+      gzipSink.add(utf8.encode(jsonData));
+      gzipSink.close();
+    } else {
+      res.write(jsonData);
+      await res.close();
+    }
+
     _finished = true;
     if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('JSON data sent: $data', LogLevel.info);
+      DartoLogger.log('JSON data sent: $jsonData', LogLevel.info);
     }
   }
 
@@ -373,5 +423,34 @@ class Response {
     if (logger.isActive(LogLevel.info)) {
       DartoLogger.log('Redirected to: $url', LogLevel.info);
     }
+  }
+
+  Response type(String mimeType) {
+    res.headers.contentType = ContentType.parse(mimeType);
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Content-Type set via type(): $mimeType', LogLevel.info);
+    }
+    return this;
+  }
+
+  Future<void> pipe(Stream<List<int>> stream) async {
+    await stream.pipe(res);
+    _finished = true;
+    if (logger.isActive(LogLevel.info)) {
+      DartoLogger.log('Stream piped to response', LogLevel.info);
+    }
+  }
+
+  void setETag(String tag) {
+    res.headers.set('ETag', tag);
+  }
+
+  void setCacheControl(String value) {
+    res.headers.set('Cache-Control', value);
+  }
+
+  bool _acceptsGzip() {
+    final enc = res.headers.value('accept-encoding') ?? '';
+    return enc.contains('gzip');
   }
 }

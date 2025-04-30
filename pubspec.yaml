@@ -17,4 +17,5 @@ dependencies:
   mustache_template: ^2.0.0
 
 dev_dependencies:
+  mocktail: ^1.0.4
   test: ^1.24.0

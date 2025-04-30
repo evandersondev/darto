@@ -109,7 +109,7 @@ void main() async {
       Tweet(id: '3', text: 'Tweet 3'),
     ];
 
-    return res.json(tweets);
+    return res.json(tweets.map((el) => el.toMap()).toList());
   });
 
   app.get('/hello', (req, res) {

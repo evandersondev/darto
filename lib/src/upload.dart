@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:darto/darto.dart';
-import 'package:darto/src/types.dart';
 import 'package:mime/mime.dart';
 
 class Upload {

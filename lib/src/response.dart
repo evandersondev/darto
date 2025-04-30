@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:mirrors';
 
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_logger.dart';
@@ -254,8 +253,9 @@ class Response {
     } else if (item is double) {
       return item;
     } else if (_isCustomModel(item)) {
-      return _mirrorToJson(item);
+      return item.toString();
     }
+
     return item;
   }
 
@@ -274,31 +274,17 @@ class Response {
   bool _isCustomModel(dynamic item) {
     if (item == null) return false;
     try {
-      final instanceMirror = reflect(item);
-      return instanceMirror.type.isSubclassOf(reflectClass(Object)) &&
-          !instanceMirror.type.isSubtypeOf(reflectClass(Map)) &&
-          !instanceMirror.type.isSubtypeOf(reflectClass(String)) &&
-          !instanceMirror.type.isSubtypeOf(reflectClass(int)) &&
-          !instanceMirror.type.isSubtypeOf(reflectClass(bool)) &&
-          !instanceMirror.type.isSubtypeOf(reflectClass(DateTime)) &&
-          !instanceMirror.type.isSubtypeOf(reflectClass(List));
+      return item is Object &&
+          item is! Map &&
+          item is! List &&
+          item is! String &&
+          item is! int &&
+          item is! double &&
+          item is! bool &&
+          item is! DateTime;
     } catch (e) {
       return false;
     }
-  }
-
-  Map<String, dynamic> _mirrorToJson(dynamic instance) {
-    var instanceMirror = reflect(instance);
-    var data = <String, dynamic>{};
-    instanceMirror.type.declarations.forEach((symbol, declaration) {
-      if (declaration is VariableMirror && !declaration.isStatic) {
-        var fieldName = MirrorSystem.getName(symbol);
-        var fieldValue =
-            _toEncodable(instanceMirror.getField(symbol).reflectee);
-        data[snakeCase ? toSnakeCase(fieldName) : fieldName] = fieldValue;
-      }
-    });
-    return data;
   }
 
   void end([dynamic data]) {

@@ -233,7 +233,7 @@ void main() async {
   });
 
   // define not found route handler
-  app.hook.onNotFound((Request req, Response res) {
+  app.addHook.onNotFound((Request req, Response res) {
     res.redirect('/404');
   });
 
@@ -242,27 +242,27 @@ void main() async {
   });
 
   // Define onRequest hook
-  app.hook.onRequest((req) {
+  app.addHook.onRequest((req) {
     print("onRequest: ${req.method} ${req.path}");
   });
 
   // Define preHandler hook
-  app.hook.preHandler((req, res) async {
+  app.addHook.preHandler((req, res) async {
     print("preHandler: processing request before handler");
   });
 
   // Define onResponse hook
-  app.hook.onResponse((req, res) {
+  app.addHook.onResponse((req, res) {
     print("onResponse: response sent for ${req.method} ${req.path}");
   });
 
   // Define onError hook
-  app.hook.onError((error, req, res) {
+  app.addHook.onError((error, req, res) {
     print("onError: error occurred ${error.toString()} on ${req.path}");
   });
 
   app.listen(
-    3000,
+    8080,
     //  () {
     //   // This will start the WebSocket server on port 3001
     //   // server.listen('0.0.0.0', 3001);

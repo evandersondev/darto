@@ -11,7 +11,7 @@ class Darto {
   final List<String> _staticFolders = [];
   static final Map<String, dynamic> settings = {};
   final bool _enableGzip;
-  final Hooks hook = Hooks();
+  final Hooks addHook = Hooks();
 
   Darto({bool? logger, bool? snakeCase, bool gzip = false})
       : _logger = logger ?? false,
@@ -324,7 +324,7 @@ class Darto {
         enableGzip: _enableGzip,
       );
 
-      hook.executeOnRequest(req);
+      addHook.executeOnRequest(req);
 
       final List<Middleware> middlewares = List.from(_globalMiddlewares);
       final routeEntries = _routes[method] ?? [];
@@ -350,7 +350,7 @@ class Darto {
           // Envolvendo o handler final com a execução do route handler de forma assíncrona
           middlewares.add((Request req, Response res, Next next) async {
             try {
-              await hook.executePreHandler(req, res);
+              await addHook.executePreHandler(req, res);
 
               final handler = handlers.last;
               dynamic result;
@@ -383,11 +383,11 @@ class Darto {
       }
       if (!handled) {
         _applyCors(res);
-        hook.executeOnNotFound(req, res);
+        addHook.executeOnNotFound(req, res);
         continue;
       }
       _executeMiddlewares(req, res, middlewares);
-      hook.executeOnResponse(req, res);
+      addHook.executeOnResponse(req, res);
     }
   }
 
@@ -422,7 +422,7 @@ class Darto {
       } else {
         if (!res.finished) {
           res.error(err);
-          hook.executeOnError(err, req, res);
+          addHook.executeOnError(err, req, res);
         }
       }
     }

@@ -2,13 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:darto/darto.dart';
-import 'package:darto/src/darto_logger.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart';
 
 class Response {
   final HttpResponse res;
-  final Logger logger;
+  final bool _showLogger;
   final bool snakeCase;
   final List<String> staticFolders;
   final bool _enableGzip;
@@ -17,22 +16,23 @@ class Response {
   bool get finished => _finished;
   final Map<String, dynamic> locals = {};
 
-  Response(this.res, this.logger, this.snakeCase, this.staticFolders,
+  Response(this.res, bool? showLogger, this.snakeCase, this.staticFolders,
       {bool enableGzip = false})
-      : _enableGzip = enableGzip;
+      : _enableGzip = enableGzip,
+        _showLogger = showLogger ?? false;
 
   Response status(int statusCode) {
     res.statusCode = statusCode;
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Response status set to $statusCode', LogLevel.info);
+    if (_showLogger) {
+      log.info('Response status set to $statusCode');
     }
     return this;
   }
 
   void set(String field, String value) {
     res.headers.set(field, value);
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Response header set: $field: $value', LogLevel.info);
+    if (_showLogger) {
+      log.info('Response header set: $field: $value');
     }
   }
 
@@ -44,8 +44,8 @@ class Response {
       res.write('File not found');
       await res.close();
       _finished = true;
-      if (logger.isActive(LogLevel.error)) {
-        DartoLogger.log('File not found: $filePath', LogLevel.error);
+      if (_showLogger) {
+        log.error('File not found: $filePath');
       }
       return;
     }
@@ -74,8 +74,8 @@ class Response {
     }
 
     _finished = true;
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('File served: $filePath', LogLevel.info);
+    if (_showLogger) {
+      log.info('File served: $filePath');
     }
   }
 
@@ -142,8 +142,8 @@ class Response {
     }
 
     _finished = true;
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Data sent: $data', LogLevel.info);
+    if (_showLogger) {
+      log.info('Data sent: $data');
     }
   }
 
@@ -164,8 +164,8 @@ class Response {
     }
 
     _finished = true;
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('JSON data sent: $jsonData', LogLevel.info);
+    if (_showLogger) {
+      log.info('JSON data sent: $jsonData');
     }
   }
 
@@ -205,8 +205,8 @@ class Response {
 
     _finished = true;
 
-    if (logger.isActive(LogLevel.error)) {
-      DartoLogger.log('Error response sent: $errorMessage', LogLevel.error);
+    if (_showLogger) {
+      log.error('Error response sent: $errorMessage');
     }
   }
 
@@ -293,8 +293,8 @@ class Response {
     }
     res.close();
     _finished = true;
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Response ended with data: $data', LogLevel.info);
+    if (_showLogger) {
+      log.info('Response ended with data: $data');
     }
   }
 
@@ -323,8 +323,8 @@ class Response {
         if (cb != null) cb(err);
       });
       if (cb != null) cb(null);
-      if (logger.isActive(LogLevel.info)) {
-        DartoLogger.log('File downloaded: $filePath', LogLevel.info);
+      if (_showLogger) {
+        log.info('File downloaded: $filePath');
       }
       _finished = true;
     } catch (err) {
@@ -335,9 +335,10 @@ class Response {
         res.write('Error while sending file: $err');
         res.close();
         _finished = true;
-        if (logger.isActive(LogLevel.error)) {
-          DartoLogger.log(
-              'Error downloading file: $filePath - $err', LogLevel.error);
+        if (_showLogger) {
+          log.error(
+            'Error downloading file: $filePath - $err',
+          );
         }
       }
     }
@@ -346,12 +347,14 @@ class Response {
   void removeHeader(String field) {
     try {
       res.headers.removeAll(field); // remove todas as ocorrências do header
-      if (logger.isActive(LogLevel.info)) {
-        DartoLogger.log('Header removed: $field', LogLevel.info);
+      if (_showLogger) {
+        log.info('Header removed: $field');
       }
     } catch (e) {
-      if (logger.isActive(LogLevel.error)) {
-        DartoLogger.log('Error removing header $field: $e', LogLevel.error);
+      if (_showLogger) {
+        log.error(
+          'Error removing header $field: $e',
+        );
       }
     }
   }
@@ -386,8 +389,8 @@ class Response {
       buffer.write('; SameSite=${opts['sameSite']}');
     }
     res.headers.add(HttpHeaders.setCookieHeader, buffer.toString());
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Set cookie: $name=$value', LogLevel.info);
+    if (_showLogger) {
+      log.info('Set cookie: $name=$value');
     }
   }
 
@@ -396,8 +399,8 @@ class Response {
     opts['expires'] = DateTime.fromMillisecondsSinceEpoch(0);
     opts['maxAge'] = 0;
     cookie(name, '', opts);
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Cleared cookie: $name', LogLevel.info);
+    if (_showLogger) {
+      log.info('Cleared cookie: $name');
     }
   }
 
@@ -406,15 +409,15 @@ class Response {
     res.headers.set(HttpHeaders.locationHeader, url);
     res.close();
     _finished = true;
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Redirected to: $url', LogLevel.info);
+    if (_showLogger) {
+      log.info('Redirected to: $url');
     }
   }
 
   Response type(String mimeType) {
     res.headers.contentType = ContentType.parse(mimeType);
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Content-Type set via type(): $mimeType', LogLevel.info);
+    if (_showLogger) {
+      log.info('Content-Type set via type(): $mimeType');
     }
     return this;
   }
@@ -422,8 +425,8 @@ class Response {
   Future<void> pipe(Stream<List<int>> stream) async {
     await stream.pipe(res);
     _finished = true;
-    if (logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Stream piped to response', LogLevel.info);
+    if (_showLogger) {
+      log.info('Stream piped to response');
     }
   }
 
@@ -439,4 +442,8 @@ class Response {
     final enc = res.headers.value('accept-encoding') ?? '';
     return enc.contains('gzip');
   }
+}
+
+extension ResponseExtension on Response {
+  Logger get log => Logger();
 }

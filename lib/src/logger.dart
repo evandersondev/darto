@@ -1,37 +1,40 @@
-import 'package:darto/src/darto_logger.dart';
+import 'package:intl/intl.dart';
 
 class Logger {
-  final bool debug;
-  final bool info;
-  final bool warning;
-  final bool error;
-  final bool access;
+  // Códigos ANSI para cores
+  static const String _green = '\x1B[32m';
+  static const String _yellow = '\x1B[33m';
+  static const String _red = '\x1B[31m';
+  static const String _blue = '\x1B[34m';
+  static const String _magenta = '\x1B[35m';
+  static const String _reset = '\x1B[0m';
+  static const String _white = '\x1B[37m';
+  static const String _gray = '\x1B[90m';
 
-  Logger({
-    this.debug = false,
-    this.info = false,
-    this.warning = false,
-    this.error = false,
-    this.access = false,
-  });
+  final _formatter = DateFormat('HH:mm:ss.SSS');
 
-  // create a singleton instance of the logger
-  static final Logger _instance = Logger();
-  static Logger get instance => _instance;
-  static Logger get I => _instance;
+  void info(String message) {
+    print(
+        '$_white[${_formatter.format(DateTime.now())}]$_green (INFO): $_gray$message$_reset');
+  }
 
-  bool isActive(LogLevel level) {
-    switch (level) {
-      case LogLevel.debug:
-        return debug;
-      case LogLevel.info:
-        return info;
-      case LogLevel.warning:
-        return warning;
-      case LogLevel.error:
-        return error;
-      case LogLevel.access:
-        return access;
-    }
+  void warn(String message) {
+    print(
+        '$_white[${_formatter.format(DateTime.now())}]$_yellow (WARN): $_gray$message$_reset');
+  }
+
+  void error(String message) {
+    print(
+        '$_white[${_formatter.format(DateTime.now())}]$_red (ERROR): $_gray$message$_reset');
+  }
+
+  void debug(String message) {
+    print(
+        '$_white[${_formatter.format(DateTime.now())}]$_blue (DEBUG): $_gray$message$_reset');
+  }
+
+  void access(String message) {
+    print(
+        '$_white[${_formatter.format(DateTime.now())}]$_magenta (ACCESS): $_gray$message$_reset');
   }
 }

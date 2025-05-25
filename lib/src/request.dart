@@ -3,14 +3,13 @@ import 'dart:io';
 
 import 'package:darto/darto.dart';
 import 'package:darto/src/darto_header.dart';
-import 'package:darto/src/darto_logger.dart';
 
 class Request {
   final HttpRequest _req;
   final Map<String, String> params;
   dynamic _cachedBody;
   bool _bodyRead = false;
-  final Logger logger;
+  final bool showLogger;
 
   // Informações de arquivo, se necessário.
   Map<String, dynamic>? file;
@@ -29,7 +28,7 @@ class Request {
   /// Callback para ser executado quando a resposta é finalizada.
   void Function()? onResponseFinished;
 
-  Request(this._req, this.params, this.logger);
+  Request(this._req, this.params, this.showLogger);
 
   Uri get uri => _req.uri;
   String get method => _req.method;
@@ -55,10 +54,9 @@ class Request {
         _cachedBody = rawBody;
       }
 
-      if (_req.connectionInfo != null && logger.isActive(LogLevel.debug)) {
-        DartoLogger.log(
+      if (_req.connectionInfo != null && showLogger) {
+        log.debug(
           'Read request body from ${_req.connectionInfo!.remoteAddress.address}',
-          LogLevel.debug,
         );
       }
     }
@@ -70,8 +68,8 @@ class Request {
     for (var cookie in _req.cookies) {
       cookieMap[cookie.name] = cookie.value;
     }
-    if (logger.isActive(LogLevel.debug)) {
-      DartoLogger.log('Cookies: $cookieMap', LogLevel.debug);
+    if (showLogger) {
+      log.debug('Cookies: $cookieMap');
     }
     return cookieMap;
   }
@@ -92,4 +90,8 @@ class Request {
 
   String get protocol => _req.requestedUri.scheme;
   Stream<List<int>> cast<T>() => _req.cast<List<int>>();
+}
+
+extension RequestExtensions on Request {
+  Logger get log => Logger();
 }

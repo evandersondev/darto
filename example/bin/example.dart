@@ -1,14 +1,15 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:darto/darto.dart';
+import 'package:example/middlewares/logger_test_middleware.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
+import 'package:example/routes/fastify_routes.dart';
 import 'package:path/path.dart';
 
 void main() async {
-  final app = Darto(logger: Logger(info: true), gzip: true, snakeCase: true);
+  final app = Darto(logger: true, gzip: true, snakeCase: true);
 
   // Router
   app.use('/app', appRouter());
@@ -19,6 +20,8 @@ void main() async {
   app.get('/about', (Request req, Response res) {
     res.sendFile('public/about.html');
   });
+
+  app.use(loggerTestMiddleware);
 
   // Config template engine
   app.set('views', join(Directory.current.path, 'lib', 'pages'));
@@ -31,6 +34,9 @@ void main() async {
       'message': 'This is a sample mustache template rendered with Darto.',
     });
   });
+
+  app.use(fastifyRoutesWithDarto);
+  app.use('/api', fastifyRoutesWithRouter);
 
   // Get instance of DartoMailer
   final mailer = DartoMailer();
@@ -133,7 +139,7 @@ void main() async {
 
   app.post('/users', (req, res) async {
     final user = await req.body;
-    return res.json(jsonDecode(user));
+    return res.json(user);
   });
 
   // // Middleware específico de rota
@@ -226,9 +232,41 @@ void main() async {
     return 'PATCH request!';
   });
 
-  app.listen(3000, () {
-    // This will start the WebSocket server on port 3001
-    // server.listen('0.0.0.0', 3001);
-    print('🚀 Server is running http://localhost:3000');
+  // define not found route handler
+  app.hook.onNotFound((Request req, Response res) {
+    res.redirect('/404');
   });
+
+  app.get('/404', (Request req, Response res) {
+    res.status(NOT_FOUND).json({'404': 'Route not found (Auto Redirect)'});
+  });
+
+  // Define onRequest hook
+  app.hook.onRequest((req) {
+    print("onRequest: ${req.method} ${req.path}");
+  });
+
+  // Define preHandler hook
+  app.hook.preHandler((req, res) async {
+    print("preHandler: processing request before handler");
+  });
+
+  // Define onResponse hook
+  app.hook.onResponse((req, res) {
+    print("onResponse: response sent for ${req.method} ${req.path}");
+  });
+
+  // Define onError hook
+  app.hook.onError((error, req, res) {
+    print("onError: error occurred ${error.toString()} on ${req.path}");
+  });
+
+  app.listen(
+    3000,
+    //  () {
+    //   // This will start the WebSocket server on port 3001
+    //   // server.listen('0.0.0.0', 3001);
+    //   app.log.error('🚀 Server is running http://localhost:3000');
+    // }
+  );
 }

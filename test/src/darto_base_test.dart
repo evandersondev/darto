@@ -1,15 +1,11 @@
 import 'package:darto/darto.dart';
 import 'package:test/test.dart';
 
-import '../__mocks__/logger_mock.dart';
-
 void main() {
   late Darto app;
-  late MockLogger mockLogger;
 
   setUp(() {
-    mockLogger = MockLogger();
-    app = Darto(logger: mockLogger);
+    app = Darto(logger: true);
   });
 
   group('Darto', () {

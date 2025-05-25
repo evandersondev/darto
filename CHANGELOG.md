@@ -1,3 +1,7 @@
+## 0.0.23
+
+- Add hooks, update logger and add new method to create routes.
+
 ## 0.0.22
 
 - Remove dart mirrors to resolve compile error.

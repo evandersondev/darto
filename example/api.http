@@ -83,3 +83,12 @@ OPTIONS http://localhost:3000/options-test
 
 ###
 PATCH http://localhost:3000/patch-test
+
+###
+GET http://localhost:3000/not-found
+
+###
+GET http://localhost:3000/fastify
+
+###
+GET http://localhost:3000/api/fastify2

@@ -2,20 +2,19 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:darto/darto.dart';
-import 'package:darto/src/darto_logger.dart';
+import 'package:darto/src/darto_hooks.dart';
 import 'package:path/path.dart' as p;
 
-import 'types.dart';
-
 class Darto {
-  final Logger _logger;
+  final bool _logger;
   final bool _snakeCase;
   final List<String> _staticFolders = [];
   static final Map<String, dynamic> settings = {};
   final bool _enableGzip;
+  final Hooks hook = Hooks();
 
-  Darto({Logger? logger, bool? snakeCase, bool gzip = false})
-      : _logger = logger ?? Logger(),
+  Darto({bool? logger, bool? snakeCase, bool gzip = false})
+      : _logger = logger ?? false,
         _snakeCase = snakeCase ?? false,
         _enableGzip = gzip;
 
@@ -91,23 +90,43 @@ class Darto {
   ///
   /// Além disso, se for passado apenas um parâmetro do tipo String, este é tratado
   /// como uma pasta estática.
-  void use(dynamic pathOrMiddleware, [dynamic second]) {
-    if (pathOrMiddleware is Timeout && second == null) {
-      // Trata como middleware de erro (timeout e outros)
-      _errorMiddlewares.add(pathOrMiddleware);
-    } else if (pathOrMiddleware is Middleware) {
-      _globalMiddlewares.add(pathOrMiddleware);
-    } else if (pathOrMiddleware is Router && second == null) {
-      _addRouterRoutes('', pathOrMiddleware);
-    } else if (pathOrMiddleware is String && second == null) {
-      // Se for apenas uma string, chame static() explicitamente.
-      static(pathOrMiddleware);
-    } else if (pathOrMiddleware is String && second is Middleware) {
-      _addRouteMiddleware(pathOrMiddleware, second);
-    } else if (pathOrMiddleware is String && second is Router) {
-      _addRouterRoutes(pathOrMiddleware, second);
+  void use(dynamic pathOrBuilder, [dynamic second]) {
+    if (pathOrBuilder is Timeout && second == null) {
+      _errorMiddlewares.add(pathOrBuilder);
+    } else if (pathOrBuilder is Middleware) {
+      _globalMiddlewares.add(pathOrBuilder);
+    } else if (pathOrBuilder is Router && second == null) {
+      _addRouterRoutes('', pathOrBuilder);
+    } else if (pathOrBuilder is String && second == null) {
+      static(pathOrBuilder);
+    } else if (pathOrBuilder is String && second is Middleware) {
+      _addRouteMiddleware(pathOrBuilder, second);
+    } else if (pathOrBuilder is String && second is Router) {
+      _addRouterRoutes(pathOrBuilder, second);
+    } else if (pathOrBuilder is String && second is Function) {
+      final prefix = pathOrBuilder;
+      final builder = second;
+      if (builder is RouterRouteBuilder) {
+        final router = Router();
+        builder(router);
+        _addRouterRoutes(prefix, router);
+      } else if (builder is DartoRouteBuilder) {
+        builder(this);
+      } else {
+        throw ArgumentError('Invalid function type provided to use method');
+      }
+    } else if (pathOrBuilder is Function && second == null) {
+      if (pathOrBuilder is DartoRouteBuilder) {
+        pathOrBuilder(this);
+      } else if (pathOrBuilder is RouterRouteBuilder) {
+        final router = Router();
+        pathOrBuilder(router);
+        _addRouterRoutes('', router);
+      } else {
+        throw ArgumentError('Invalid function type provided to use method');
+      }
     } else {
-      throw ArgumentError('Invalid arguments for use method');
+      throw ArgumentError('Invalid arguments for the use method');
     }
   }
 
@@ -282,18 +301,17 @@ class Darto {
   /// ```
   void listen(int port, [void Function()? callback]) async {
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
-    if (_logger.isActive(LogLevel.info)) {
-      DartoLogger.log('Server started on port $port', LogLevel.info);
+    if (_logger) {
+      log.info('Server listening at ${server.address.address}:$port');
     }
     callback?.call();
 
     await for (HttpRequest request in server) {
       final method = request.method;
       final path = request.uri.path;
-      if (_logger.isActive(LogLevel.access)) {
-        DartoLogger.log(
+      if (_logger) {
+        log.access(
           '[$method $path] - IP: ${request.connectionInfo?.remoteAddress.address}',
-          LogLevel.access,
         );
       }
 
@@ -305,6 +323,8 @@ class Darto {
         _staticFolders,
         enableGzip: _enableGzip,
       );
+
+      hook.executeOnRequest(req);
 
       final List<Middleware> middlewares = List.from(_globalMiddlewares);
       final routeEntries = _routes[method] ?? [];
@@ -330,6 +350,8 @@ class Darto {
           // Envolvendo o handler final com a execução do route handler de forma assíncrona
           middlewares.add((Request req, Response res, Next next) async {
             try {
+              await hook.executePreHandler(req, res);
+
               final handler = handlers.last;
               dynamic result;
               // Se o handler é do tipo RouteHandler (dois parâmetros) ou é um middleware (três parâmetros)
@@ -361,10 +383,11 @@ class Darto {
       }
       if (!handled) {
         _applyCors(res);
-        res.status(HttpStatus.notFound).send({'error': 'Route not found'});
+        hook.executeOnNotFound(req, res);
         continue;
       }
       _executeMiddlewares(req, res, middlewares);
+      hook.executeOnResponse(req, res);
     }
   }
 
@@ -399,6 +422,7 @@ class Darto {
       } else {
         if (!res.finished) {
           res.error(err);
+          hook.executeOnError(err, req, res);
         }
       }
     }
@@ -420,4 +444,8 @@ class Darto {
       res.res.headers.set(key, value);
     });
   }
+}
+
+extension DartoExtensions on Darto {
+  Logger get log => Logger();
 }

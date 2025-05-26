@@ -1,9 +1,9 @@
 
 ###
-http://localhost:3000/auth
+http://localhost:8080/auth
 
 ###
-POST http://localhost:3000/auth/resgiter
+POST http://localhost:8080/auth/resgiter
 Content-Type: application/json
 
 {
@@ -12,41 +12,41 @@ Content-Type: application/json
 }
 
 ###
-http://localhost:3000/
+http://localhost:8080/
 
 ###
-http://localhost:3000/app
+http://localhost:8080/app
 
 ###
-http://localhost:3000/app/profile
+http://localhost:8080/app/profile
 
 ###
-http://localhost:3000/app/events/1/attendees
+http://localhost:8080/app/events/1/attendees
 
 ###
-http://localhost:3000/user/23
+http://localhost:8080/user/23
 
 ###
-http://localhost:3000/todos/23
+http://localhost:8080/todos/23
 
 
 ### 
-http://localhost:3000/public/test.pdf
+http://localhost:8080/public/test.pdf
 
 ###
-http://localhost:3000/tweets
+http://localhost:8080/tweets
 
 ###
-http://localhost:3000/hello
+http://localhost:8080/hello
 
 ###
-http://localhost:3000/hello2
+http://localhost:8080/hello2
 
 ###
-http://localhost:3000/users
+http://localhost:8080/users
 
 ###
-POST http://localhost:3000/users
+POST http://localhost:8080/users
 Content-Type: application/json
 
 {
@@ -57,38 +57,47 @@ Content-Type: application/json
 
 // Set Bearer token in Authorization header
 ###
-GET http://localhost:3000/users
+GET http://localhost:8080/users
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNjg0NjQzMzU2LCJleHAiOjE2ODQ2NDMzNjZ9.1z83d338383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383838383
 
 
 ###
-GET http://localhost:3000/delay
+GET http://localhost:8080/delay
 
 ###
-POST http://localhost:3000/send-email
-
-
-###
-GET http://localhost:3000/home
+POST http://localhost:8080/send-email
 
 
 ###
-HEAD http://localhost:3000/head-test
+GET http://localhost:8080/home
+
 
 ###
-TRACE http://localhost:3000/trace-test
+HEAD http://localhost:8080/head-test
 
 ###
-OPTIONS http://localhost:3000/options-test
+TRACE http://localhost:8080/trace-test
 
 ###
-PATCH http://localhost:3000/patch-test
+OPTIONS http://localhost:8080/options-test
 
 ###
-GET http://localhost:3000/not-found
+PATCH http://localhost:8080/patch-test
 
 ###
-GET http://localhost:3000/fastify
+GET http://localhost:8080/not-found
 
 ###
-GET http://localhost:3000/api/fastify2
+GET http://localhost:8080/fastify
+
+###
+GET http://localhost:8080/api/fastify2
+
+###
+GET http://localhost:8080/new
+
+###
+POST http://localhost:8080/new
+
+###
+GET http://localhost:8080/app/product/1

@@ -6,14 +6,18 @@ import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
 import 'package:example/routes/fastify_routes.dart';
+import 'package:example/routes/new_router.dart';
 import 'package:path/path.dart';
 
 void main() async {
   final app = Darto(logger: true, gzip: true, snakeCase: true);
 
-  // Router
+  // Routes
   app.use('/app', appRouter());
   app.use('/auth', authRouter());
+  app.use(fastifyRoutesWithDarto);
+  app.use('/api', fastifyRoutesWithRouter);
+  app.use(newRoutes);
 
   app.static('public');
 
@@ -21,6 +25,7 @@ void main() async {
     res.sendFile('public/about.html');
   });
 
+  // Middleware global
   app.use(loggerTestMiddleware);
 
   // Config template engine
@@ -34,9 +39,6 @@ void main() async {
       'message': 'This is a sample mustache template rendered with Darto.',
     });
   });
-
-  app.use(fastifyRoutesWithDarto);
-  app.use('/api', fastifyRoutesWithRouter);
 
   // Get instance of DartoMailer
   final mailer = DartoMailer();

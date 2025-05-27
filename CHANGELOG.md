@@ -1,3 +1,7 @@
+## 0.0.24
+
+- Add chained routes, param method, add support for next funcation a optional param like Exception.
+
 ## 0.0.23
 
 - Add hooks, update logger and add new method to create routes.

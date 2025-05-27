@@ -12,7 +12,7 @@ class MockRequest extends Mock implements Request {}
 class MockResponse extends Mock implements Response {}
 
 class MockNext extends Mock {
-  void call();
+  void call([dynamic error]);
 }
 
 class MockMiddleware extends Mock {

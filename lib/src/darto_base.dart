@@ -21,18 +21,24 @@ class Darto {
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
   final List<Middleware> _globalMiddlewares = [];
   Map<String, String> _corsOptions = {};
+  final Map<String, List<ParamMiddleware>> paramCallbacks = {};
 
-  // Lista de middlewares de erro (incluindo os de timeout)
+  // List of error middlewares (including timeout middleware)
   final List<Timeout> _errorMiddlewares = [];
 
-  /// Armazena um valor global de configuração.
+  /// Sets a global configuration value.
   void set(String key, dynamic value) {
     settings[key] = value;
   }
 
-  /// Método GET com comportamento duplo:
-  /// - Se chamado com apenas uma string, pode ser estendido para buscar configurações.
-  /// - Se chamado com handlers, registra uma rota GET.
+  void engine(String engine, String path) {
+    settings['views'] = path;
+    settings['view engine'] = engine;
+  }
+
+  /// GET method with dual behavior:
+  /// - If called with only a string, it returns a configuration value.
+  /// - If called with handlers, it registers a GET route.
   ///
   /// Example:
   /// ```dart
@@ -48,48 +54,48 @@ class Darto {
     }
   }
 
-  /// Registra uma rota POST.
+  /// Registers a POST route.
   void post(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('POST', path, first, second, third);
   }
 
-  /// Registra uma rota PUT.
+  /// Registers a PUT route.
   void put(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('PUT', path, first, second, third);
   }
 
-  /// Registra uma rota DELETE.
+  /// Registers a DELETE route.
   void delete(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('DELETE', path, first, second, third);
   }
 
-  /// Registra uma rota HEAD.
+  /// Registers a HEAD route.
   void head(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('HEAD', path, first, second, third);
   }
 
-  /// Registra uma rota TRACE.
+  /// Registers a TRACE route.
   void trace(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('TRACE', path, first, second, third);
   }
 
-  /// Registra uma rota OPTIONS.
+  /// Registers an OPTIONS route.
   void options(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('OPTIONS', path, first, second, third);
   }
 
-  /// Registra uma rota PATCH.
+  /// Registers a PATCH route.
   void patch(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('PATCH', path, first, second, third);
   }
 
-  /// Registra middlewares, sub-rotas ou arquivos estáticos.
+  /// Registers middlewares, sub-routers, or static folders.
   ///
-  /// Se o primeiro parâmetro for uma função compatível com [Timeout],
-  /// ela é registrada como um middleware de tratamento de erros (ex.: timeout).
+  /// If the first parameter is a function compatible with [Timeout],
+  /// it is registered as an error-handling middleware (e.g., timeout).
   ///
-  /// Além disso, se for passado apenas um parâmetro do tipo String, este é tratado
-  /// como uma pasta estática.
+  /// Additionally, if a single String parameter is provided, it is treated
+  /// as a static folder.
   void use(dynamic pathOrBuilder, [dynamic second]) {
     if (pathOrBuilder is Timeout && second == null) {
       _errorMiddlewares.add(pathOrBuilder);
@@ -130,36 +136,32 @@ class Darto {
     }
   }
 
-  /// Define pasta para arquivos estáticos.
+  /// Defines a static folder.
   void static(String path) {
     _staticFolders.add(path);
     _addStaticRoute(path);
   }
 
-  /// Define um timeout global para as requisições em milissegundos.
+  /// Defines a global timeout for requests in milliseconds.
   ///
-  /// Exemplo:
+  /// Example:
   /// ```dart
   /// app.timeout(5000);
   /// ```
   void timeout(int milliseconds) {
-    // Armazena o valor de timeout nas configurações
     set('timeout', milliseconds);
 
-    // Middleware que seta o valor de timeout em req.timeout e dispara erro caso ultrapasse o tempo.
+    // Middleware that sets the timeout value in req.timeout and triggers an error if exceeded.
     timeoutMiddleware(Request req, Response res, Next next) {
-      // Atribui o valor de timeout à requisição
       req.timeout = milliseconds;
 
       Timer timer = Timer(Duration(milliseconds: milliseconds), () {
-        // Ao disparar o timeout, marcamos a requisição como "timedOut"
         req.timedOut = true;
         if (!res.finished) {
           _executeErrorMiddlewares(Exception("Request timed out"), req, res);
         }
       });
 
-      // Quando a resposta for finalizada, cancela o timer para evitar disparos indevidos
       req.onResponseFinished = () {
         timer.cancel();
       };
@@ -167,7 +169,6 @@ class Darto {
       next();
     }
 
-    // Adiciona o middleware de timeout ao início dos middlewares globais
     _globalMiddlewares.insert(0, timeoutMiddleware);
   }
 
@@ -199,8 +200,19 @@ class Darto {
     }
 
     _routes.putIfAbsent(method, () => []).add(
-          MapEntry(regexPath, {'handlers': handlers, 'paramNames': paramNames}),
+          MapEntry(regexPath, {
+            'handlers': handlers,
+            'paramNames': paramNames,
+            'paramCallbacks': paramCallbacks,
+          }),
         );
+  }
+
+  void param(String name, ParamMiddleware callback) {
+    if (!paramCallbacks.containsKey(name)) {
+      paramCallbacks[name] = [];
+    }
+    paramCallbacks[name]!.add(callback);
   }
 
   void _addRouteMiddleware(String path, Middleware middleware) {
@@ -216,7 +228,8 @@ class Darto {
     _routes.putIfAbsent('USE', () => []).add(
           MapEntry(regexPath, {
             'handlers': [middleware],
-            'paramNames': paramNames
+            'paramNames': paramNames,
+            'paramCallbacks': paramCallbacks,
           }),
         );
   }
@@ -242,7 +255,8 @@ class Darto {
                   }
                 }
               ],
-              'paramNames': <String>[]
+              'paramNames': <String>[],
+              'paramCallbacks': paramCallbacks,
             },
           ),
         );
@@ -267,14 +281,16 @@ class Darto {
           if (normalizedPrefix.isNotEmpty && !normalizedPrefix.endsWith('/')) {
             normalizedPrefix += '/';
           }
-
           newPattern = prefix.isEmpty
               ? '^/' + pattern + r'$'
               : '^' + normalizedPrefix + pattern + r'$';
         }
         final newRegex = RegExp(newPattern);
+        var routeData = Map<String, dynamic>.from(entry.value);
+        // Attach paramCallbacks from the Router to the route data.
+        routeData['paramCallbacks'] = router.paramCallbacks;
         _routes.putIfAbsent(method, () => []).add(
-              MapEntry(newRegex, entry.value),
+              MapEntry(newRegex, routeData),
             );
       }
     });
@@ -291,7 +307,20 @@ class Darto {
     };
   }
 
-  /// Inicia o servidor e processa as requisições.
+  Future<void> _executeSequentialMiddleware(
+      List<Middleware> middlewares, Request req, Response res) async {
+    int index = 0;
+    Future<void> next([dynamic error]) async {
+      if (index < middlewares.length) {
+        var middleware = middlewares[index++];
+        await middleware(req, res, next);
+      }
+    }
+
+    await next();
+  }
+
+  /// Starts the server and processes incoming requests.
   ///
   /// Example:
   /// ```dart
@@ -299,7 +328,7 @@ class Darto {
   ///   print('Server started on port 3000');
   /// });
   /// ```
-  void listen(int port, [void Function()? callback]) async {
+  Future<void> listen(int port, [void Function()? callback]) async {
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
     if (_logger) {
       log.info('Server listening at ${server.address.address}:$port');
@@ -336,31 +365,50 @@ class Darto {
           middlewares.addAll(entry.value['handlers'].cast<Middleware>());
         }
       }
+
       for (var entry in routeEntries) {
         final match = entry.key.firstMatch(path);
         if (match != null) {
           final params = _extractRouteParams(
-            (entry.value['paramNames'] as List).cast<String>(),
-            match,
-          );
+              (entry.value['paramNames'] as List).cast<String>(), match);
           req.params.addAll(params);
+
+          // If there are param callbacks registered, add a middleware to execute them.
+          final routeParamCallbacks = entry.value['paramCallbacks']
+              as Map<String, List<ParamMiddleware>>?;
+          if (routeParamCallbacks != null) {
+            middlewares.add((Request req, Response res, Next next) async {
+              List<Middleware> paramHandlers = [];
+              req.params.forEach((key, value) {
+                if (routeParamCallbacks.containsKey(key)) {
+                  for (var callback in routeParamCallbacks[key]!) {
+                    paramHandlers.add((req, res, next) {
+                      callback(req, res, next, value);
+                    });
+                  }
+                }
+              });
+              if (paramHandlers.isNotEmpty) {
+                await _executeSequentialMiddleware(paramHandlers, req, res);
+              }
+              next();
+            });
+          }
+
           final handlers = entry.value['handlers'];
           middlewares.addAll(handlers.whereType<Middleware>());
 
-          // Envolvendo o handler final com a execução do route handler de forma assíncrona
+          // Wrap the final handler for asynchronous execution.
           middlewares.add((Request req, Response res, Next next) async {
             try {
               await addHook.executePreHandler(req, res);
-
               final handler = handlers.last;
               dynamic result;
-              // Se o handler é do tipo RouteHandler (dois parâmetros) ou é um middleware (três parâmetros)
               if (handler is RouteHandler) {
                 result = handler(req, res);
               } else if (handler is Middleware) {
                 result = await handler(req, res, next);
               }
-              // Se o resultado for uma Future, aguarde sua conclusão
               if (result is Future) {
                 result = await result;
               }
@@ -381,6 +429,7 @@ class Darto {
           break;
         }
       }
+
       if (!handled) {
         _applyCors(res);
         addHook.executeOnNotFound(req, res);
@@ -395,13 +444,17 @@ class Darto {
       Request req, Response res, List<Middleware> middlewares) {
     int index = 0;
 
-    void next() {
+    void next([dynamic error]) {
+      if (error != null) {
+        _executeErrorMiddlewares(error, req, res);
+        return;
+      }
+
       if (req.timedOut || res.finished) return;
 
       if (index < middlewares.length) {
         try {
           final middleware = middlewares[index++];
-
           middleware(req, res, next);
         } catch (e) {
           _executeErrorMiddlewares(e, req, res);
@@ -412,7 +465,7 @@ class Darto {
     next();
   }
 
-  // Atualizado para capturar erros e chamar res.error(), que retorna o JSON padrão
+  // Executes error middlewares and calls res.error() for a default JSON response.
   void _executeErrorMiddlewares(dynamic err, Request req, Response res) {
     int index = 0;
     void nextError() {

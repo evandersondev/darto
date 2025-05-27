@@ -21,6 +21,7 @@ class Darto {
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
   final List<Middleware> _globalMiddlewares = [];
   Map<String, String> _corsOptions = {};
+  final Map<String, List<ParamMiddleware>> paramCallbacks = {};
 
   // List of error middlewares (including timeout middleware)
   final List<Timeout> _errorMiddlewares = [];
@@ -28,6 +29,11 @@ class Darto {
   /// Sets a global configuration value.
   void set(String key, dynamic value) {
     settings[key] = value;
+  }
+
+  void engine(String engine, String path) {
+    settings['views'] = path;
+    settings['view engine'] = engine;
   }
 
   /// GET method with dual behavior:
@@ -194,8 +200,19 @@ class Darto {
     }
 
     _routes.putIfAbsent(method, () => []).add(
-          MapEntry(regexPath, {'handlers': handlers, 'paramNames': paramNames}),
+          MapEntry(regexPath, {
+            'handlers': handlers,
+            'paramNames': paramNames,
+            'paramCallbacks': paramCallbacks,
+          }),
         );
+  }
+
+  void param(String name, ParamMiddleware callback) {
+    if (!paramCallbacks.containsKey(name)) {
+      paramCallbacks[name] = [];
+    }
+    paramCallbacks[name]!.add(callback);
   }
 
   void _addRouteMiddleware(String path, Middleware middleware) {
@@ -211,7 +228,8 @@ class Darto {
     _routes.putIfAbsent('USE', () => []).add(
           MapEntry(regexPath, {
             'handlers': [middleware],
-            'paramNames': paramNames
+            'paramNames': paramNames,
+            'paramCallbacks': paramCallbacks,
           }),
         );
   }
@@ -237,7 +255,8 @@ class Darto {
                   }
                 }
               ],
-              'paramNames': <String>[]
+              'paramNames': <String>[],
+              'paramCallbacks': paramCallbacks,
             },
           ),
         );
@@ -309,7 +328,7 @@ class Darto {
   ///   print('Server started on port 3000');
   /// });
   /// ```
-  void listen(int port, [void Function()? callback]) async {
+  Future<void> listen(int port, [void Function()? callback]) async {
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
     if (_logger) {
       log.info('Server listening at ${server.address.address}:$port');

@@ -9,3 +9,5 @@ typedef Err = Exception;
 typedef Hanlder = void;
 typedef DartoRouteBuilder = void Function(Darto app);
 typedef RouterRouteBuilder = void Function(Router router);
+typedef ParamMiddleware = void Function(
+    Request req, Response res, Next next, String value);

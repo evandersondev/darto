@@ -17,7 +17,7 @@ void main() async {
   app.use('/auth', authRouter());
   app.use(fastifyRoutesWithDarto);
   app.use('/api', fastifyRoutesWithRouter);
-  app.use(newRoutes);
+  app.use('/new-routes', newRoutes);
 
   app.static('public');
 
@@ -29,13 +29,15 @@ void main() async {
   app.use(loggerTestMiddleware);
 
   // Config template engine
-  app.set('views', join(Directory.current.path, 'lib', 'pages'));
-  app.set('view engine', 'mustache');
+  // app.set('views', join(Directory.current.path, 'lib', 'pages'));
+  // app.set('view engine', 'mustache');
+
+  app.engine('mustache', join(Directory.current.path, 'lib', 'pages'));
 
   app.get('/', (Request req, Response res) {
     res.render('index', {
-      'title': 'Welcome to My App',
-      'header': 'Hello, World!',
+      'title': 'Welcome',
+      'header': 'Hello',
       'message': 'This is a sample mustache template rendered with Darto.',
     });
   });
@@ -261,6 +263,12 @@ void main() async {
   // Define onError hook
   app.addHook.onError((error, req, res) {
     print("onError: error occurred ${error.toString()} on ${req.path}");
+  });
+
+  // Param method
+  app.param('id', (req, res, next, id) {
+    print('Custom param middleware for id: $id from app');
+    next();
   });
 
   app.listen(

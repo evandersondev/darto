@@ -1,11 +1,5 @@
 import 'package:darto/src/types.dart';
 
-import 'request.dart';
-import 'response.dart';
-
-typedef ParamMiddleware = void Function(
-    Request req, Response res, Next next, String value);
-
 class Router {
   // Armazena as rotas registradas
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> routes = {};

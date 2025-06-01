@@ -288,7 +288,7 @@ void main() {
   final app = Darto();
 
   // Mount the authRouter on the "/auth" prefix:
-  app.use('/auth', authRouter);
+  app.use('/auth', authRouter());
 }
 ```
 

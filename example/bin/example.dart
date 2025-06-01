@@ -82,7 +82,7 @@ void main() async {
 
   // app.timeout(5000);
 
-  // app.use((Err err, Request req, Response res, Next next) {
+  // app.use((Err err, Request req, Response res) {
   //   if (!res.finished) {
   //     res.status(SERVICE_UNAVAILABLE).json({
   //       'error': 'Request timed out or internal error occurred.',

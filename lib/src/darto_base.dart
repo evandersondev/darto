@@ -468,19 +468,15 @@ class Darto {
   // Executes error middlewares and calls res.error() for a default JSON response.
   void _executeErrorMiddlewares(dynamic err, Request req, Response res) {
     int index = 0;
-    void nextError() {
+    do {
       if (index < _errorMiddlewares.length) {
         final errorMiddleware = _errorMiddlewares[index++];
-        errorMiddleware(err, req, res, nextError);
+        errorMiddleware(err, req, res);
       } else {
-        if (!res.finished) {
-          res.error(err);
-          addHook.executeOnError(err, req, res);
-        }
+        res.error(err);
+        addHook.executeOnError(err, req, res);
       }
-    }
-
-    nextError();
+    } while (!res.finished);
   }
 
   Map<String, String> _extractRouteParams(

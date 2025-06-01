@@ -1,7 +1,6 @@
 import 'dart:io';
 
-import 'package:darto/src/request.dart';
-import 'package:darto/src/response.dart';
+import '../darto.dart';
 
 enum HookType { onRequest, preHandler, onResponse, onError, onNotFound }
 
@@ -56,7 +55,7 @@ class Hooks {
         hook(req, res);
       }
     } else {
-      res.status(HttpStatus.notFound).send({'error': 'Route not found'});
+      res.status(HttpStatus.notFound).json({'error': 'Route not found'});
     }
   }
 }

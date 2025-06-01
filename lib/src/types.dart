@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:darto/darto.dart';
 
 typedef Next = void Function([Exception error]);
@@ -11,3 +13,4 @@ typedef DartoRouteBuilder = void Function(Darto app);
 typedef RouterRouteBuilder = void Function(Router router);
 typedef ParamMiddleware = void Function(
     Request req, Response res, Next next, String value);
+typedef RenderLayout = FutureOr<Response> Function(String content);

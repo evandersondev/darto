@@ -12,7 +12,10 @@ Router appRouter() {
   });
 
   router.get('/events/:id/attendees', (Request req, Response res) {
-    return res.send('Attendees for event ${req.params['id']}');
+    // final allParams = req.param();
+    // print('allParams: $allParams');
+
+    return res.send('Attendees for event ${req.param['id']}');
   });
 
   router.param('user_id', (req, res, next, userId) {
@@ -22,7 +25,7 @@ Router appRouter() {
 
   router.get('/product/:user_id', (req, res) {
     print('although this matches');
-    res.send('Product ${req.params['user_id']}');
+    res.send('Product ${req.param['user_id']}');
   });
 
   return router;

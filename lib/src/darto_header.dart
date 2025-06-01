@@ -14,6 +14,10 @@ class DartoHeader {
   /// Returns the value of a specified header.
   String? get(String name) => _headers.value(name);
 
+  void append(String name, String value) {
+    _headers.set(name, value);
+  }
+
   /// Returns all headers as a map.
   Map<String, List<String>> get allHeaders {
     final headersMap = <String, List<String>>{};

@@ -196,6 +196,25 @@ void main() {
 }
 ```
 
+### Error Middleware
+
+Error middlewares are applied to all incoming requests. You can register a error middleware using the `use` method.
+
+```dart
+void main() {
+  final app = Darto();
+
+  app.timeout(5000);
+
+  // Error middleware to handle timeouts
+  app.use((Err err, Request req, Response res) {
+    res.status(SERVICE_UNAVAILABLE).json({
+      'error': 'Request timed out or internal error occurred.',
+    });
+  });
+}
+```
+
 <br>
 
 ### Route-Specific Middleware

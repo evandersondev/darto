@@ -23,8 +23,8 @@ class Darto {
   Map<String, String> _corsOptions = {};
   final Map<String, List<ParamMiddleware>> paramCallbacks = {};
 
-  // List of error middlewares (including timeout middleware)
-  final List<Timeout> _errorMiddlewares = [];
+  // List of error middlewares
+  final List<ErrorHandler> _errorMiddlewares = [];
 
   /// Sets a global configuration value.
   void set(String key, dynamic value) {
@@ -91,13 +91,13 @@ class Darto {
 
   /// Registers middlewares, sub-routers, or static folders.
   ///
-  /// If the first parameter is a function compatible with [Timeout],
+  /// If the first parameter is a function compatible with [ErrorHandler],
   /// it is registered as an error-handling middleware (e.g., timeout).
   ///
   /// Additionally, if a single String parameter is provided, it is treated
   /// as a static folder.
   void use(dynamic pathOrBuilder, [dynamic second]) {
-    if (pathOrBuilder is Timeout && second == null) {
+    if (pathOrBuilder is ErrorHandler && second == null) {
       _errorMiddlewares.add(pathOrBuilder);
     } else if (pathOrBuilder is Middleware) {
       _globalMiddlewares.add(pathOrBuilder);
@@ -465,7 +465,8 @@ class Darto {
     next();
   }
 
-  // Executes error middlewares and calls res.error() for a default JSON response.
+  // Executes all error middlewares
+  // will calls res.error() for a default JSON response when [res] not finished
   void _executeErrorMiddlewares(dynamic err, Request req, Response res) {
     int index = 0;
     do {

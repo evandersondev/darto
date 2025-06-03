@@ -169,6 +169,20 @@ void main() {
 }
 ```
 
+### Enable Cors
+
+To enable CORS (Cross-Origin Resource Sharing), you can use `useCors` helper. Here's an example:
+
+```
+darto.useCors(origin: ['https://example.com', 'https://another-domain.org']);
+
+// Allow specific methods and headers
+darto.useCors(
+  methods: ['GET', 'POST'],
+  headers: ['Content-Type', 'Authorization'],
+);
+```
+
 <br>
 
 ## Middleware Usage 🛠️

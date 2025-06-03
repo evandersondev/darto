@@ -80,15 +80,13 @@ void main() async {
 
   /// Serve static files from the 'public' directory.
 
-  // app.timeout(5000);
+  app.timeout(5000);
 
-  // app.use((Err err, Request req, Response res, Next next) {
-  //   if (!res.finished) {
-  //     res.status(SERVICE_UNAVAILABLE).json({
-  //       'error': 'Request timed out or internal error occurred.',
-  //     });
-  //   }
-  // });
+  app.use((Err err, Request req, Response res) {
+    res.status(SERVICE_UNAVAILABLE).json({
+      'error': 'Request timed out or internal error occurred.',
+    });
+  });
 
   app.get('/delay', (Request req, Response res) {
     Future.delayed(Duration(milliseconds: 6000), () {

@@ -60,7 +60,7 @@ Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.24
+  darto: ^0.0.25
 ```
 
 Then, run the following command:
@@ -173,14 +173,23 @@ void main() {
 
 To enable CORS (Cross-Origin Resource Sharing), you can use `useCors` helper. Here's an example:
 
-```
-darto.useCors(origin: ['https://example.com', 'https://another-domain.org']);
+```dart
+void main() {
+  final app = Darto();
 
-// Allow specific methods and headers
-darto.useCors(
-  methods: ['GET', 'POST'],
-  headers: ['Content-Type', 'Authorization'],
-);
+  app.useCors(
+    origin: [
+        'https://example.com',
+        'https://another-domain.org'
+      ]
+    );
+
+  // Allow specific methods and headers
+  app.useCors(
+    methods: ['GET', 'POST'],
+    headers: ['Content-Type', 'Authorization'],
+  );
+}
 ```
 
 <br>
@@ -221,10 +230,14 @@ void main() {
   app.timeout(5000);
 
   // Error middleware to handle timeouts
-  app.use((Err err, Request req, Response res) {
-    res.status(SERVICE_UNAVAILABLE).json({
-      'error': 'Request timed out or internal error occurred.',
-    });
+  app.use((Err err, Request req, Response res, Next next) {
+    if (req.timedOut && !res.finished) {
+      res.status(SERVICE_UNAVAILABLE).json({
+        'error': 'Request timed out or internal error occurred.',
+      });
+    } else {
+      next(err);
+    }
   });
 }
 ```

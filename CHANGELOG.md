@@ -1,3 +1,7 @@
+## 0.0.25
+
+- Private methods, add new methods to Response, Resquest, DartoBase, and Router.
+
 ## 0.0.24
 
 - Add chained routes, param method, add support for next funcation a optional param like Exception.

@@ -5,12 +5,17 @@ import 'package:example/middlewares/logger_test_middleware.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
+import 'package:example/routes/book_router.dart';
 import 'package:example/routes/fastify_routes.dart';
 import 'package:example/routes/new_router.dart';
 import 'package:path/path.dart';
 
 void main() async {
-  final app = Darto(logger: true, gzip: true, snakeCase: true);
+  final app = Darto(
+    logger: true,
+    gzip: true,
+    snakeCase: true,
+  ).basePath('/api/v1');
 
   // Routes
   app.use('/app', appRouter());
@@ -18,6 +23,7 @@ void main() async {
   app.use(fastifyRoutesWithDarto);
   app.use('/api', fastifyRoutesWithRouter);
   app.use('/new-routes', newRoutes);
+  app.use(bookRouter);
 
   app.static('public');
 
@@ -33,6 +39,27 @@ void main() async {
   // app.set('view engine', 'mustache');
 
   app.engine('mustache', join(Directory.current.path, 'lib', 'pages'));
+
+  app.use((Request req, Response res, Next next) {
+    res.setRender((content) {
+      return res.html('''
+        <html>
+          <head>
+            <title>My layout</title>
+          </head>
+          <body>
+            <h1>My Template Layout</h1>
+            $content
+            <footer>
+            <p>This is the footer</p>
+            </footer>
+          </body>
+        </html>
+        ''');
+    });
+
+    next();
+  });
 
   app.get('/', (Request req, Response res) {
     res.render('index', {
@@ -82,10 +109,16 @@ void main() async {
 
   app.timeout(5000);
 
-  app.use((Err err, Request req, Response res) {
-    res.status(SERVICE_UNAVAILABLE).json({
-      'error': 'Request timed out or internal error occurred.',
-    });
+  app.use((Exception err, Request req, Response res, Next next) {
+    // Se o erro for de timeout, pode customizar a resposta,
+    // mas se não for, repassa para o próximo middleware.
+    if (req.timedOut && !res.finished) {
+      res.status(SERVICE_UNAVAILABLE).json({
+        'error': 'Request timed out or internal error occurred.',
+      });
+    } else {
+      next(err);
+    }
   });
 
   app.get('/delay', (Request req, Response res) {
@@ -97,7 +130,7 @@ void main() async {
   });
 
   app.get('/todos/:id', (Request req, Response res) {
-    final id = req.params['id'];
+    final id = req.param['id'];
 
     final todo = {
       'id': id,
@@ -107,7 +140,7 @@ void main() async {
       'createdAt': DateTime.now(),
     };
 
-    res.status(OK).send(todo);
+    res.status(OK).json(todo);
   });
 
   app.get('/tweets', (req, res) {
@@ -125,7 +158,7 @@ void main() async {
   });
 
   app.get('/users', (Request req, Response res) {
-    res.set('X-Custom-Header', 'CustomValue');
+    res.headers.append('X-Custom-Header', 'CustomValue');
     return res.json([
       {
         'title': 'New Task',
@@ -235,38 +268,84 @@ void main() async {
   });
 
   // define not found route handler
-  app.addHook.onNotFound((Request req, Response res) {
-    res.redirect('/404');
-  });
+  // app.addHook.onNotFound((Request req, Response res) {
+  //   res.redirect('/404');
+  // });
 
-  app.get('/404', (Request req, Response res) {
-    res.status(NOT_FOUND).json({'404': 'Route not found (Auto Redirect)'});
-  });
+  // app.get('/404', (Request req, Response res) {
+  //   res.status(NOT_FOUND).json({'404': 'Route not found (Auto Redirect)'});
+  // });
 
   // Define onRequest hook
-  app.addHook.onRequest((req) {
-    print("onRequest: ${req.method} ${req.path}");
-  });
+  // app.addHook.onRequest((req) {
+  //   print("onRequest: ${req.method} ${req.path}");
+  // });
 
-  // Define preHandler hook
-  app.addHook.preHandler((req, res) async {
-    print("preHandler: processing request before handler");
-  });
+  // // Define preHandler hook
+  // app.addHook.preHandler((req, res) async {
+  //   print("preHandler: processing request before handler");
+  // });
 
-  // Define onResponse hook
-  app.addHook.onResponse((req, res) {
-    print("onResponse: response sent for ${req.method} ${req.path}");
-  });
+  // // Define onResponse hook
+  // app.addHook.onResponse((req, res) {
+  //   print("onResponse: response sent for ${req.method} ${req.path}");
+  // });
 
-  // Define onError hook
-  app.addHook.onError((error, req, res) {
-    print("onError: error occurred ${error.toString()} on ${req.path}");
-  });
+  // // Define onError hook
+  // app.addHook.onError((error, req, res) {
+  //   print("onError: error occurred ${error.toString()} on ${req.path}");
+  // });
 
   // Param method
   app.param('id', (req, res, next, id) {
     print('Custom param middleware for id: $id from app');
     next();
+  });
+
+  // app.all
+  app.all('/all', (req, res) {
+    res.json({'message': 'This route should handle all HTTP methods'});
+  });
+
+  // Optional params
+  app.get('/author/:name?/post/:id', (Request req, Response res) {
+    // final name = req.param['name'] ?? 'World';
+    final [name, id] = req.params();
+    res.send('Hello, $name -  $id!');
+  });
+
+  // Wildcard params
+  app.get('/wildcard/*', (Request req, Response res) {
+    // Pode-se acessar a parte que foi capturada pelo wildcard,
+    // se necessário, utilizando alguma lógica extra.
+    res.send('Hello, World!');
+  });
+
+  // Body Parse
+  app.post('/parsed', (Request req, Response res) async {
+    final tweet = await req.bodyParse((body) => Tweet.fromMap(body));
+
+    res.send(tweet.text);
+  });
+
+  // Blob
+  app.post('/blob', (Request req, Response res) async {
+    final blob = await req.blob();
+    res.send(blob);
+  });
+
+  // ArrayBuffer
+  app.post('/array-buffer', (Request req, Response res) async {
+    final arrayBuffer = await req.arrayBuffer();
+    print(arrayBuffer);
+    res.send(arrayBuffer);
+  });
+
+  // Form Data
+  app.post('/form-data', (Request req, Response res) async {
+    final formData = await req.formData();
+
+    res.send(formData);
   });
 
   app.listen(

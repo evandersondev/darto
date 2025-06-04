@@ -1,28 +1,24 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:darto/darto.dart';
-import 'package:mustache_template/mustache.dart';
-import 'package:path/path.dart';
+part of 'darto_base.dart';
 
 class Response {
-  final HttpResponse res;
+  final HttpResponse _res;
   final bool _showLogger;
-  final bool snakeCase;
-  final List<String> staticFolders;
+  final bool _snakeCase;
   final bool _enableGzip;
+
+  Response(this._res, bool? showLogger, this._snakeCase,
+      {bool enableGzip = false})
+      : _enableGzip = enableGzip,
+        _showLogger = showLogger ?? false;
 
   bool _finished = false;
   bool get finished => _finished;
   final Map<String, dynamic> locals = {};
 
-  Response(this.res, bool? showLogger, this.snakeCase, this.staticFolders,
-      {bool enableGzip = false})
-      : _enableGzip = enableGzip,
-        _showLogger = showLogger ?? false;
+  DartoHeader get headers => DartoHeader(_res.headers);
 
   Response status(int statusCode) {
-    res.statusCode = statusCode;
+    _res.statusCode = statusCode;
     if (_showLogger) {
       log.info('Response status set to $statusCode');
     }
@@ -30,9 +26,32 @@ class Response {
   }
 
   void set(String field, String value) {
-    res.headers.set(field, value);
+    _res.headers.set(field, value);
     if (_showLogger) {
       log.info('Response header set: $field: $value');
+    }
+  }
+
+  RenderLayout? _renderLayout;
+
+  /// ```dart
+  /// res.setRender((content) {
+  ///   return res.html('''
+  ///     <html>
+  ///       <head>
+  ///         <title>Meu titulo</title>
+  ///       </head>
+  ///       <body>
+  ///         $content
+  ///       </body>
+  ///     </html>
+  ///   ''');
+  /// });
+  /// ```
+  void setRender(RenderLayout layout) {
+    _renderLayout = layout;
+    if (_showLogger) {
+      log.info('Render layout configured.');
     }
   }
 
@@ -40,9 +59,9 @@ class Response {
     final file = File(filePath);
 
     if (!await file.exists()) {
-      res.statusCode = HttpStatus.notFound;
-      res.write('File not found');
-      await res.close();
+      _res.statusCode = HttpStatus.notFound;
+      _res.write('File not found');
+      await _res.close();
       _finished = true;
       if (_showLogger) {
         log.error('File not found: $filePath');
@@ -51,9 +70,9 @@ class Response {
     }
 
     final contentType = _getContentType(filePath);
-    res.headers.contentType = contentType;
+    _res.headers.contentType = contentType;
 
-    final enableGzip = Darto.settings['gzip'] == true;
+    final enableGzip = Darto._settings['gzip'] == true;
     final acceptsGzip = _acceptsGzip();
     final compressibleTypes = [
       ContentType.text.mimeType,
@@ -66,11 +85,11 @@ class Response {
     if (enableGzip &&
         acceptsGzip &&
         compressibleTypes.contains(contentType.mimeType)) {
-      res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+      _res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
       final gzipStream = file.openRead().transform(gzip.encoder);
-      await gzipStream.pipe(res);
+      await gzipStream.pipe(_res);
     } else {
-      await file.openRead().pipe(res);
+      await file.openRead().pipe(_res);
     }
 
     _finished = true;
@@ -117,13 +136,13 @@ class Response {
       return;
     }
 
-    if (res.headers.contentType != null) {
+    if (_res.headers.contentType != null) {
       if (data is String && data.trim().startsWith('<')) {
-        res.headers.contentType = ContentType.html;
-      } else if (res.headers.contentType!.value.contains('json')) {
+        _res.headers.contentType = ContentType.html;
+      } else if (_res.headers.contentType!.value.contains('json')) {
         return json(data);
       } else {
-        res.headers.contentType = ContentType.text;
+        _res.headers.contentType = ContentType.text;
       }
     }
 
@@ -131,14 +150,14 @@ class Response {
 
     if (_enableGzip &&
         acceptsGzip &&
-        res.headers.contentType?.mimeType == ContentType.text.mimeType) {
-      res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
-      final gzipSink = gzip.encoder.startChunkedConversion(res);
+        _res.headers.contentType?.mimeType == ContentType.text.mimeType) {
+      _res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+      final gzipSink = gzip.encoder.startChunkedConversion(_res);
       gzipSink.add(utf8.encode(data.toString()));
       gzipSink.close();
     } else {
-      res.write(data);
-      await res.close();
+      _res.write(data);
+      await _res.close();
     }
 
     _finished = true;
@@ -147,20 +166,30 @@ class Response {
     }
   }
 
+  /// Sends a JSON response.
+  ///
+  /// This method sets the Content-Type header to application/json and sends the provided data as JSON.
+  /// Supported data types: Map and List.
+  /// example:
+  ///
+  /// ```dart
+  /// res.json({ 'message': 'Hello, World!' });
+  /// or
+  /// res.json([1, 2, 3]);
   void json(dynamic data) async {
     final jsonData = _toJson(data);
-    res.headers.contentType = ContentType.json;
+    _res.headers.contentType = ContentType.json;
 
     final acceptsGzip = _acceptsGzip();
 
     if (_enableGzip && acceptsGzip) {
-      res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
-      final gzipSink = gzip.encoder.startChunkedConversion(res);
+      _res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+      final gzipSink = gzip.encoder.startChunkedConversion(_res);
       gzipSink.add(utf8.encode(jsonData));
       gzipSink.close();
     } else {
-      res.write(jsonData);
-      await res.close();
+      _res.write(jsonData);
+      await _res.close();
     }
 
     _finished = true;
@@ -173,7 +202,7 @@ class Response {
     if (_finished) return;
 
     try {
-      res.statusCode = HttpStatus.internalServerError;
+      _res.statusCode = HttpStatus.internalServerError;
     } catch (err) {
       // Ignorar erro se os headers já foram enviados
     }
@@ -186,19 +215,19 @@ class Response {
     };
 
     try {
-      res.headers.contentType = ContentType.json;
+      _res.headers.contentType = ContentType.json;
     } catch (err) {
       // Ignorar erro se os headers não puderem ser modificados
     }
 
     try {
-      res.add(utf8.encode(jsonEncode(jsonResponse)));
+      _res.add(utf8.encode(jsonEncode(jsonResponse)));
     } catch (err) {
       // Ignorar erro se o StreamSink já estiver vinculado a um stream
     }
 
     try {
-      res.close();
+      _res.close();
     } catch (err) {
       // Ignorar erro se a resposta já estiver sendo fechada ou fechada
     }
@@ -210,31 +239,107 @@ class Response {
     }
   }
 
-  Future<void> render(String viewName, [Map<String, dynamic>? data]) async {
-    final viewsDir = Darto.settings['views'] ?? 'views';
-    final viewEngine = Darto.settings['view engine'] ?? 'mustache';
-
-    final filePath = join(viewsDir, '$viewName.$viewEngine');
+  /// The render method now receives two parameters:
+  /// - [templateName]: the name of the template file (without extension)
+  /// - [head]: a map with template variables, which will be processed using Mustache.
+  ///
+  /// After rendering, if a layout was configured with setRender, then the rendered content is
+  /// passed to that layout function, wrapping it accordingly.
+  Future<void> render(String templateName, Map<String, dynamic> head) async {
+    final viewsDir = Darto._settings['views'] ?? 'views';
+    final viewEngine = Darto._settings['view engine'] ?? 'mustache';
+    final filePath = p.join(viewsDir, '$templateName.$viewEngine');
     final file = File(filePath);
+
     if (!await file.exists()) {
-      res.statusCode = HttpStatus.notFound;
-      res.write('Template not found: $filePath');
-      await res.close();
+      _res.statusCode = HttpStatus.notFound;
+      _res.write('Template not found: $filePath');
+      await _res.close();
       _finished = true;
       return;
     }
 
     try {
       final templateContent = await file.readAsString();
-      final template = Template(templateContent, name: viewName);
-      final output = template.renderString(data ?? {});
-      res.headers.contentType = ContentType.html;
-      res.write(output);
-      await res.close();
+      final template = Template(templateContent, name: templateName);
+      final output = template.renderString(head);
+      if (_renderLayout != null) {
+        var result = _renderLayout!(output);
+        if (result is Future<Response>) {
+          await result;
+        }
+        _finished = true;
+        return;
+      }
+      _res.headers.contentType = ContentType.html;
+      _res.write(output);
+      await _res.close();
       _finished = true;
     } catch (e) {
       error(e);
     }
+  }
+
+  // New method: res.text() - Returns plain text content.
+  Future<Response> text(String data) async {
+    _res.headers.contentType = ContentType.text;
+    _res.write(data);
+    await _res.close();
+    _finished = true;
+    if (_showLogger) {
+      log.info('Text data sent: $data');
+    }
+    return this;
+  }
+
+  // New method: res.html() - Returns HTML content.
+  Future<Response> html(String data) async {
+    _res.headers.contentType = ContentType.html;
+    _res.write(data);
+    await _res.close();
+    _finished = true;
+    if (_showLogger) {
+      log.info('HTML data sent: $data');
+    }
+    return this;
+  }
+
+  // New method: res.notFound() - Sends a 404 response.
+  Future<Response> notFound() async {
+    _res.statusCode = HttpStatus.notFound;
+    _res.headers.contentType = ContentType.text;
+    _res.write('404 - Not Found');
+    await _res.close();
+    _finished = true;
+    if (_showLogger) {
+      log.info('Sent 404 response');
+    }
+    return this;
+  }
+
+  // New method: res.body() - Sets status code, headers and sends the data accordingly.
+  Future<Response> body(
+      dynamic data, int status, Map<String, dynamic> headers) async {
+    _res.statusCode = status;
+    headers.forEach((key, value) {
+      _res.headers.set(key, value.toString());
+    });
+    // Check content type and send data accordingly.
+    if (data is Map<String, dynamic>) {
+      // If data is a map, assume JSON.
+      _res.headers.contentType = ContentType.json;
+      _res.write(jsonEncode(data));
+    } else {
+      // Otherwise, send it as plain text.
+      _res.headers.contentType = ContentType.text;
+      _res.write(data.toString());
+    }
+    await _res.close();
+    _finished = true;
+    if (_showLogger) {
+      log.info('Response body sent with status $status: $data');
+    }
+    return this;
   }
 
   String _toJson(dynamic data) {
@@ -247,7 +352,7 @@ class Response {
       return item.map((element) => _toEncodable(element)).toList();
     } else if (item is Map) {
       return item.map((key, value) =>
-          MapEntry(snakeCase ? toSnakeCase(key) : key, _toEncodable(value)));
+          MapEntry(_snakeCase ? toSnakeCase(key) : key, _toEncodable(value)));
     } else if (item is DateTime) {
       return item.toIso8601String();
     } else if (item is double) {
@@ -289,9 +394,9 @@ class Response {
 
   void end([dynamic data]) {
     if (data != null) {
-      res.write(data);
+      _res.write(data);
     }
-    res.close();
+    _res.close();
     _finished = true;
     if (_showLogger) {
       log.info('Response ended with data: $data');
@@ -315,11 +420,11 @@ class Response {
       if (!await file.exists()) {
         throw HttpException('File not found');
       }
-      res.headers.contentType = ContentType.binary;
-      String dispositionFile = downloadName ?? basename(filePath);
-      res.headers.set(
+      _res.headers.contentType = ContentType.binary;
+      String dispositionFile = downloadName ?? p.basename(filePath);
+      _res.headers.set(
           'Content-Disposition', 'attachment; filename="$dispositionFile"');
-      await file.openRead().pipe(res).catchError((err) {
+      await file.openRead().pipe(_res).catchError((err) {
         if (cb != null) cb(err);
       });
       if (cb != null) cb(null);
@@ -331,9 +436,9 @@ class Response {
       if (cb != null) {
         cb(err);
       } else {
-        res.statusCode = HttpStatus.internalServerError;
-        res.write('Error while sending file: $err');
-        res.close();
+        _res.statusCode = HttpStatus.internalServerError;
+        _res.write('Error while sending file: $err');
+        _res.close();
         _finished = true;
         if (_showLogger) {
           log.error(
@@ -346,7 +451,7 @@ class Response {
 
   void removeHeader(String field) {
     try {
-      res.headers.removeAll(field); // remove todas as ocorrências do header
+      _res.headers.removeAll(field); // remove todas as ocorrências do header
       if (_showLogger) {
         log.info('Header removed: $field');
       }
@@ -388,7 +493,7 @@ class Response {
     if (opts.containsKey('sameSite')) {
       buffer.write('; SameSite=${opts['sameSite']}');
     }
-    res.headers.add(HttpHeaders.setCookieHeader, buffer.toString());
+    _res.headers.add(HttpHeaders.setCookieHeader, buffer.toString());
     if (_showLogger) {
       log.info('Set cookie: $name=$value');
     }
@@ -405,9 +510,9 @@ class Response {
   }
 
   void redirect(String url) {
-    res.statusCode = HttpStatus.found;
-    res.headers.set(HttpHeaders.locationHeader, url);
-    res.close();
+    _res.statusCode = HttpStatus.found;
+    _res.headers.set(HttpHeaders.locationHeader, url);
+    _res.close();
     _finished = true;
     if (_showLogger) {
       log.info('Redirected to: $url');
@@ -415,7 +520,7 @@ class Response {
   }
 
   Response type(String mimeType) {
-    res.headers.contentType = ContentType.parse(mimeType);
+    _res.headers.contentType = ContentType.parse(mimeType);
     if (_showLogger) {
       log.info('Content-Type set via type(): $mimeType');
     }
@@ -423,7 +528,7 @@ class Response {
   }
 
   Future<void> pipe(Stream<List<int>> stream) async {
-    await stream.pipe(res);
+    await stream.pipe(_res);
     _finished = true;
     if (_showLogger) {
       log.info('Stream piped to response');
@@ -431,15 +536,15 @@ class Response {
   }
 
   void setETag(String tag) {
-    res.headers.set('ETag', tag);
+    _res.headers.set('ETag', tag);
   }
 
   void setCacheControl(String value) {
-    res.headers.set('Cache-Control', value);
+    _res.headers.set('Cache-Control', value);
   }
 
   bool _acceptsGzip() {
-    final enc = res.headers.value('accept-encoding') ?? '';
+    final enc = _res.headers.value('accept-encoding') ?? '';
     return enc.contains('gzip');
   }
 }

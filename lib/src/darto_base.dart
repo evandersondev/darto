@@ -1,17 +1,30 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:darto/darto.dart';
-import 'package:darto/src/darto_hooks.dart';
+import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
+
+import 'darto_header.dart';
+import 'darto_hooks.dart';
+import 'logger.dart';
+import 'types.dart';
+
+part 'request.dart';
+part 'response.dart';
+part 'router.dart';
 
 class Darto {
   final bool _logger;
   final bool _snakeCase;
   final List<String> _staticFolders = [];
-  static final Map<String, dynamic> settings = {};
+  static final Map<String, dynamic> _settings = {};
   final bool _enableGzip;
   final Hooks addHook = Hooks();
+
+  String _basePath = '';
+  // Map<String, String> _corsOptions = {};
 
   Darto({bool? logger, bool? snakeCase, bool gzip = false})
       : _logger = logger ?? false,
@@ -19,7 +32,9 @@ class Darto {
         _enableGzip = gzip;
 
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
+  final Map<String, List<ParamMiddleware>> _paramCallbacks = {};
   final List<Middleware> _globalMiddlewares = [];
+  // final List<Timeout> _errorMiddlewares = [];
   Map<String, List<String>> _corsOptions = {};
   final Map<String, List<ParamMiddleware>> paramCallbacks = {};
 
@@ -28,63 +43,66 @@ class Darto {
 
   /// Sets a global configuration value.
   void set(String key, dynamic value) {
-    settings[key] = value;
+    _settings[key] = value;
   }
 
   void engine(String engine, String path) {
-    settings['views'] = path;
-    settings['view engine'] = engine;
+    _settings['views'] = path;
+    _settings['view engine'] = engine;
   }
 
-  /// GET method with dual behavior:
-  /// - If called with only a string, it returns a configuration value.
-  /// - If called with handlers, it registers a GET route.
+  /// Sets or gets the global base path for all routes.
+  ///
+  /// If called with a string, it sets the base path and returns the instance.
+  /// If called without parameter, it returns the current base path.
   ///
   /// Example:
   /// ```dart
-  /// app.get('/hello', (Request req, Response res) {
-  ///   res.send('Hello, World!');
-  /// });
+  /// void main() {
+  ///   final app = Darto().basePath('/api');
+  ///   // Or get via app.basePath();
+  /// }
   /// ```
+  dynamic basePath([String? path]) {
+    if (path == null) {
+      return _basePath;
+    }
+    _basePath = path.startsWith('/') ? path : '/$path';
+    return this;
+  }
+
   dynamic get(String path, [dynamic first, dynamic second, dynamic third]) {
     if (first == null) {
-      return settings[path];
+      return _settings[path];
     } else {
       _addRoute('GET', path, first, second, third);
     }
   }
 
-  /// Registers a POST route.
   void post(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('POST', path, first, second, third);
   }
 
-  /// Registers a PUT route.
   void put(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('PUT', path, first, second, third);
   }
 
-  /// Registers a DELETE route.
   void delete(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('DELETE', path, first, second, third);
   }
 
-  /// Registers a HEAD route.
   void head(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('HEAD', path, first, second, third);
   }
 
-  /// Registers a TRACE route.
   void trace(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('TRACE', path, first, second, third);
   }
 
-  /// Registers an OPTIONS route.
   void options(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('OPTIONS', path, first, second, third);
   }
 
-  /// Registers a PATCH route.
   void patch(String path, dynamic first, [dynamic second, dynamic third]) {
     _addRoute('PATCH', path, first, second, third);
   }
@@ -136,22 +154,14 @@ class Darto {
     }
   }
 
-  /// Defines a static folder.
   void static(String path) {
     _staticFolders.add(path);
     _addStaticRoute(path);
   }
 
-  /// Defines a global timeout for requests in milliseconds.
-  ///
-  /// Example:
-  /// ```dart
-  /// app.timeout(5000);
-  /// ```
   void timeout(int milliseconds) {
     set('timeout', milliseconds);
 
-    // Middleware that sets the timeout value in req.timeout and triggers an error if exceeded.
     timeoutMiddleware(Request req, Response res, Next next) {
       req.timeout = milliseconds;
 
@@ -174,15 +184,44 @@ class Darto {
 
   void _addRoute(String method, String path, dynamic first,
       [dynamic second, dynamic third]) {
+    // Aplica o basePath global.
+    if (_basePath.isNotEmpty) {
+      String base = _basePath;
+      if (!base.endsWith('/')) {
+        base = '$base/';
+      }
+      if (path.startsWith('/')) {
+        path = path.substring(1);
+      }
+      path = base + path;
+    }
+
+    // Se a rota não for a raiz ("/"), remove a barra final para evitar duplicação.
+    if (path != "/" && path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
+    }
+
     final paramNames = <String>[];
-    final regexPath = RegExp(
-      '^' +
-          path.replaceAllMapped(RegExp(r':(\w+)'), (match) {
-            paramNames.add(match.group(1)!);
-            return '([^/]+)';
-          }) +
-          r'$',
-    );
+    String regexPattern = path.replaceAllMapped(RegExp(r'/:(\w+)\?'), (match) {
+      paramNames.add(match.group(1)!);
+      return '(?:/([^/]+))?';
+    });
+    regexPattern = regexPattern.replaceAllMapped(RegExp(r'/:(\w+)'), (match) {
+      paramNames.add(match.group(1)!);
+      return '/([^/]+)';
+    });
+    regexPattern =
+        regexPattern.replaceAllMapped(RegExp(r'/\*'), (match) => '(?:/(.*))?');
+
+    // Remove a barra inicial, se houver.
+    if (regexPattern.startsWith('/')) {
+      regexPattern = regexPattern.substring(1);
+    }
+
+    // Caso a rota seja a raiz, use ^/?$; senão, prefixe com '^/?'
+    final regexPath = regexPattern.isEmpty
+        ? RegExp('^/?\$')
+        : RegExp('^/?' + regexPattern + '/?\$');
 
     final List<dynamic> handlers = [];
     if (first is Middleware || first is RouteHandler) {
@@ -203,19 +242,29 @@ class Darto {
           MapEntry(regexPath, {
             'handlers': handlers,
             'paramNames': paramNames,
-            'paramCallbacks': paramCallbacks,
+            'paramCallbacks': _paramCallbacks,
           }),
         );
   }
 
   void param(String name, ParamMiddleware callback) {
-    if (!paramCallbacks.containsKey(name)) {
-      paramCallbacks[name] = [];
+    if (!_paramCallbacks.containsKey(name)) {
+      _paramCallbacks[name] = [];
     }
-    paramCallbacks[name]!.add(callback);
+    _paramCallbacks[name]!.add(callback);
   }
 
   void _addRouteMiddleware(String path, Middleware middleware) {
+    if (_basePath.isNotEmpty) {
+      String base = _basePath;
+      if (!base.endsWith('/')) {
+        base = '$base/';
+      }
+      if (path.startsWith('/')) {
+        path = path.substring(1);
+      }
+      path = base + path;
+    }
     final paramNames = <String>[];
     final regexPath = RegExp(
       '^' +
@@ -229,7 +278,7 @@ class Darto {
           MapEntry(regexPath, {
             'handlers': [middleware],
             'paramNames': paramNames,
-            'paramCallbacks': paramCallbacks,
+            'paramCallbacks': _paramCallbacks,
           }),
         );
   }
@@ -256,14 +305,24 @@ class Darto {
                 }
               ],
               'paramNames': <String>[],
-              'paramCallbacks': paramCallbacks,
+              'paramCallbacks': _paramCallbacks,
             },
           ),
         );
   }
 
   void _addRouterRoutes(String prefix, Router router) {
-    router.routes.forEach((method, routeEntries) {
+    if (_basePath.isNotEmpty) {
+      String base = _basePath;
+      if (!base.endsWith('/')) {
+        base = '$base/';
+      }
+      if (prefix.startsWith('/')) {
+        prefix = prefix.substring(1);
+      }
+      prefix = base + prefix;
+    }
+    router._routes.forEach((method, routeEntries) {
       for (final entry in routeEntries) {
         final RegExp originalRegex = entry.key;
         String pattern = originalRegex.pattern;
@@ -287,8 +346,7 @@ class Darto {
         }
         final newRegex = RegExp(newPattern);
         var routeData = Map<String, dynamic>.from(entry.value);
-        // Attach paramCallbacks from the Router to the route data.
-        routeData['paramCallbacks'] = router.paramCallbacks;
+        routeData['paramCallbacks'] = router._paramCallbacks;
         _routes.putIfAbsent(method, () => []).add(
               MapEntry(newRegex, routeData),
             );
@@ -321,21 +379,47 @@ class Darto {
     await next();
   }
 
-  /// Starts the server and processes incoming requests.
-  ///
-  /// Example:
-  /// ```dart
-  /// app.listen(3000, () {
-  ///   print('Server started on port 3000');
-  /// });
-  /// ```
+  void all(String path, dynamic first, [dynamic second, dynamic third]) {
+    final methods = [
+      'GET',
+      'POST',
+      'PUT',
+      'DELETE',
+      'PATCH',
+      'HEAD',
+      'OPTIONS',
+      'TRACE'
+    ];
+    for (var method in methods) {
+      _addRoute(method, path, first, second, third);
+    }
+  }
+
+  void on(dynamic methods, dynamic paths, dynamic first,
+      [dynamic second, dynamic third]) {
+    if (methods is! List && methods is! String) {
+      throw ArgumentError('Methods parameter must be a String or List<String>');
+    }
+    if (paths is! List && paths is! String) {
+      throw ArgumentError('Paths parameter must be a String or List<String>');
+    }
+    final List<String> methodsList =
+        methods is String ? [methods] : List<String>.from(methods);
+    final List<String> pathsList =
+        paths is String ? [paths] : List<String>.from(paths);
+    for (var method in methodsList) {
+      for (var path in pathsList) {
+        _addRoute(method.toUpperCase(), path, first, second, third);
+      }
+    }
+  }
+
   Future<void> listen(int port, [void Function()? callback]) async {
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
     if (_logger) {
       log.info('Server listening at ${server.address.address}:$port');
     }
     callback?.call();
-
     await for (HttpRequest request in server) {
       final method = request.method;
       final path = request.uri.path;
@@ -345,21 +429,20 @@ class Darto {
         );
       }
 
-      final req = Request(request, {}, _logger);
+      final req = Request(request, {}, [], _logger);
       final res = Response(
         request.response,
         _logger,
         _snakeCase,
-        _staticFolders,
         enableGzip: _enableGzip,
       );
-
       addHook.executeOnRequest(req);
 
       final List<Middleware> middlewares = List.from(_globalMiddlewares);
       final routeEntries = _routes[method] ?? [];
       bool handled = false;
 
+      // Processa middlewares de uso global (USE)
       for (var entry in _routes['USE'] ?? []) {
         final match = entry.key.firstMatch(path);
         if (match != null) {
@@ -367,20 +450,24 @@ class Darto {
         }
       }
 
+      // Verifica se alguma rota corresponde
       for (var entry in routeEntries) {
         final match = entry.key.firstMatch(path);
         if (match != null) {
+          final orderedValues = _extractOrderedParams(
+              (entry.value['paramNames'] as List).cast<String>(), match);
           final params = _extractRouteParams(
               (entry.value['paramNames'] as List).cast<String>(), match);
-          req.params.addAll(params);
+          req.param.addAll(params);
+          req._orderedParamValues.clear();
+          req._orderedParamValues.addAll(orderedValues);
 
-          // If there are param callbacks registered, add a middleware to execute them.
           final routeParamCallbacks = entry.value['paramCallbacks']
               as Map<String, List<ParamMiddleware>>?;
           if (routeParamCallbacks != null) {
             middlewares.add((Request req, Response res, Next next) async {
               List<Middleware> paramHandlers = [];
-              req.params.forEach((key, value) {
+              req.param.forEach((key, value) {
                 if (routeParamCallbacks.containsKey(key)) {
                   for (var callback in routeParamCallbacks[key]!) {
                     paramHandlers.add((req, res, next) {
@@ -398,8 +485,6 @@ class Darto {
 
           final handlers = entry.value['handlers'];
           middlewares.addAll(handlers.whereType<Middleware>());
-
-          // Wrap the final handler for asynchronous execution.
           middlewares.add((Request req, Response res, Next next) async {
             try {
               await addHook.executePreHandler(req, res);
@@ -431,9 +516,10 @@ class Darto {
         }
       }
 
-      // attach cors headers
       _applyCors(req, res);
+      // Se nenhuma rota foi encontrada, envia 404 imediatamente
 
+      // attach cors headers
       if (req.method == 'OPTIONS') {
         res.status(204).end();
         continue;
@@ -450,15 +536,12 @@ class Darto {
   void _executeMiddlewares(
       Request req, Response res, List<Middleware> middlewares) {
     int index = 0;
-
     void next([dynamic error]) {
       if (error != null) {
         _executeErrorMiddlewares(error, req, res);
         return;
       }
-
       if (req.timedOut || res.finished) return;
-
       if (index < middlewares.length) {
         try {
           final middleware = middlewares[index++];
@@ -476,24 +559,41 @@ class Darto {
   // will calls res.error() for a default JSON response when [res] not finished
   void _executeErrorMiddlewares(dynamic err, Request req, Response res) {
     int index = 0;
-    do {
+
+    void nextError([dynamic error]) {
       if (index < _errorMiddlewares.length) {
         final errorMiddleware = _errorMiddlewares[index++];
-        errorMiddleware(err, req, res);
+        errorMiddleware(err, req, res, nextError);
       } else {
-        res.error(err);
-        addHook.executeOnError(err, req, res);
+        if (!res.finished) {
+          res.error(err);
+          addHook.executeOnError(err, req, res);
+        }
       }
-    } while (!res.finished);
+    }
+
+    nextError();
   }
 
   Map<String, String> _extractRouteParams(
       List<String> paramNames, Match match) {
     final params = <String, String>{};
     for (var i = 0; i < paramNames.length; i++) {
-      params[paramNames[i]] = match.group(i + 1) ?? '';
+      final value = match.group(i + 1);
+      if (value != null && value.isNotEmpty) {
+        params[paramNames[i]] = value;
+      }
     }
     return params;
+  }
+
+  List<String?> _extractOrderedParams(List<String> paramNames, Match match) {
+    final orderedValues = <String?>[];
+    for (var i = 0; i < paramNames.length; i++) {
+      final value = match.group(i + 1);
+      orderedValues.add(value);
+    }
+    return orderedValues;
   }
 
   void _applyCors(Request req, Response res) {

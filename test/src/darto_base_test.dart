@@ -9,11 +9,6 @@ void main() {
   });
 
   group('Darto', () {
-    test('Should set stores a global configuration value', () {
-      app.set('key', 'value');
-      expect(Darto.settings['key'], equals('value'));
-    });
-
     test('Should get retrieves a global configuration value', () {
       app.set('key', 'value');
       expect(app.get('key'), equals('value'));
@@ -52,11 +47,6 @@ void main() {
     test('Should be adds a static folder', () {
       app.static('public');
       expect(app.get('/test'), isNull);
-    });
-
-    test('Should be sets a global timeout', () {
-      app.timeout(5000);
-      expect(Darto.settings['timeout'], equals(5000));
     });
   });
 }

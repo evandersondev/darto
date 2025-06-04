@@ -1,11 +1,8 @@
-import 'package:darto/src/types.dart';
+part of 'darto_base.dart';
 
 class Router {
-  // Armazena as rotas registradas
-  final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> routes = {};
-
-  // Armazena os callbacks de parâmetro
-  final Map<String, List<ParamMiddleware>> paramCallbacks = {};
+  final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
+  final Map<String, List<ParamMiddleware>> _paramCallbacks = {};
 
   void get(String path, dynamic first, [dynamic second, dynamic third]) =>
       _addRoute('GET', path, first, second, third);
@@ -16,25 +13,41 @@ class Router {
   void delete(String path, dynamic first, [dynamic second, dynamic third]) =>
       _addRoute('DELETE', path, first, second, third);
 
-  // Registra callbacks para um parâmetro específico
   void param(String name, ParamMiddleware callback) {
-    if (!paramCallbacks.containsKey(name)) {
-      paramCallbacks[name] = [];
+    if (!_paramCallbacks.containsKey(name)) {
+      _paramCallbacks[name] = [];
     }
-    paramCallbacks[name]!.add(callback);
+    _paramCallbacks[name]!.add(callback);
   }
 
   void _addRoute(String method, String path, dynamic first,
       [dynamic second, dynamic third]) {
+    // Se a rota não for a raiz ("/"), remove a barra final para evitar duplicação.
+    if (path != "/" && path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
+    }
+
     final paramNames = <String>[];
-    final regexPath = RegExp(
-      '^' +
-          path.replaceAllMapped(RegExp(r':(\w+)'), (match) {
-            paramNames.add(match.group(1)!);
-            return '([^/]+)';
-          }) +
-          r'$',
-    );
+    String regexPattern = path.replaceAllMapped(RegExp(r'/:(\w+)\?'), (match) {
+      paramNames.add(match.group(1)!);
+      return '(?:/([^/]+))?';
+    });
+    regexPattern = regexPattern.replaceAllMapped(RegExp(r'/:(\w+)'), (match) {
+      paramNames.add(match.group(1)!);
+      return '/([^/]+)';
+    });
+    regexPattern =
+        regexPattern.replaceAllMapped(RegExp(r'/\*'), (match) => '(?:/(.*))?');
+
+    // Remove a barra inicial, se houver.
+    if (regexPattern.startsWith('/')) {
+      regexPattern = regexPattern.substring(1);
+    }
+
+    // Se o regexPattern for vazio (rota raiz), use expressão que aceita com ou sem barra.
+    final regexPath = regexPattern.isEmpty
+        ? RegExp('^/?\$')
+        : RegExp('^' + regexPattern + '/?\$');
 
     final List<dynamic> handlers = [];
     if (first is Middleware || first is RouteHandler) {
@@ -46,23 +59,54 @@ class Router {
     if (third != null) {
       handlers.add(third);
     }
-
     if (handlers.isEmpty) {
       throw ArgumentError("Route must have at least one handler.");
     }
-
-    // Ao adicionar uma rota, anexa os callbacks de parâmetros cadastrados
-    routes.putIfAbsent(method, () => []).add(
+    _routes.putIfAbsent(method, () => []).add(
           MapEntry(regexPath, {
             'handlers': handlers,
             'paramNames': paramNames,
-            'paramCallbacks': paramCallbacks // anexa mapa de callbacks
+            'paramCallbacks': _paramCallbacks
           }),
         );
   }
 
-  // Para permitir construção encadeada de rotas (como no Express)
   Route route(String path) => Route(path, this);
+
+  void all(String path, dynamic first, [dynamic second, dynamic third]) {
+    final methods = [
+      'GET',
+      'POST',
+      'PUT',
+      'DELETE',
+      'PATCH',
+      'HEAD',
+      'OPTIONS',
+      'TRACE'
+    ];
+    for (var method in methods) {
+      _addRoute(method, path, first, second, third);
+    }
+  }
+
+  void on(dynamic methods, dynamic paths, dynamic first,
+      [dynamic second, dynamic third]) {
+    if (methods is! List && methods is! String) {
+      throw ArgumentError('Methods parameter must be a String or List<String>');
+    }
+    if (paths is! List && paths is! String) {
+      throw ArgumentError('Paths parameter must be a String or List<String>');
+    }
+    final List<String> methodsList =
+        methods is String ? [methods] : List<String>.from(methods);
+    final List<String> pathsList =
+        paths is String ? [paths] : List<String>.from(paths);
+    for (var method in methodsList) {
+      for (var path in pathsList) {
+        _addRoute(method.toUpperCase(), path, first, second, third);
+      }
+    }
+  }
 }
 
 class Route {
@@ -72,7 +116,6 @@ class Route {
 
   Route(this.path, this.router);
 
-  // Executa para todos os verbos HTTP (middleware específico da rota)
   Route all(Middleware handler) {
     _commonHandlers.add(handler);
     return this;
@@ -104,26 +147,42 @@ class Route {
 }
 
 extension on Router {
-  // Método auxiliar para registro de rota via construção encadeada
   void _addRouteChain(String method, String path, List<Middleware> handlers) {
+    // Se a rota não for a raiz ("/"), remove a barra final para evitar duplicação.
+    if (path != "/" && path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
+    }
+
     final paramNames = <String>[];
-    final regexPath = RegExp(
-      '^' +
-          path.replaceAllMapped(RegExp(r':(\w+)'), (match) {
-            paramNames.add(match.group(1)!);
-            return '([^/]+)';
-          }) +
-          r'$',
-    );
+    String regexPattern = path.replaceAllMapped(RegExp(r'/:(\w+)\?'), (match) {
+      paramNames.add(match.group(1)!);
+      return '(?:/([^/]+))?';
+    });
+    regexPattern = regexPattern.replaceAllMapped(RegExp(r'/:(\w+)'), (match) {
+      paramNames.add(match.group(1)!);
+      return '/([^/]+)';
+    });
+    regexPattern =
+        regexPattern.replaceAllMapped(RegExp(r'/\*'), (match) => '(?:/(.*))?');
+
+    // Remove a barra inicial, se houver.
+    if (regexPattern.startsWith('/')) {
+      regexPattern = regexPattern.substring(1);
+    }
+
+    // Se o regexPattern for vazio (rota raiz), use expressão que aceita com ou sem barra.
+    final regexPath = regexPattern.isEmpty
+        ? RegExp('^/?\$')
+        : RegExp('^' + regexPattern + '/?\$');
+
     if (handlers.isEmpty) {
       throw ArgumentError("Route must have at least one handler.");
     }
-    // Anexa os callbacks de parâmetros também
-    routes.putIfAbsent(method, () => []).add(
+    _routes.putIfAbsent(method, () => []).add(
           MapEntry(regexPath, {
             'handlers': handlers,
             'paramNames': paramNames,
-            'paramCallbacks': paramCallbacks
+            'paramCallbacks': _paramCallbacks
           }),
         );
   }

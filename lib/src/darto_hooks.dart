@@ -55,7 +55,7 @@ class Hooks {
         hook(req, res);
       }
     } else {
-      res.status(HttpStatus.notFound).json({'error': 'Route not found'});
+      res.status(HttpStatus.notFound).send('Not found');
     }
   }
 }

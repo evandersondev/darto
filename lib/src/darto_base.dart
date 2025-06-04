@@ -24,7 +24,7 @@ class Darto {
   final Hooks addHook = Hooks();
 
   String _basePath = '';
-  Map<String, String> _corsOptions = {};
+  // Map<String, String> _corsOptions = {};
 
   Darto({bool? logger, bool? snakeCase, bool gzip = false})
       : _logger = logger ?? false,
@@ -34,7 +34,12 @@ class Darto {
   final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
   final Map<String, List<ParamMiddleware>> _paramCallbacks = {};
   final List<Middleware> _globalMiddlewares = [];
-  final List<Timeout> _errorMiddlewares = [];
+  // final List<Timeout> _errorMiddlewares = [];
+  Map<String, List<String>> _corsOptions = {};
+  final Map<String, List<ParamMiddleware>> paramCallbacks = {};
+
+  // List of error middlewares
+  final List<ErrorHandler> _errorMiddlewares = [];
 
   /// Sets a global configuration value.
   void set(String key, dynamic value) {
@@ -102,8 +107,15 @@ class Darto {
     _addRoute('PATCH', path, first, second, third);
   }
 
+  /// Registers middlewares, sub-routers, or static folders.
+  ///
+  /// If the first parameter is a function compatible with [ErrorHandler],
+  /// it is registered as an error-handling middleware (e.g., timeout).
+  ///
+  /// Additionally, if a single String parameter is provided, it is treated
+  /// as a static folder.
   void use(dynamic pathOrBuilder, [dynamic second]) {
-    if (pathOrBuilder is Timeout && second == null) {
+    if (pathOrBuilder is ErrorHandler && second == null) {
       _errorMiddlewares.add(pathOrBuilder);
     } else if (pathOrBuilder is Middleware) {
       _globalMiddlewares.add(pathOrBuilder);
@@ -342,10 +354,11 @@ class Darto {
     });
   }
 
-  void useCors(
-      {String origin = '*',
-      String methods = 'GET, POST, PUT, DELETE, OPTIONS',
-      String headers = 'Content-Type'}) {
+  void useCors({
+    List<String> origin = const ['*'],
+    List<String> methods = const ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    List<String> headers = const ['Content-Type'],
+  }) {
     _corsOptions = {
       'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': methods,
@@ -503,17 +516,18 @@ class Darto {
         }
       }
 
+      _applyCors(req, res);
       // Se nenhuma rota foi encontrada, envia 404 imediatamente
-      if (!handled) {
-        _applyCors(res);
+
+      // attach cors headers
+      if (req.method == 'OPTIONS') {
+        res.status(204).end();
+        continue;
+      } else if (!handled) {
         addHook.executeOnNotFound(req, res);
-        // if (!res.finished) {
-        //   res
-        //       .status(HttpStatus.notFound)
-        //       .send({"404": "Route not found (Auto Redirect)"});
-        // }
         continue;
       }
+
       _executeMiddlewares(req, res, middlewares);
       addHook.executeOnResponse(req, res);
     }
@@ -541,9 +555,12 @@ class Darto {
     next();
   }
 
+  // Executes all error middlewares
+  // will calls res.error() for a default JSON response when [res] not finished
   void _executeErrorMiddlewares(dynamic err, Request req, Response res) {
     int index = 0;
-    void nextError() {
+
+    void nextError([dynamic error]) {
       if (index < _errorMiddlewares.length) {
         final errorMiddleware = _errorMiddlewares[index++];
         errorMiddleware(err, req, res, nextError);
@@ -579,10 +596,31 @@ class Darto {
     return orderedValues;
   }
 
-  void _applyCors(Response res) {
-    _corsOptions.forEach((key, value) {
-      res._res.headers.set(key, value);
-    });
+  void _applyCors(Request req, Response res) {
+    // CORS not configured, do nothing
+    if (_corsOptions.isEmpty) return;
+
+    // Not a cross-origin request, no CORS headers needed
+    final origin = req.headers.get('origin');
+    if (origin == null) return;
+
+    final allowedOrigins = _corsOptions['Access-Control-Allow-Origin'] ?? [];
+
+    final isOriginAllowed =
+        allowedOrigins.contains('*') || allowedOrigins.contains(origin);
+
+    // If the origin is not allowed, do NOT set CORS headers.
+    // The browser will then block the request.
+    if (!isOriginAllowed) return;
+
+    // Set CORS default headers
+    for (var entry in _corsOptions.entries) {
+      res.set(entry.key, entry.value.join(','));
+    }
+
+    // override allow origin header to echo origin
+    // This correctly handles the '*' case as per CORS spec.
+    res.set('Access-Control-Allow-Origin', origin);
   }
 }
 

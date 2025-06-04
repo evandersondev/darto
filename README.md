@@ -169,6 +169,29 @@ void main() {
 }
 ```
 
+### Enable Cors
+
+To enable CORS (Cross-Origin Resource Sharing), you can use `useCors` helper. Here's an example:
+
+```dart
+void main() {
+  final app = Darto();
+
+  app.useCors(
+    origin: [
+        'https://example.com',
+        'https://another-domain.org'
+      ]
+    );
+
+  // Allow specific methods and headers
+  app.useCors(
+    methods: ['GET', 'POST'],
+    headers: ['Content-Type', 'Authorization'],
+  );
+}
+```
+
 <br>
 
 ## Middleware Usage 🛠️
@@ -192,6 +215,29 @@ void main() {
 
   app.listen(3000, () {
     print('🔹 Server is running at http://localhost:3000');
+  });
+}
+```
+
+### Error Middleware
+
+Error middlewares are applied to all incoming requests. You can register a error middleware using the `use` method.
+
+```dart
+void main() {
+  final app = Darto();
+
+  app.timeout(5000);
+
+  // Error middleware to handle timeouts
+  app.use((Err err, Request req, Response res, Next next) {
+    if (req.timedOut && !res.finished) {
+      res.status(SERVICE_UNAVAILABLE).json({
+        'error': 'Request timed out or internal error occurred.',
+      });
+    } else {
+      next(err);
+    }
   });
 }
 ```

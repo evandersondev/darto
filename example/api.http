@@ -27,7 +27,7 @@ http://localhost:8080/api/v1/app/events/1/attendees
 http://localhost:8080/api/v1/user/23
 
 ###
-http://localhost:8080/todos/23
+http://localhost:8080/api/v1/todos/23
 
 
 ### 
@@ -62,10 +62,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6I
 
 
 ###
-GET http://localhost:8080/delay
+GET http://localhost:8080/api/v1/delay
 
 ###
-POST http://localhost:8080/send-email
+POST http://localhost:8080/api/v1/send-email
 
 
 ###
@@ -85,7 +85,7 @@ OPTIONS http://localhost:8080/api/v1/options-test
 PATCH http://localhost:8080/api/v1/patch-test
 
 ###
-GET http://localhost:8080/not-found
+GET http://localhost:8080/api/v1/not-found
 
 ###
 GET http://localhost:8080/api/v1/fastify
@@ -100,6 +100,10 @@ GET http://localhost:8080/api/v1/new-routes/new
 POST http://localhost:8080/api/v1/new-routes/new
 
 ###
+
+PUT http://localhost:8080/api/v1/new-routes/new
+
+###
 GET http://localhost:8080/api/v1/app/product/1
 
 ###
@@ -112,7 +116,7 @@ POST http://localhost:8080/api/v1/all
 
 ###
 
-GET http://localhost:8080/api/v1/author/John/post/1
+GET http://localhost:8080/api/v1/author/null/post/1
 
 ###
 

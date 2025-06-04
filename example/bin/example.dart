@@ -107,15 +107,19 @@ void main() async {
 
   /// Serve static files from the 'public' directory.
 
-  // app.timeout(5000);
+  app.timeout(5000);
 
-  // app.use((Err err, Request req, Response res, Next next) {
-  //   if (!res.finished) {
-  //     res.status(SERVICE_UNAVAILABLE).json({
-  //       'error': 'Request timed out or internal error occurred.',
-  //     });
-  //   }
-  // });
+  app.use((Exception err, Request req, Response res, Next next) {
+    // Se o erro for de timeout, pode customizar a resposta,
+    // mas se não for, repassa para o próximo middleware.
+    if (req.timedOut && !res.finished) {
+      res.status(SERVICE_UNAVAILABLE).json({
+        'error': 'Request timed out or internal error occurred.',
+      });
+    } else {
+      next(err);
+    }
+  });
 
   app.get('/delay', (Request req, Response res) {
     Future.delayed(Duration(milliseconds: 6000), () {
@@ -136,7 +140,7 @@ void main() async {
       'createdAt': DateTime.now(),
     };
 
-    res.status(OK).send(todo);
+    res.status(OK).json(todo);
   });
 
   app.get('/tweets', (req, res) {

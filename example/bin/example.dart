@@ -348,6 +348,33 @@ void main() async {
     res.send(formData);
   });
 
+  app.get('/stream', (req, res) async {
+    return res.stream((stream) {
+      // Write all data through the stream controller to avoid conflicts
+      stream.write('Starting stream...\n');
+      stream.write('Data 1\n');
+      stream.write('Data 2\n');
+      stream.onAbort(() => print('Client disconnected'));
+    });
+  });
+
+  app.get('/text', (req, res) async {
+    return res.streamText((stream) {
+      stream.writeln('Line 1');
+      stream.writeln('Line 2');
+      stream.onAbort(() => print('Text stream aborted'));
+    });
+  });
+
+  app.get('/sse', (req, res) async {
+    return res.streamSSE((stream) async {
+      stream.event('Event 1', id: '1');
+      await Future.delayed(Duration(seconds: 1));
+      stream.event('Event 2', id: '2');
+      stream.onAbort(() => print('SSE connection closed'));
+    });
+  });
+
   app.listen(
     8080,
     //  () {

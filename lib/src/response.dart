@@ -547,6 +547,52 @@ class Response {
     final enc = _res.headers.value('accept-encoding') ?? '';
     return enc.contains('gzip');
   }
+
+  Future<Response> stream(
+      FutureOr<void> Function(DartoStream stream) callback) async {
+    if (_finished) throw StateError('Response already finished');
+    _res.headers.set('Transfer-Encoding', 'chunked');
+    final dartoStream = DartoStream(_res, _showLogger);
+    try {
+      await callback(dartoStream);
+    } catch (e) {
+      error(e);
+    }
+    _finished = true;
+    return this;
+  }
+
+  Future<Response> streamText(
+      FutureOr<void> Function(DartoStream stream) callback) async {
+    if (_finished) throw StateError('Response already finished');
+    _res.headers.contentType = ContentType.text;
+    _res.headers.set('Transfer-Encoding', 'chunked');
+    final dartoStream = DartoStream(_res, _showLogger);
+    try {
+      await callback(dartoStream);
+    } catch (e) {
+      error(e);
+    }
+    _finished = true;
+    return this;
+  }
+
+  Future<Response> streamSSE(
+      FutureOr<void> Function(DartoStream stream) callback) async {
+    if (_finished) throw StateError('Response already finished');
+    _res.headers.contentType = ContentType('text', 'event-stream');
+    _res.headers.set('Cache-Control', 'no-cache');
+    _res.headers.set('Connection', 'keep-alive');
+    _res.headers.set('Transfer-Encoding', 'chunked');
+    final dartoStream = DartoStream(_res, _showLogger);
+    try {
+      await callback(dartoStream);
+    } catch (e) {
+      error(e);
+    }
+    _finished = true;
+    return this;
+  }
 }
 
 extension ResponseExtension on Response {

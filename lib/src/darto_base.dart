@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import 'darto_header.dart';
 import 'darto_hooks.dart';
+import 'darto_stream.dart';
 import 'logger.dart';
 import 'types.dart';
 

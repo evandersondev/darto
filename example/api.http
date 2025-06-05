@@ -159,3 +159,12 @@ All text of description.
 
 ###
 GET http://localhost:8080/api/v1/books
+
+###
+GET http://localhost:8080/api/v1/stream
+
+###
+GET http://localhost:8080/api/v1/text
+
+###
+GET http://localhost:8080/api/v1/sse

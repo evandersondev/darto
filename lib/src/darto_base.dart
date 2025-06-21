@@ -563,16 +563,23 @@ class Darto {
     void nextError([dynamic error]) {
       if (index < _errorMiddlewares.length) {
         final errorMiddleware = _errorMiddlewares[index++];
-        errorMiddleware(err, req, res, nextError);
-      } else {
-        if (!res.finished) {
-          res.error(err);
-          addHook.executeOnError(err, req, res);
-        }
+
+        // recapture error when prev middleware not explicitly pass it
+        final captErr = error ?? err;
+
+        // make sure [error] is an Exception to satisfy middleware requirements
+        final exception = captErr is Exception ? captErr : Exception(captErr);
+        errorMiddleware(exception, req, res, nextError);
+      }
+
+      // if server has not response for [error] send default one
+      if (!res.finished) {
+        res.error(error);
+        addHook.executeOnError(error, req, res);
       }
     }
 
-    nextError();
+    nextError(err);
   }
 
   Map<String, String> _extractRouteParams(

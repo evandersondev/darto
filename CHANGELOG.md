@@ -1,3 +1,7 @@
+## 0.0.26
+
+- Ensure errorMiddleware receives Exception to prevent crash due to Error received.
+
 ## 0.0.25
 
 - Private methods, add new methods to Response, Resquest, DartoBase, and Router.

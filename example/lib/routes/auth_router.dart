@@ -1,5 +1,8 @@
-import 'package:darto/darto.dart';
 import 'package:zard/zard.dart';
+
+import 'package:darto/darto.dart';
+
+import '../middlewares/logger_test_middleware.dart';
 
 Router authRouter() {
   final router = Router();
@@ -7,6 +10,8 @@ Router authRouter() {
   router.get('/', (req, res) {
     res.send('Login Page');
   });
+
+  router.use(loggerTestMiddleware);
 
   router.post('/resgiter', (Request req, Response res) async {
     final schema = z.map({

@@ -1,3 +1,7 @@
+## 0.0.27
+
+- Add support middleware for context routes.
+
 ## 0.0.26
 
 - Ensure errorMiddleware receives Exception to prevent crash due to Error received.

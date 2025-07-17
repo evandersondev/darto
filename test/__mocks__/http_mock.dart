@@ -16,7 +16,7 @@ class MockNext extends Mock {
 }
 
 class MockMiddleware extends Mock {
-  dynamic call(Request req, Response res, Next next);
+  dynamic call(Request req, Response res, NextFunction next);
 }
 
 class MockRouteHandler extends Mock {

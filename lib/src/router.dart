@@ -1,7 +1,7 @@
 part of 'darto_base.dart';
 
 class Router {
-  final Map<String, List<MapEntry<RegExp, Map<String, dynamic>>>> _routes = {};
+  final List<Layer> _layers = [];
   final Map<String, List<ParamMiddleware>> _paramCallbacks = {};
 
   void get(String path, dynamic first, [dynamic second, dynamic third]) =>
@@ -10,8 +10,50 @@ class Router {
       _addRoute('POST', path, first, second, third);
   void put(String path, dynamic first, [dynamic second, dynamic third]) =>
       _addRoute('PUT', path, first, second, third);
+  void patch(String path, dynamic first, [dynamic second, dynamic third]) =>
+      _addRoute('PATCH', path, first, second, third);
   void delete(String path, dynamic first, [dynamic second, dynamic third]) =>
       _addRoute('DELETE', path, first, second, third);
+  void head(String path, dynamic first, [dynamic second, dynamic third]) =>
+      _addRoute('HEAD', path, first, second, third);
+  void trace(String path, dynamic first, [dynamic second, dynamic third]) =>
+      _addRoute('TRACE', path, first, second, third);
+  void options(String path, dynamic first, [dynamic second, dynamic third]) =>
+      _addRoute('OPTIONS', path, first, second, third);
+
+  void use(dynamic pathOrMiddleware, [dynamic second]) {
+    if (pathOrMiddleware is Middleware && second == null) {
+      _layers.add(Layer(
+        handlers: [pathOrMiddleware],
+        paramCallbacks: _paramCallbacks,
+      ));
+    } else if (pathOrMiddleware is String && second is Middleware) {
+      final paramNames = <String>[];
+      String path = pathOrMiddleware;
+      String regexPattern =
+          path.replaceAllMapped(RegExp(r'/:(\w+)\?'), (match) {
+        paramNames.add(match.group(1)!);
+        return '(?:/([^/]+))?';
+      }).replaceAllMapped(RegExp(r'/:(\w+)'), (match) {
+        paramNames.add(match.group(1)!);
+        return '/([^/]+)';
+      }).replaceAllMapped(RegExp(r'/\*'), (match) => '(?:/(.*))?');
+      if (regexPattern.startsWith('/'))
+        regexPattern = regexPattern.substring(1);
+      final regex = regexPattern.isEmpty
+          ? RegExp('^/?\$')
+          : RegExp('^/?' + regexPattern + '/?\$');
+      _layers.add(Layer(
+        path: path,
+        regex: regex,
+        paramNames: paramNames,
+        handlers: [second],
+        paramCallbacks: _paramCallbacks,
+      ));
+    } else {
+      throw ArgumentError('Invalid arguments for Router.use');
+    }
+  }
 
   void param(String name, ParamMiddleware callback) {
     if (!_paramCallbacks.containsKey(name)) {
@@ -22,7 +64,6 @@ class Router {
 
   void _addRoute(String method, String path, dynamic first,
       [dynamic second, dynamic third]) {
-    // Se a rota não for a raiz ("/"), remove a barra final para evitar duplicação.
     if (path != "/" && path.endsWith('/')) {
       path = path.substring(0, path.length - 1);
     }
@@ -31,44 +72,31 @@ class Router {
     String regexPattern = path.replaceAllMapped(RegExp(r'/:(\w+)\?'), (match) {
       paramNames.add(match.group(1)!);
       return '(?:/([^/]+))?';
-    });
-    regexPattern = regexPattern.replaceAllMapped(RegExp(r'/:(\w+)'), (match) {
+    }).replaceAllMapped(RegExp(r'/:(\w+)'), (match) {
       paramNames.add(match.group(1)!);
       return '/([^/]+)';
-    });
-    regexPattern =
-        regexPattern.replaceAllMapped(RegExp(r'/\*'), (match) => '(?:/(.*))?');
-
-    // Remove a barra inicial, se houver.
-    if (regexPattern.startsWith('/')) {
-      regexPattern = regexPattern.substring(1);
-    }
-
-    // Se o regexPattern for vazio (rota raiz), use expressão que aceita com ou sem barra.
+    }).replaceAllMapped(RegExp(r'/\*'), (match) => '(?:/(.*))?');
+    if (regexPattern.startsWith('/')) regexPattern = regexPattern.substring(1);
     final regexPath = regexPattern.isEmpty
         ? RegExp('^/?\$')
-        : RegExp('^' + regexPattern + '/?\$');
+        : RegExp('^/?' + regexPattern + '/?\$');
 
     final List<dynamic> handlers = [];
-    if (first is Middleware || first is RouteHandler) {
-      handlers.add(first);
-    }
-    if (second != null) {
-      handlers.add(second);
-    }
-    if (third != null) {
-      handlers.add(third);
-    }
+    if (first is Middleware || first is RouteHandler) handlers.add(first);
+    if (second != null) handlers.add(second);
+    if (third != null) handlers.add(third);
     if (handlers.isEmpty) {
       throw ArgumentError("Route must have at least one handler.");
     }
-    _routes.putIfAbsent(method, () => []).add(
-          MapEntry(regexPath, {
-            'handlers': handlers,
-            'paramNames': paramNames,
-            'paramCallbacks': _paramCallbacks
-          }),
-        );
+
+    _layers.add(Layer(
+      path: path,
+      regex: regexPath,
+      paramNames: paramNames,
+      method: method,
+      handlers: handlers,
+      paramCallbacks: _paramCallbacks,
+    ));
   }
 
   Route route(String path) => Route(path, this);
@@ -148,7 +176,6 @@ class Route {
 
 extension on Router {
   void _addRouteChain(String method, String path, List<Middleware> handlers) {
-    // Se a rota não for a raiz ("/"), remove a barra final para evitar duplicação.
     if (path != "/" && path.endsWith('/')) {
       path = path.substring(0, path.length - 1);
     }
@@ -157,33 +184,26 @@ extension on Router {
     String regexPattern = path.replaceAllMapped(RegExp(r'/:(\w+)\?'), (match) {
       paramNames.add(match.group(1)!);
       return '(?:/([^/]+))?';
-    });
-    regexPattern = regexPattern.replaceAllMapped(RegExp(r'/:(\w+)'), (match) {
+    }).replaceAllMapped(RegExp(r'/:(\w+)'), (match) {
       paramNames.add(match.group(1)!);
       return '/([^/]+)';
-    });
-    regexPattern =
-        regexPattern.replaceAllMapped(RegExp(r'/\*'), (match) => '(?:/(.*))?');
-
-    // Remove a barra inicial, se houver.
-    if (regexPattern.startsWith('/')) {
-      regexPattern = regexPattern.substring(1);
-    }
-
-    // Se o regexPattern for vazio (rota raiz), use expressão que aceita com ou sem barra.
+    }).replaceAllMapped(RegExp(r'/\*'), (match) => '(?:/(.*))?');
+    if (regexPattern.startsWith('/')) regexPattern = regexPattern.substring(1);
     final regexPath = regexPattern.isEmpty
         ? RegExp('^/?\$')
-        : RegExp('^' + regexPattern + '/?\$');
+        : RegExp('^/?' + regexPattern + '/?\$');
 
     if (handlers.isEmpty) {
       throw ArgumentError("Route must have at least one handler.");
     }
-    _routes.putIfAbsent(method, () => []).add(
-          MapEntry(regexPath, {
-            'handlers': handlers,
-            'paramNames': paramNames,
-            'paramCallbacks': _paramCallbacks
-          }),
-        );
+
+    _layers.add(Layer(
+      path: path,
+      regex: regexPath,
+      paramNames: paramNames,
+      method: method,
+      handlers: handlers,
+      paramCallbacks: _paramCallbacks,
+    ));
   }
 }

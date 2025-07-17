@@ -10,7 +10,7 @@ class Upload {
   Upload(this.saveDir);
 
   Middleware single(String fieldName) {
-    return (Request req, Response res, Next next) async {
+    return (Request req, Response res, NextFunction next) async {
       try {
         final contentType = req.headers.get('content-type');
         if (contentType == null ||

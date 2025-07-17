@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:darto/darto.dart';
-import 'package:example/middlewares/logger_test_middleware.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
@@ -9,6 +7,8 @@ import 'package:example/routes/book_router.dart';
 import 'package:example/routes/fastify_routes.dart';
 import 'package:example/routes/new_router.dart';
 import 'package:path/path.dart';
+
+import 'package:darto/darto.dart';
 
 void main() async {
   final app = Darto(
@@ -31,16 +31,13 @@ void main() async {
     res.sendFile('public/about.html');
   });
 
-  // Middleware global
-  app.use(loggerTestMiddleware);
-
   // Config template engine
   // app.set('views', join(Directory.current.path, 'lib', 'pages'));
   // app.set('view engine', 'mustache');
 
   app.engine('mustache', join(Directory.current.path, 'lib', 'pages'));
 
-  app.use((Request req, Response res, Next next) {
+  app.use((Request req, Response res, NextFunction next) {
     res.setRender((content) {
       return res.html('''
         <html>
@@ -109,7 +106,7 @@ void main() async {
 
   app.timeout(5000);
 
-  app.use((Exception err, Request req, Response res, Next next) {
+  app.use((Exception err, Request req, Response res, NextFunction next) {
     // Se o erro for de timeout, pode customizar a resposta,
     // mas se não for, repassa para o próximo middleware.
     if (req.timedOut && !res.finished) {
@@ -189,14 +186,14 @@ void main() async {
     next();
   }
 
-  middleware2(Request req, Response res, Next next) async {
+  middleware2(Request req, Response res, NextFunction next) async {
     print(req.path);
     print('Middleware 2');
     next();
   }
 
   // Middleware global
-  app.use((Request req, Response res, Next next) {
+  app.use((Request req, Response res, NextFunction next) {
     app.set('title', 'Tweets');
     next();
   });

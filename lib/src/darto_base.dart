@@ -11,6 +11,7 @@ import 'darto_hooks.dart';
 import 'layer.dart';
 import 'logger.dart';
 import 'types.dart';
+import 'ws.dart';
 
 part 'request.dart';
 part 'response.dart';
@@ -37,6 +38,11 @@ class Darto {
 
   void set(String key, dynamic value) {
     _settings[key] = value;
+  }
+
+  WebSocketServer? _wsServer;
+  void useWebSocket(WebSocketServer server) {
+    _wsServer = server;
   }
 
   void engine(String engine, String path) {
@@ -393,6 +399,27 @@ class Darto {
     }
     callback?.call();
     await for (HttpRequest request in server) {
+      if (_wsServer != null && WebSocketTransformer.isUpgradeRequest(request)) {
+        final path = request.uri.path;
+        final handler = _wsServer!.match(path);
+
+        if (handler != null) {
+          final accepted = await _wsServer!.executeMiddlewares(path, request);
+          if (!accepted) {
+            request.response
+              ..statusCode = HttpStatus.forbidden
+              ..write('WebSocket Forbidden')
+              ..close();
+            continue;
+          }
+
+          final socket = await WebSocketTransformer.upgrade(request);
+          _wsServer!.addClient(path, socket);
+          handler.handle(socket);
+          continue;
+        }
+      }
+
       final method = request.method;
       final path = request.uri.path;
       if (_logger) {

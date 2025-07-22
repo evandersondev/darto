@@ -1,3 +1,7 @@
+## 0.0.28
+
+- Fix websocket to broadcastings and update sintaxe.
+
 ## 0.0.27
 
 - Add support middleware for context routes.

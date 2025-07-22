@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
@@ -7,8 +8,6 @@ import 'package:example/routes/book_router.dart';
 import 'package:example/routes/fastify_routes.dart';
 import 'package:example/routes/new_router.dart';
 import 'package:path/path.dart';
-
-import 'package:darto/darto.dart';
 
 void main() async {
   final app = Darto(
@@ -59,11 +58,12 @@ void main() async {
   });
 
   app.get('/', (Request req, Response res) {
-    res.render('index', {
-      'title': 'Welcome',
-      'header': 'Hello',
-      'message': 'This is a sample mustache template rendered with Darto.',
-    });
+    return res.sendFile('public/websocket_test.html');
+    // res.render('index', {
+    //   'title': 'Welcome',
+    //   'header': 'Hello',
+    //   'message': 'This is a sample mustache template rendered with Darto.',
+    // });
   });
 
   // Get instance of DartoMailer
@@ -221,15 +221,15 @@ void main() async {
   });
 
   // Instance of WebSocket server
-  final server = DartoWebsocket();
+  // final server = DartoWebsocket();
 
-  // Register a handler for the 'connection' event
-  server.on('connection', (DartoSocketChannel socket) {
-    // Handle incoming messages from the client
-    socket.stream.listen((message) {
-      socket.sink.add('Echo: $message');
-    });
-  });
+  // // Register a handler for the 'connection' event
+  // server.on('connection', (DartoSocketChannel socket) {
+  //   // Handle incoming messages from the client
+  //   socket.stream.listen((message) {
+  //     socket.sink.add('Echo: $message');
+  //   });
+  // });
 
   app.get('/home', (req, res) {
     return {
@@ -344,6 +344,28 @@ void main() async {
 
     res.send(formData);
   });
+
+  final ws = WebSocketServer();
+
+  ws
+      .on('/chat')
+      .onConnect((socket) {
+        print('Novo cliente conectado');
+        socket.send('Bem-vindo ao chat!');
+      })
+      .onMessage((socket, message) {
+        // print('Mensagem recebida: $message');
+        // socket.send('Você disse: $message');
+        ws.broadcast('/chat', message);
+      })
+      .onDisconnect((socket) {
+        print('Cliente desconectado');
+      })
+      .onError((socket, error) {
+        print('Erro: $error');
+      });
+
+  // app.useWebSocket(ws);
 
   app.listen(
     8080,

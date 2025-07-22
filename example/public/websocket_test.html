@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <title>Teste de WebSocket</title>
 </head>
+
 <body>
   <h1>Teste de WebSocket</h1>
   <div id="status"></div>
   <script>
     const statusDiv = document.getElementById('status');
-    const ws = new WebSocket('ws://localhost:3001');
+    const ws = new WebSocket('ws://localhost:8080/chat');
 
     ws.onopen = () => {
       statusDiv.innerHTML += '<p>Conectado ao servidor WebSocket.</p>';
@@ -29,4 +31,5 @@
     };
   </script>
 </body>
+
 </html>

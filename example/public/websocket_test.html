@@ -1,34 +1,353 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 
 <head>
+  <title>WebSocket Client - Teste Completo</title>
   <meta charset="UTF-8">
-  <title>Teste de WebSocket</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
-  <h1>Teste de WebSocket</h1>
-  <div id="status"></div>
+<body class="bg-[#ece5dd] min-h-screen flex flex-col items-center font-sans">
+  <div class="w-full max-w-xl mt-8 bg-[#ffffff] rounded-lg shadow-lg flex flex-col">
+    <div class="bg-[#075e54] rounded-t-lg px-6 py-4 flex items-center">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="Logo" class="h-8 w-8 mr-3">
+      <h1 class="text-white text-xl font-bold">Teste Completo WebSocket</h1>
+    </div>
+
+    <div id="messages" class="flex-1 px-4 py-3 overflow-y-auto border-b border-gray-200 h-[400px] bg-[#ece5dd]">
+      <!-- Mensagens aparecem aqui -->
+    </div>
+
+    <div class="px-4 py-2 bg-[#f7f7f7] border-b border-gray-200">
+      <div class="flex items-center space-x-2">
+        <input type="text" id="messageInput" placeholder="Digite sua mensagem..."
+          class="flex-1 rounded-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#25d366] bg-white" />
+        <button onclick="sendMessage()"
+          class="bg-[#25d366] text-white rounded-full px-4 py-2 font-semibold hover:bg-[#128c7e] transition">Enviar</button>
+        <button onclick="joinChat()"
+          class="bg-[#075e54] text-white rounded-full px-4 py-2 font-semibold hover:bg-[#128c7e] transition">Entrar</button>
+      </div>
+    </div>
+
+    <div class="px-4 py-2 bg-[#f7f7f7] border-b border-gray-200">
+      <div class="flex items-center space-x-2">
+        <button onclick="startTyping()"
+          class="bg-[#34b7f1] text-white rounded-full px-4 py-2 font-semibold hover:bg-[#128c7e] transition">Começar a
+          Digitar</button>
+        <button onclick="stopTyping()"
+          class="bg-[#f44336] text-white rounded-full px-4 py-2 font-semibold hover:bg-[#128c7e] transition">Parar de
+          Digitar</button>
+      </div>
+    </div>
+
+    <div class="px-4 py-2 bg-[#f7f7f7] border-b border-gray-200">
+      <div class="flex items-center space-x-2">
+        <button onclick="sendGameMove()"
+          class="bg-[#ffeb3b] text-[#075e54] rounded-full px-4 py-2 font-semibold hover:bg-[#128c7e] transition">Enviar
+          Movimento</button>
+        <button onclick="updateGameState()"
+          class="bg-[#ffc107] text-[#075e54] rounded-full px-4 py-2 font-semibold hover:bg-[#128c7e] transition">Atualizar
+          Estado</button>
+      </div>
+    </div>
+
+    <div class="px-4 py-2 bg-[#f7f7f7] border-b border-gray-200">
+      <div class="flex items-center space-x-2">
+        <input type="text" id="topicInput" placeholder="Nome do tópico"
+          class="flex-1 rounded-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#25d366] bg-white" />
+        <button onclick="subscribeToTopic()"
+          class="bg-[#25d366] text-white rounded-full px-4 py-2 font-semibold hover:bg-[#128c7e] transition">Inscrever-se</button>
+        <button onclick="sendNotification()"
+          class="bg-[#075e54] text-white rounded-full px-4 py-2 font-semibold hover:bg-[#128c7e] transition">Notificar</button>
+      </div>
+    </div>
+
+    <div class="px-4 py-2 bg-[#f7f7f7] rounded-b-lg">
+      <div class="flex items-center space-x-2"></div>
+      <input type="text" id="customEventInput" placeholder="Dados do evento"
+        class="flex-1 rounded-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#25d366] bg-white" />
+      <button onclick="sendCustomEvent()"
+        class="bg-[#128c7e] text-white rounded-full px-4 py-2 font-semibold hover:bg-[#25d366] transition">Evento</button>
+    </div>
+  </div>
+  </div>
+
   <script>
-    const statusDiv = document.getElementById('status');
-    const ws = new WebSocket('ws://localhost:8080/chat');
+    // Conecta ao servidor WebSocket
+    const ws = new WebSocket('ws://localhost:8080');
+    let username = 'User' + Math.floor(Math.random() * 1000);
 
-    ws.onopen = () => {
-      statusDiv.innerHTML += '<p>Conectado ao servidor WebSocket.</p>';
-      ws.send('Olá, servidor!');
+    ws.onopen = function (event) {
+      console.log('Conectado ao WebSocket');
+      addMessage('Conectado ao servidor!', 'system');
+      setTimeout(joinChat, 1000);
     };
 
-    ws.onmessage = (event) => {
-      statusDiv.innerHTML += '<p>Recebido: ' + event.data + '</p>';
+    ws.onmessage = function (event) {
+      try {
+        const data = JSON.parse(event.data);
+        handleStructuredMessage(data);
+      } catch (e) {
+        addMessage(event.data, 'system');
+      }
     };
 
-    ws.onclose = () => {
-      statusDiv.innerHTML += '<p>Conexão fechada.</p>';
+    ws.onclose = function (event) {
+      console.log('Conexão WebSocket fechada');
+      addMessage('Desconectado do servidor', 'system');
     };
 
-    ws.onerror = (error) => {
-      statusDiv.innerHTML += '<p>Erro: ' + error + '</p>';
+    ws.onerror = function (error) {
+      console.error('Erro WebSocket:', error);
+      addMessage('Erro na conexão', 'system');
     };
+
+    function handleStructuredMessage(data) {
+      switch (data.event) {
+        case 'welcome':
+          addMessage(`Servidor: ${data.data}`, 'system');
+          break;
+        case 'newMessage':
+          addMessage(`${data.data.username}: ${data.data.message}`, 'user');
+          break;
+        case 'userJoined':
+          addMessage(`${data.data.username} entrou no chat`, 'system');
+          break;
+        case 'userLeft':
+          addMessage(`Cliente ${data.data.clientId} saiu do chat`, 'system');
+          break;
+        case 'userTyping':
+          if (data.data.isTyping) {
+            showTypingIndicator(`${data.data.username} está digitando...`);
+          } else {
+            hideTypingIndicator();
+          }
+          break;
+        case 'notification':
+          addMessage(`📢 Notificação: ${data.data.message}`, 'notification');
+          break;
+        case 'subscribed':
+          addMessage(`✅ ${data.data.message}`, 'system');
+          break;
+        case 'gameState':
+          addMessage(`🎮 Estado do jogo atualizado: ${JSON.stringify(data.data)}`, 'system');
+          break;
+        case 'playerMoved':
+          addMessage(`🏃 Jogador ${data.data.playerId} moveu para: (${data.data.position.x}, ${data.data.position.y})`, 'system');
+          break;
+        case 'customEvent':
+          addMessage(`🔧 Evento personalizado: ${JSON.stringify(data.data)}`, 'notification');
+          break;
+        default:
+          console.log('Evento desconhecido:', data);
+          addMessage(`Evento desconhecido: ${data.event}`, 'system');
+      }
+    }
+
+    // Funções de Chat
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+      if (message && ws.readyState === WebSocket.OPEN) {
+        const messageData = {
+          event: 'chatMessage',
+          data: {
+            username: username,
+            message: message,
+            timestamp: new Date().toISOString()
+          }
+        };
+        ws.send(JSON.stringify(messageData));
+        addMessage(`Você: ${message}`, 'user own');
+        input.value = '';
+      }
+    }
+
+    function joinChat() {
+      if (ws.readyState === WebSocket.OPEN) {
+        const joinData = {
+          event: 'userJoin',
+          data: {
+            username: username
+          }
+        };
+        ws.send(JSON.stringify(joinData));
+        addMessage(`Entrando no chat como ${username}`, 'system');
+      }
+    }
+
+    // Funções de Digitação
+    function startTyping() {
+      if (ws.readyState === WebSocket.OPEN) {
+        const typingData = {
+          event: 'typing',
+          data: {
+            username: username,
+            isTyping: true
+          }
+        };
+        ws.send(JSON.stringify(typingData));
+      }
+    }
+
+    function stopTyping() {
+      if (ws.readyState === WebSocket.OPEN) {
+        const typingData = {
+          event: 'typing',
+          data: {
+            username: username,
+            isTyping: false
+          }
+        };
+        ws.send(JSON.stringify(typingData));
+      }
+    }
+
+    // Funções de Jogo
+    function sendGameMove() {
+      if (ws.readyState === WebSocket.OPEN) {
+        const moveData = {
+          event: 'playerMove',
+          data: {
+            position: {
+              x: Math.floor(Math.random() * 100),
+              y: Math.floor(Math.random() * 100)
+            }
+          }
+        };
+        ws.send(JSON.stringify(moveData));
+        addMessage(`Você se moveu para: (${moveData.data.position.x}, ${moveData.data.position.y})`, 'user own');
+      }
+    }
+
+    function updateGameState() {
+      if (ws.readyState === WebSocket.OPEN) {
+        const gameData = {
+          event: 'gameStateUpdate',
+          data: {
+            level: Math.floor(Math.random() * 10) + 1,
+            score: Math.floor(Math.random() * 1000),
+            players: Math.floor(Math.random() * 5) + 1
+          }
+        };
+        ws.send(JSON.stringify(gameData));
+        addMessage(`Estado do jogo atualizado: Level ${gameData.data.level}, Score ${gameData.data.score}`, 'user own');
+      }
+    }
+
+    // Funções de Notificação
+    function subscribeToTopic() {
+      const topicInput = document.getElementById('topicInput');
+      const topic = topicInput.value.trim();
+      if (topic && ws.readyState === WebSocket.OPEN) {
+        const subscribeData = {
+          event: 'subscribe',
+          data: {
+            topic: topic
+          }
+        };
+        ws.send(JSON.stringify(subscribeData));
+        topicInput.value = '';
+      }
+    }
+
+    function sendNotification() {
+      if (ws.readyState === WebSocket.OPEN) {
+        const notificationData = {
+          event: 'notification',
+          data: {
+            message: `Notificação de ${username} às ${new Date().toLocaleTimeString()}`,
+            type: 'info',
+            sender: username
+          }
+        };
+        ws.send(JSON.stringify(notificationData));
+      }
+    }
+
+    // Função de Evento Personalizado
+    function sendCustomEvent() {
+      const customInput = document.getElementById('customEventInput');
+      const customData = customInput.value.trim();
+      if (customData && ws.readyState === WebSocket.OPEN) {
+        const eventData = {
+          event: 'customEvent',
+          data: {
+            message: customData,
+            sender: username,
+            timestamp: new Date().toISOString()
+          }
+        };
+        ws.send(JSON.stringify(eventData));
+        customInput.value = '';
+        addMessage(`Evento personalizado enviado: ${customData}`, 'user own');
+      }
+    }
+
+    // Funções Utilitárias
+    function addMessage(message, type) {
+      const messagesDiv = document.getElementById('messages');
+      const messageElement = document.createElement('div');
+      let baseClasses = "message my-2 px-4 py-2 rounded-lg max-w-[80%] break-words";
+      let time = `[${new Date().toLocaleTimeString()}] `;
+      if (type.includes('system')) {
+        messageElement.className = baseClasses + " bg-gray-200 text-gray-700 italic self-center";
+      } else if (type.includes('user')) {
+        messageElement.className = baseClasses + " bg-[#e3f2fd] text-gray-900 self-start";
+      }
+      if (type.includes('own')) {
+        messageElement.className = baseClasses + " bg-[#dcf8c6] text-gray-900 self-end ml-auto";
+      }
+      if (type.includes('notification')) {
+        messageElement.className = baseClasses + " bg-[#e8f5e9] text-[#2e7d32] self-center";
+      }
+      if (type.includes('typing')) {
+        messageElement.className = baseClasses + " bg-[#fff3e0] text-gray-500 text-sm self-start";
+        messageElement.id = 'typing-indicator';
+        time = '';
+      }
+      messageElement.textContent = time + message;
+      messagesDiv.appendChild(messageElement);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function showTypingIndicator(message) {
+      hideTypingIndicator();
+      const messagesDiv = document.getElementById('messages');
+      const typingElement = document.createElement('div');
+      typingElement.className = "message my-2 px-4 py-2 rounded-lg bg-[#fff3e0] text-gray-500 text-sm self-start";
+      typingElement.id = 'typing-indicator';
+      typingElement.textContent = message;
+      messagesDiv.appendChild(typingElement);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      const typingElement = document.getElementById('typing-indicator');
+      if (typingElement) {
+        typingElement.remove();
+      }
+    }
+
+    document.getElementById('messageInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    document.getElementById('customEventInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        sendCustomEvent();
+      }
+    });
+
+    document.getElementById('topicInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        subscribeToTopic();
+      }
+    });
   </script>
 </body>
 

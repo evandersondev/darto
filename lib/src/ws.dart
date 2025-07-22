@@ -6,98 +6,206 @@ import 'dart:io';
 
 typedef WebSocketMiddleware = FutureOr<bool> Function(HttpRequest request);
 
-class WebSocketChannelHandler {
-  void Function(WebSocket socket)? _onConnect;
-  void Function(WebSocket socket, dynamic message)? _onMessage;
-  void Function(WebSocket socket)? _onDisconnect;
-  void Function(WebSocket socket, Object error)? _onError;
-
-  WebSocketChannelHandler onConnect(void Function(WebSocket socket) handler) {
-    _onConnect = handler;
-    return this;
-  }
-
-  WebSocketChannelHandler onMessage(
-      void Function(WebSocket socket, dynamic message) handler) {
-    _onMessage = handler;
-    return this;
-  }
-
-  WebSocketChannelHandler onDisconnect(
-      void Function(WebSocket socket) handler) {
-    _onDisconnect = handler;
-    return this;
-  }
-
-  WebSocketChannelHandler onError(
-      void Function(WebSocket socket, Object error) handler) {
-    _onError = handler;
-    return this;
-  }
-
-  void handle(WebSocket socket) {
-    _onConnect?.call(socket);
-    socket.listen(
-      (data) => _onMessage?.call(socket, data),
-      onDone: () => _onDisconnect?.call(socket),
-      onError: (err) => _onError?.call(socket, err),
-    );
-  }
-}
-
 class WebSocketServer {
-  final _clients = <String, List<WebSocket>>{};
-  final _handlers = <String, WebSocketChannelHandler>{};
-  final _middlewares = <String, List<WebSocketMiddleware>>{};
+  final _clients = <WebSocket>[];
+  final _middlewares = <WebSocketMiddleware>[];
+  final _globalHandlers = <String, void Function(WebSocket)>{};
+  final _socketEventHandlers =
+      <WebSocket, Map<String, void Function(dynamic)>>{};
 
-  WebSocketChannelHandler on(String path) {
-    final handler = WebSocketChannelHandler();
-    _handlers[path] = handler;
-    _clients[path] = [];
-    return handler;
+  // Método para eventos globais (similar ao Node.js)
+  void on(String event, void Function(WebSocket socket) handler) {
+    _globalHandlers[event] = handler;
   }
 
-  void use(String path, WebSocketMiddleware middleware) {
-    _middlewares.putIfAbsent(path, () => []).add(middleware);
+  void use(WebSocketMiddleware middleware) {
+    _middlewares.add(middleware);
   }
 
-  WebSocketChannelHandler? match(String path) => _handlers[path];
-
-  Future<bool> executeMiddlewares(String path, HttpRequest req) async {
-    final middlewares = _middlewares[path] ?? [];
-    for (final middleware in middlewares) {
+  Future<bool> executeMiddlewares(HttpRequest req) async {
+    for (final middleware in _middlewares) {
       final result = await middleware(req);
       if (!result) return false;
     }
     return true;
   }
 
-  void addClient(String path, WebSocket socket) {
-    _clients[path]?.add(socket);
-    socket.done.then((_) => _clients[path]?.remove(socket));
+  void addClient(WebSocket socket) {
+    _clients.add(socket);
+    _socketEventHandlers[socket] = <String, void Function(dynamic)>{};
+
+    // Configurar o broadcast para este socket
+    WebSocketBroadcast.setServer(this, socket);
+
+    // Chamar handler de conexão
+    final connectionHandler = _globalHandlers['connection'];
+    if (connectionHandler != null) {
+      connectionHandler(socket);
+    }
+
+    // Configurar listeners para eventos do socket
+    socket.listen(
+      (data) {
+        // Chamar handler global de message se existir
+        final messageHandler = _globalHandlers['message'];
+        if (messageHandler != null) {
+          messageHandler(socket);
+        }
+
+        // Processar eventos específicos do socket
+        try {
+          final decoded = jsonDecode(data);
+          if (decoded is Map<String, dynamic> && decoded.containsKey('event')) {
+            final event = decoded['event'] as String;
+            final eventData = decoded['data'];
+
+            final socketHandlers = _socketEventHandlers[socket];
+            if (socketHandlers != null && socketHandlers.containsKey(event)) {
+              socketHandlers[event]!(eventData);
+            }
+          }
+        } catch (e) {
+          // Se não for JSON válido, trata como mensagem simples
+          final socketHandlers = _socketEventHandlers[socket];
+          if (socketHandlers != null && socketHandlers.containsKey('message')) {
+            socketHandlers['message']!(data);
+          }
+        }
+      },
+      onDone: () {
+        _clients.remove(socket);
+        _socketEventHandlers.remove(socket);
+
+        final closeHandler = _globalHandlers['close'];
+        if (closeHandler != null) {
+          closeHandler(socket);
+        }
+      },
+      onError: (err) {
+        final errorHandler = _globalHandlers['error'];
+        if (errorHandler != null) {
+          errorHandler(socket);
+        }
+      },
+    );
+
+    // Chamar handler de open
+    final openHandler = _globalHandlers['open'];
+    if (openHandler != null) {
+      openHandler(socket);
+    }
   }
 
-  void broadcast(String path, dynamic data) {
-    for (final socket in _clients[path] ?? []) {
+  void broadcast(dynamic data) {
+    for (final socket in _clients) {
       if (socket.readyState == WebSocket.open) {
         socket.add(data);
       }
     }
   }
 
-  void sendJson(String path, Map<String, dynamic> data) {
-    broadcast(path, jsonEncode(data));
+  void broadcastJson(Map<String, dynamic> data) {
+    broadcast(jsonEncode(data));
   }
 
-  List<WebSocket> getClients(String path) => _clients[path] ?? [];
+  void broadcastEmit(String event, dynamic data) {
+    final message = jsonEncode({
+      'event': event,
+      'data': data,
+    });
+    broadcast(message);
+  }
+
+  List<WebSocket> getClients() => List.unmodifiable(_clients);
+
+  // Método interno para registrar event handlers específicos do socket
+  void _registerSocketEventHandler(
+      WebSocket socket, String event, void Function(dynamic) handler) {
+    final socketHandlers = _socketEventHandlers[socket];
+    if (socketHandlers != null) {
+      socketHandlers[event] = handler;
+    }
+  }
 }
 
 extension WebSocketUtils on WebSocket {
   void sendJson(Map<String, dynamic> data) {
     add(jsonEncode(data));
   }
+
+  // Método emit para enviar dados para o socket específico
+  void emit(String event, dynamic data) {
+    final message = jsonEncode({
+      'event': event,
+      'data': data,
+    });
+    add(message);
+  }
+
+  // Método on para escutar eventos específicos
+  void on(String event, void Function(dynamic data) handler) {
+    final server = WebSocketBroadcast._getServerForSocket(this);
+    if (server != null) {
+      server._registerSocketEventHandler(this, event, handler);
+    }
+  }
+
+  // Método destroy para fechar a conexão
+  void destroy() {
+    close();
+  }
+}
+
+extension WebSocketBroadcastExtension on WebSocket {
+  // Extensão para broadcast que precisa de acesso ao servidor
+  WebSocketBroadcast get broadcast => WebSocketBroadcast(this);
+}
+
+class WebSocketBroadcast {
+  final WebSocket _socket;
+  static final Map<WebSocket, WebSocketServer> _socketServerMap = {};
+
+  WebSocketBroadcast(this._socket);
+
+  static void setServer(WebSocketServer server, WebSocket socket) {
+    _socketServerMap[socket] = server;
+  }
+
+  static WebSocketServer? _getServerForSocket(WebSocket socket) {
+    return _socketServerMap[socket];
+  }
+
+  void emit(String event, dynamic data) {
+    final server = _socketServerMap[_socket];
+    if (server != null) {
+      final message = jsonEncode({
+        'event': event,
+        'data': data,
+      });
+
+      // Broadcast para todos os outros clientes (exceto o atual)
+      for (final socket in server.getClients()) {
+        if (socket != _socket && socket.readyState == WebSocket.open) {
+          socket.add(message);
+        }
+      }
+    }
+  }
+
+  void send(dynamic data) {
+    final server = _socketServerMap[_socket];
+    if (server != null) {
+      // Broadcast para todos os outros clientes (exceto o atual)
+      for (final socket in server.getClients()) {
+        if (socket != _socket && socket.readyState == WebSocket.open) {
+          socket.add(data);
+        }
+      }
+    }
+  }
 }
 
 extension WebSocketSendExtension on WebSocket {
   void send(dynamic data) => add(data);
+  int get id => hashCode;
 }

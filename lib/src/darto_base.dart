@@ -400,24 +400,18 @@ class Darto {
     callback?.call();
     await for (HttpRequest request in server) {
       if (_wsServer != null && WebSocketTransformer.isUpgradeRequest(request)) {
-        final path = request.uri.path;
-        final handler = _wsServer!.match(path);
-
-        if (handler != null) {
-          final accepted = await _wsServer!.executeMiddlewares(path, request);
-          if (!accepted) {
-            request.response
-              ..statusCode = HttpStatus.forbidden
-              ..write('WebSocket Forbidden')
-              ..close();
-            continue;
-          }
-
-          final socket = await WebSocketTransformer.upgrade(request);
-          _wsServer!.addClient(path, socket);
-          handler.handle(socket);
+        final accepted = await _wsServer!.executeMiddlewares(request);
+        if (!accepted) {
+          request.response
+            ..statusCode = HttpStatus.forbidden
+            ..write('WebSocket Forbidden')
+            ..close();
           continue;
         }
+
+        final socket = await WebSocketTransformer.upgrade(request);
+        _wsServer!.addClient(socket);
+        continue;
       }
 
       final method = request.method;

@@ -1,3 +1,7 @@
+## 0.0.29
+
+- Websocket fix sintaxe.
+
 ## 0.0.28
 
 - Fix websocket to broadcastings and update sintaxe.

@@ -10,11 +10,8 @@ import 'package:example/routes/new_router.dart';
 import 'package:path/path.dart';
 
 void main() async {
-  final app = Darto(
-    logger: true,
-    gzip: true,
-    snakeCase: true,
-  ).basePath('/api/v1');
+  final app = Darto(logger: true, gzip: true, snakeCase: true);
+  // .basePath('/api/v1');
 
   // Routes
   app.use('/app', appRouter());
@@ -346,26 +343,126 @@ void main() async {
   });
 
   final ws = WebSocketServer();
+  // app.useWebSocket(ws); // Active websocket
 
-  ws
-      .on('/chat')
-      .onConnect((socket) {
-        print('Novo cliente conectado');
-        socket.send('Bem-vindo ao chat!');
-      })
-      .onMessage((socket, message) {
-        // print('Mensagem recebida: $message');
-        // socket.send('Você disse: $message');
-        ws.broadcast('/chat', message);
-      })
-      .onDisconnect((socket) {
-        print('Cliente desconectado');
-      })
-      .onError((socket, error) {
-        print('Erro: $error');
+  ws.on('connection', (socket) {
+    print('Novo cliente conectado ${socket.id}');
+
+    final clients = ws.getClients();
+    print('Clientes conectados: ${clients.length}');
+
+    // Envia mensagem de boas-vindas para o cliente recém-conectado
+    socket.emit('welcome', 'Bem-vindo ao servidor!');
+
+    // Escuta evento de mensagem de chat
+    socket.on('chatMessage', (dynamic data) {
+      print('Mensagem de chat recebida: $data');
+      // Faz broadcast da mensagem para todos os outros clientes
+      socket.broadcast.emit('newMessage', data);
+    });
+
+    // Escuta evento de usuário entrando no chat
+    socket.on('userJoin', (dynamic data) {
+      print('Usuário entrando: ${data['username']}');
+      // Notifica todos os outros clientes sobre o novo usuário
+      socket.broadcast.emit('userJoined', data);
+    });
+
+    // Escuta evento de digitação
+    socket.on('typing', (dynamic data) {
+      print('Usuário digitando: ${data['username']}');
+      // Informa outros clientes que alguém está digitando
+      socket.broadcast.emit('userTyping', data);
+    });
+
+    // Escuta evento de movimento do jogador (para jogos)
+    socket.on('playerMove', (dynamic data) {
+      print('Movimento do jogador: $data');
+      // Envia movimento para outros jogadores
+      socket.broadcast.emit('playerMoved', {
+        'playerId': socket.id,
+        'position': data['position'],
       });
+    });
 
-  // app.useWebSocket(ws);
+    // Escuta evento de inscrição em tópicos
+    socket.on('subscribe', (dynamic data) {
+      print('Cliente se inscrevendo no tópico: ${data['topic']}');
+      // Confirma inscrição
+      socket.emit('subscribed', {
+        'topic': data['topic'],
+        'message': 'Inscrito com sucesso em ${data['topic']}',
+      });
+    });
+
+    // Escuta evento de notificação
+    socket.on('notification', (dynamic data) {
+      print('Notificação recebida: $data');
+      // Envia notificação para todos os clientes
+      socket.broadcast.emit('notification', data);
+    });
+
+    // Escuta evento de atualização de estado do jogo
+    socket.on('gameStateUpdate', (dynamic data) {
+      print('Atualização do estado do jogo: $data');
+      // Sincroniza estado do jogo com todos os clientes
+      socket.broadcast.emit('gameState', data);
+    });
+
+    // Escuta evento personalizado genérico
+    socket.on('customEvent', (dynamic data) {
+      print('Evento personalizado recebido: $data');
+      // Retransmite evento personalizado para todos
+      socket.broadcast.emit('customEvent', data);
+    });
+  });
+
+  // Handler para quando um cliente desconecta
+  ws.on('close', (socket) {
+    print('Cliente desconectado: ${socket.id}');
+    final clients = ws.getClients();
+    print('Clientes restantes: ${clients.length}');
+
+    // Notifica todos os clientes sobre a desconexão
+    ws.broadcastEmit('userLeft', {
+      'clientId': socket.id,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+  });
+
+  // Handler para erros
+  ws.on('error', (socket) {
+    print('Erro na conexão WebSocket: ${socket.id}');
+    socket.destroy();
+  });
+
+  // Handler para quando a conexão é aberta
+  ws.on('open', (socket) {
+    print('Conexão WebSocket aberta: ${socket.id}');
+  });
+
+  // Handler global para todas as mensagens
+  ws.on('message', (socket) {
+    print('Mensagem recebida do cliente: ${socket.id}');
+  });
+
+  // ws
+  //     .on('/chat')
+  //     .onConnect((socket) {
+  //       print('Novo cliente conectado ${socket.id}');
+  //       socket.send('Bem-vindo ao chat!');
+  //     })
+  //     .onMessage((socket, message) {
+  //       // print('Mensagem recebida: $message');
+  //       // socket.send('Você disse: $message');
+  //       ws.broadcast('/chat', message);
+  //     })
+  //     .onDisconnect((socket) {
+  //       print('Cliente desconectado');
+  //     })
+  //     .onError((socket, error) {
+  //       print('Erro: $error');
+  //     });
 
   app.listen(
     8080,

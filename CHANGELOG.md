@@ -1,7 +1,3 @@
-## 0.0.31
-
-- Add darto_types from github
-
 ## 0.0.30
 
 - Remove types and a new package darto_types

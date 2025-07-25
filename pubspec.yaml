@@ -1,6 +1,6 @@
 name: darto
 description: Darto is a microframework inspired by Express ify for building web applications in Dart.
-version: 0.0.29
+version: 0.0.30
 homepage: https://github.com/evandersondev/darto
 
 environment:
@@ -16,6 +16,7 @@ dependencies:
   mailer: ^6.4.1
   mustache_template: ^2.0.0
   intl: ^0.20.2
+  darto_types: ^0.0.1
 
 dev_dependencies:
   mocktail: ^1.0.4

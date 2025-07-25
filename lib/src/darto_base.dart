@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:darto_types/darto_types.dart';
 import 'package:mustache_template/mustache.dart';
 import 'package:path/path.dart' as p;
 
@@ -422,8 +423,8 @@ class Darto {
         );
       }
 
-      final req = Request(request, {}, [], _logger);
-      final res = Response(
+      final req = RequestImpl(request, {}, [], _logger);
+      final res = ResponseImpl(
         request.response,
         _logger,
         _snakeCase,

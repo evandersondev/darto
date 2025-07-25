@@ -1,12 +1,13 @@
 part of 'darto_base.dart';
 
-class Request {
+class RequestImpl implements Request {
   final HttpRequest _req;
   final bool _showLogger;
   final List<String?> _orderedParamValues;
   final Map<String, String> _params;
 
-  Request(this._req, this._params, this._orderedParamValues, this._showLogger);
+  RequestImpl(
+      this._req, this._params, this._orderedParamValues, this._showLogger);
 
   bool _bodyRead = false;
   dynamic _cachedBody;
@@ -19,7 +20,7 @@ class Request {
   String get method => _req.method;
   Map<String, String> get query => _req.uri.queryParameters;
   String get baseUrl => '/';
-  DartoHeader get headers => DartoHeader(_req.headers);
+  DartoHeader get headers => DartoHeaderImpl(_req.headers);
   String get host => _req.headers.value(HttpHeaders.hostHeader) ?? '';
   String get hostname => host.contains(':') ? host.split(':')[0] : host;
   String get originalUrl => _req.uri.toString();

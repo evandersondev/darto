@@ -1,3 +1,7 @@
+## 0.0.30
+
+- Remove types and a new package darto_types
+
 ## 0.0.29
 
 - Websocket fix sintaxe.

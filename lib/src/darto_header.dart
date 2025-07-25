@@ -1,12 +1,14 @@
 import 'dart:io';
 
+import 'package:darto_types/darto_types.dart';
+
 /// Represents the headers of a request or response.
 ///
 /// This class provides methods to access and manipulate the headers of a request or response.
-class DartoHeader {
+class DartoHeaderImpl implements DartoHeader {
   final HttpHeaders _headers;
 
-  DartoHeader(this._headers);
+  DartoHeaderImpl(this._headers);
 
   /// Returns the value of the 'authorization' header.
   String? get authorization => _headers.value(HttpHeaders.authorizationHeader);

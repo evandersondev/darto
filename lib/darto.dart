@@ -3,7 +3,9 @@
 /// More dartdocs go here.
 library;
 
-export 'src/darto_base.dart';
+export 'package:darto_types/darto_types.dart';
+
+export 'src/darto_base.dart' hide ResponseImpl, RequestImpl;
 export 'src/darto_mailer.dart';
 export 'src/http_status_code.dart';
 export 'src/logger.dart';

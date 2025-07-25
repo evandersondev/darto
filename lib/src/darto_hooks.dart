@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import '../darto.dart';
+import 'package:darto_types/darto_types.dart';
 
 enum HookType { onRequest, preHandler, onResponse, onError, onNotFound }
 

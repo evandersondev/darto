@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:darto/src/darto_header.dart';
+import 'package:darto_types/darto_types.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
@@ -12,7 +13,7 @@ void main() {
 
   setUpAll(() {
     httpHeaders = MockHttpHeaders();
-    dartoHeader = DartoHeader(httpHeaders);
+    dartoHeader = DartoHeaderImpl(httpHeaders);
   });
 
   group('DartoHeader', () {

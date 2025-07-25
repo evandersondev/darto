@@ -1,4 +1,4 @@
-import '../darto.dart';
+import 'package:darto_types/darto_types.dart';
 
 class Layer {
   final String? path;

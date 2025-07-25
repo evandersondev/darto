@@ -10,8 +10,11 @@ import 'package:example/routes/new_router.dart';
 import 'package:path/path.dart';
 
 void main() async {
-  final app = Darto(logger: true, gzip: true, snakeCase: true);
-  // .basePath('/api/v1');
+  final app = Darto(
+    logger: true,
+    gzip: true,
+    snakeCase: true,
+  ).basePath('/api/v1');
 
   // Routes
   app.use('/app', appRouter());
@@ -275,12 +278,12 @@ void main() async {
   //   print("onRequest: ${req.method} ${req.path}");
   // });
 
-  // // Define preHandler hook
+  // Define preHandler hook
   // app.addHook.preHandler((req, res) async {
   //   print("preHandler: processing request before handler");
   // });
 
-  // // Define onResponse hook
+  // Define onResponse hook
   // app.addHook.onResponse((req, res) {
   //   print("onResponse: response sent for ${req.method} ${req.path}");
   // });

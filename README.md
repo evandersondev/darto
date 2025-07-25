@@ -60,7 +60,7 @@ Add the package to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  darto: ^0.0.29
+  darto: ^0.0.30
 ```
 
 Then, run the following command:

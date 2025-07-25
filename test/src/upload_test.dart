@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 
 import '../__mocks__/http_mock.dart';
 
-final headers = DartoHeader(MockHttpHeaders());
+final headers = DartoHeaderImpl(MockHttpHeaders());
 
 void main() {
   late MockRequest req;

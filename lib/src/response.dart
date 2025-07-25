@@ -1,12 +1,12 @@
 part of 'darto_base.dart';
 
-class Response {
+class ResponseImpl implements Response {
   final HttpResponse _res;
   final bool _showLogger;
   final bool _snakeCase;
   final bool _enableGzip;
 
-  Response(this._res, bool? showLogger, this._snakeCase,
+  ResponseImpl(this._res, bool? showLogger, this._snakeCase,
       {bool enableGzip = false})
       : _enableGzip = enableGzip,
         _showLogger = showLogger ?? false;
@@ -15,8 +15,9 @@ class Response {
   bool get finished => _finished;
   final Map<String, dynamic> locals = {};
 
-  DartoHeader get headers => DartoHeader(_res.headers);
+  DartoHeader get headers => DartoHeaderImpl(_res.headers);
 
+  @override
   Response status(int statusCode) {
     _res.statusCode = statusCode;
     if (_showLogger) {

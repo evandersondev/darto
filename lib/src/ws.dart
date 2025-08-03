@@ -12,6 +12,7 @@ class WebSocketServer {
   final _globalHandlers = <String, void Function(WebSocket)>{};
   final _socketEventHandlers =
       <WebSocket, Map<String, void Function(dynamic)>>{};
+  StreamSubscription? _socketSubscription;
 
   // Método para eventos globais (similar ao Node.js)
   void on(String event, void Function(WebSocket socket) handler) {
@@ -44,7 +45,7 @@ class WebSocketServer {
     }
 
     // Configurar listeners para eventos do socket
-    socket.listen(
+    _socketSubscription = socket.listen(
       (data) {
         // Chamar handler global de message se existir
         final messageHandler = _globalHandlers['message'];
@@ -117,6 +118,20 @@ class WebSocketServer {
   }
 
   List<WebSocket> getClients() => List.unmodifiable(_clients);
+
+  Future<void> close() async {
+
+    if (_socketSubscription != null) {
+      await _socketSubscription!.cancel();
+      _socketSubscription = null;
+    }
+
+    for (final socket in _clients) {
+      socket.close();
+    }
+    _clients.clear();
+    _socketEventHandlers.clear();
+  }
 
   // Método interno para registrar event handlers específicos do socket
   void _registerSocketEventHandler(

@@ -31,6 +31,8 @@ class Darto {
   Map<String, List<String>> _corsOptions = {};
 
   String _basePath = '';
+  HttpServer? _server;
+  bool get isRunning => _server != null;
 
   Darto({bool? logger, bool? snakeCase, bool gzip = false})
       : _logger = logger ?? false,
@@ -394,12 +396,12 @@ class Darto {
   }
 
   Future<void> listen(int port, [void Function()? callback]) async {
-    final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
+    _server = await HttpServer.bind(InternetAddress.anyIPv4, port);
     if (_logger) {
-      log.info('Server listening at ${server.address.address}:$port');
+      log.info('Server listening at ${_server!.address.address}:$port');
     }
     callback?.call();
-    await for (HttpRequest request in server) {
+    await for (HttpRequest request in _server!) {
       if (_wsServer != null && WebSocketTransformer.isUpgradeRequest(request)) {
         final accepted = await _wsServer!.executeMiddlewares(request);
         if (!accepted) {
@@ -513,6 +515,20 @@ class Darto {
 
       _executeMiddlewares(req, res, middlewares);
       addHook.executeOnResponse(req, res);
+    }
+  }
+
+  Future<void> stop() async {
+    await _server?.close();
+    _server = null;
+
+    if (_wsServer != null) {
+      _wsServer!.close();
+      _wsServer = null;
+    }
+
+    if (_logger) {
+      log.info('Server stopped');
     }
   }
 

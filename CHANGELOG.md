@@ -1,3 +1,7 @@
+## 0.0.31
+
+- Update basePath method and add example stop method
+
 ## 0.0.30
 
 - Remove types and a new package darto_types

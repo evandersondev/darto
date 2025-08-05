@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
@@ -9,12 +8,19 @@ import 'package:example/routes/fastify_routes.dart';
 import 'package:example/routes/new_router.dart';
 import 'package:path/path.dart';
 
+import 'package:darto/darto.dart';
+
 void main() async {
   final app = Darto(
     logger: true,
     gzip: true,
     snakeCase: true,
   ).basePath('/api/v1');
+
+  // Example stopped
+  // Future.delayed(Duration(seconds: 30), () {
+  //   app.stop();
+  // });
 
   // Routes
   app.use('/app', appRouter());
@@ -468,7 +474,7 @@ void main() async {
   //     });
 
   app.listen(
-    8080,
+    3333,
     //  () {
     //   // This will start the WebSocket server on port 3001
     //   // server.listen('0.0.0.0', 3001);

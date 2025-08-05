@@ -53,11 +53,11 @@ class Darto {
     _settings['view engine'] = engine;
   }
 
-  dynamic basePath([String? path]) {
-    if (path == null) {
-      return _basePath;
+  Darto basePath([String? path]) {
+    if (path != null) {
+      _basePath = path.startsWith('/') ? path : '/$path';
     }
-    _basePath = path.startsWith('/') ? path : '/$path';
+
     return this;
   }
 

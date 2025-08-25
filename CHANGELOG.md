@@ -1,3 +1,7 @@
+## 0.0.33
+
+- Update Darto Types from Response
+
 ## 0.0.32
 
 - Add the res.write method to accept String or Uint8List

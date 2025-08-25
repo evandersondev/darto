@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:darto/darto.dart';
 import 'package:example/models/tweet_model.dart';
 import 'package:example/routes/app_router.dart';
 import 'package:example/routes/auth_router.dart';
@@ -7,8 +8,6 @@ import 'package:example/routes/book_router.dart';
 import 'package:example/routes/fastify_routes.dart';
 import 'package:example/routes/new_router.dart';
 import 'package:path/path.dart';
-
-import 'package:darto/darto.dart';
 
 void main() async {
   final app = Darto(
@@ -473,7 +472,7 @@ void main() async {
   //       print('Erro: $error');
   //     });
 
-  app.get('/write', (req, res) {
+  app.get('/write', (Request req, Response res) {
     res.write('Hello, ', 'utf8', () {
       print('First chunk sended');
     });

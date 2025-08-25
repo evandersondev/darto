@@ -1,3 +1,7 @@
+## 0.0.32
+
+- Add the res.write method to accept String or Uint8List
+
 ## 0.0.31
 
 - Update basePath method and add example stop method

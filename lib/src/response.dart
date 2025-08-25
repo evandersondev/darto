@@ -548,6 +548,48 @@ class ResponseImpl implements Response {
     final enc = _res.headers.value('accept-encoding') ?? '';
     return enc.contains('gzip');
   }
+
+  /// Send a chunk data to response without close conection.
+  ///
+  /// [chunk] can be a String or Uint8List.
+  /// [encoding] define codification for strings (default: 'utf8'). 'utf8' | 'latin1'
+  bool write(dynamic chunk, [String encoding = 'utf8', Function? callback]) {
+    if (_finished) {
+      if (_showLogger) {
+        log.error('Attempt to write after reply is finished');
+      }
+      return false;
+    }
+
+    try {
+      if (chunk is String) {
+        final encoder = encoding.toLowerCase() == 'utf8' ? utf8 : latin1;
+        _res.add(encoder.encode(chunk));
+      } else if (chunk is Uint8List) {
+        _res.add(chunk);
+      } else {
+        throw ArgumentError('Chunk must be String or Uint8List');
+      }
+
+      if (_showLogger) {
+        log.info('Chunk sent: ${chunk is String ? chunk : '[Uint8List]'}');
+      }
+
+      if (callback != null) {
+        callback();
+      }
+
+      return true;
+    } catch (e) {
+      if (_showLogger) {
+        log.error('Error to write chunk: $e');
+      }
+      if (callback != null) {
+        callback(e);
+      }
+      return false;
+    }
+  }
 }
 
 extension ResponseExtension on Response {

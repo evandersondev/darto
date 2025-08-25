@@ -473,6 +473,16 @@ void main() async {
   //       print('Erro: $error');
   //     });
 
+  app.get('/write', (req, res) {
+    res.write('Hello, ', 'utf8', () {
+      print('First chunk sended');
+    });
+    res.write('World!', 'utf8', () {
+      print('Second chunk sended');
+    });
+    res.end();
+  });
+
   app.listen(
     3333,
     //  () {

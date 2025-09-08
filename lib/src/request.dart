@@ -36,7 +36,16 @@ class RequestImpl implements Request {
   }
 
   final Map<String, dynamic> context = {};
+  @override
+  set context(Map<String, dynamic> _context) {
+    context.addAll(_context);
+  }
+
   final Map<String, dynamic> session = {};
+  @override
+  set session(Map<String, dynamic> _session) {
+    session.addAll(_session);
+  }
 
   void Function()? onResponseFinished;
 

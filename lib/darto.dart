@@ -9,6 +9,7 @@ export 'src/darto_base.dart' hide ResponseImpl, RequestImpl;
 export 'src/darto_mailer.dart';
 export 'src/http_status_code.dart';
 export 'src/logger.dart';
+export 'src/session.dart';
 export 'src/types.dart';
 export 'src/upload.dart';
 export 'src/ws.dart';

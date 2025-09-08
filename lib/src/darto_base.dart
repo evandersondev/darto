@@ -148,7 +148,20 @@ class Darto {
         builder(router);
         _addRouterLayers(prefix, router);
       } else if (builder is DartoRouteBuilder) {
+        // Salvar o basePath atual
+        final originalBasePath = _basePath;
+        // Aplicar o prefixo temporariamente
+        if (prefix.isNotEmpty) {
+          String base = _basePath;
+          if (!base.endsWith('/')) base = '$base/';
+          String newPrefix =
+              prefix.startsWith('/') ? prefix.substring(1) : prefix;
+          _basePath = base + newPrefix;
+        }
+        // Chamar a função de rotas
         builder(this);
+        // Restaurar o basePath original
+        _basePath = originalBasePath;
       } else {
         throw ArgumentError('Invalid function type provided to use method');
       }

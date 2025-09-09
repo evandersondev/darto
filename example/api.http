@@ -171,7 +171,7 @@ Content-Type: application/json
 
 ###
 GET http://localhost:3333/api/v1/sessions/protected
-Cookie: darto.sid=39d066d6b2bb24e8cbaba738f4f7e0d6
+Cookie: darto.sid=b4ae7ac7ee437e17f59105c021031e10
 
 
 

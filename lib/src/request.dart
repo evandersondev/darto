@@ -41,10 +41,12 @@ class RequestImpl implements Request {
     context.addAll(_context);
   }
 
-  final Map<String, dynamic> session = {};
+  late Session _session;
   @override
-  set session(Map<String, dynamic> _session) {
-    session.addAll(_session);
+  Session get session => _session;
+  @override
+  set session(Session _session) {
+    this._session = _session;
   }
 
   void Function()? onResponseFinished;
@@ -53,7 +55,6 @@ class RequestImpl implements Request {
     return _orderedParamValues;
   }
 
-  // Método interno para ler os bytes do corpo da requisição e armazenar em cache.
   Future<Uint8List> _readBytes() async {
     if (_cachedBytes != null) return _cachedBytes!;
     final bytes =
@@ -65,7 +66,6 @@ class RequestImpl implements Request {
   Future<dynamic> get body async {
     if (!_bodyRead) {
       final bytes = await _readBytes();
-      // Decodifica os bytes para string utilizando UTF-8.
       final rawBody = utf8.decode(bytes);
       _bodyRead = true;
       final contentType = _req.headers.contentType?.mimeType;
@@ -102,30 +102,24 @@ class RequestImpl implements Request {
     return cookieMap;
   }
 
-  /// Retorna o corpo da requisição como bytes.
   Future<Uint8List> blob() async {
     return await _readBytes();
   }
 
-  /// Retorna o corpo da requisição como ByteBuffer.
   Future<ByteBuffer> arrayBuffer() async {
     final bytes = await blob();
     return bytes.buffer;
   }
 
-  /// Para requests do tipo "application/x-www-form-urlencoded"
-  /// ou similar, retorna os dados do formulário.
   Future<dynamic> formData() async {
     final contentType = _req.headers.contentType?.mimeType ?? "";
     final text = await _bodyText();
     if (contentType == "application/x-www-form-urlencoded") {
       return Uri.splitQueryString(text);
     }
-    // Para multipart/form-data, uma implementação mais completa é necessária.
     return text;
   }
 
-  /// Transforma o corpo da requisição em uma String.
   Future<String> _bodyText() async {
     final b = await body;
     if (b is String) return b;

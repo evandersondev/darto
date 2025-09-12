@@ -1,3 +1,7 @@
+## 0.0.34
+
+- Fix version darto_types in 0.0.2
+
 ## 0.0.33
 
 - Update Darto Types from Response

@@ -426,11 +426,15 @@ class Darto {
       }
 
       final req = RequestImpl(request, {}, [], _logger);
+      final acceptEncoding =
+          request.headers.value(HttpHeaders.acceptEncodingHeader) ?? '';
       final res = ResponseImpl(
         request.response,
         _logger,
         _snakeCase,
         enableGzip: _enableGzip,
+        acceptEncoding: acceptEncoding,
+        onResponseFinished: req.onResponseFinished,
       );
       addHook.executeOnRequest(req);
 
@@ -532,43 +536,59 @@ class Darto {
     }
   }
 
-  void _executeMiddlewares(
-      Request req, Response res, List<Middleware> middlewares) {
+  Future<void> _executeMiddlewares(
+    Request req,
+    Response res,
+    List<Middleware> middlewares,
+  ) async {
     int index = 0;
-    void next([dynamic error]) {
+
+    Future<void> next([dynamic error]) async {
       if (error != null) {
         _executeErrorMiddlewares(error, req, res);
         return;
       }
+
       if (req.timedOut || res.finished) return;
-      if (index < middlewares.length) {
-        try {
-          final middleware = middlewares[index++];
-          middleware(req, res, next);
-        } catch (e) {
-          _executeErrorMiddlewares(e, req, res);
-        }
+      if (index >= middlewares.length) return;
+
+      final middleware = middlewares[index++];
+      try {
+        final result = middleware(req, res, next);
+        if (result is Future) await result;
+      } catch (e) {
+        _executeErrorMiddlewares(e, req, res);
       }
     }
 
-    next();
+    await next();
   }
 
   void _executeErrorMiddlewares(dynamic err, Request req, Response res) {
     int index = 0;
 
     void nextError([dynamic error]) {
+      final currentErr = error ?? err;
+
       if (index < _errorMiddlewares.length) {
         final errorMiddleware = _errorMiddlewares[index++];
 
-        final captErr = error ?? err;
-        final exception = captErr is Exception ? captErr : Exception(captErr);
-        errorMiddleware(exception, req, res, nextError);
+        try {
+          errorMiddleware(
+            currentErr is Exception ? currentErr : Exception(currentErr),
+            req,
+            res,
+            nextError,
+          );
+        } catch (e) {
+          return nextError(e);
+        }
+        return;
       }
 
       if (!res.finished) {
-        res.error(error);
-        addHook.executeOnError(error, req, res);
+        res.error(currentErr);
+        addHook.executeOnError(currentErr, req, res);
       }
     }
 

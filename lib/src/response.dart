@@ -6,10 +6,20 @@ class ResponseImpl implements Response {
   final bool _snakeCase;
   final bool _enableGzip;
 
-  ResponseImpl(this._res, bool? showLogger, this._snakeCase,
-      {bool enableGzip = false})
-      : _enableGzip = enableGzip,
-        _showLogger = showLogger ?? false;
+  final String _acceptEncoding;
+  final void Function()? _onResponseFinished;
+
+  ResponseImpl(
+    this._res,
+    bool? showLogger,
+    this._snakeCase, {
+    bool enableGzip = false,
+    required String acceptEncoding,
+    required void Function()? onResponseFinished,
+  })  : _enableGzip = enableGzip,
+        _showLogger = showLogger ?? false,
+        _acceptEncoding = acceptEncoding,
+        _onResponseFinished = onResponseFinished;
 
   bool _finished = false;
   bool get finished => _finished;
@@ -131,37 +141,43 @@ class ResponseImpl implements Response {
   }
 
   void send([dynamic data]) async {
-    if (data == null) {
-      end();
-      _finished = true;
-      return;
-    }
+    if (_finished) return;
 
-    if (_res.headers.contentType != null) {
-      if (data is String && data.trim().startsWith('<')) {
-        _res.headers.contentType = ContentType.html;
-      } else if (_res.headers.contentType!.value.contains('json')) {
-        return json(data);
-      } else {
-        _res.headers.contentType = ContentType.text;
+    try {
+      if (data == null) {
+        end();
+        _finished = true;
+        return;
       }
+
+      if (_res.headers.contentType != null) {
+        if (data is String && data.trim().startsWith('<')) {
+          _res.headers.contentType = ContentType.html;
+        } else if (_res.headers.contentType!.value.contains('json')) {
+          return json(data);
+        } else {
+          _res.headers.contentType = ContentType.text;
+        }
+      }
+
+      final acceptsGzip = _acceptsGzip();
+
+      if (_enableGzip &&
+          acceptsGzip &&
+          _res.headers.contentType?.mimeType == ContentType.text.mimeType) {
+        _res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+        final gzipSink = gzip.encoder.startChunkedConversion(_res);
+        gzipSink.add(utf8.encode(data.toString()));
+        gzipSink.close();
+      } else {
+        _res.write(data);
+        await _res.close();
+      }
+    } finally {
+      _finished = true;
+      _onResponseFinished?.call();
     }
 
-    final acceptsGzip = _acceptsGzip();
-
-    if (_enableGzip &&
-        acceptsGzip &&
-        _res.headers.contentType?.mimeType == ContentType.text.mimeType) {
-      _res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
-      final gzipSink = gzip.encoder.startChunkedConversion(_res);
-      gzipSink.add(utf8.encode(data.toString()));
-      gzipSink.close();
-    } else {
-      _res.write(data);
-      await _res.close();
-    }
-
-    _finished = true;
     if (_showLogger) {
       log.info('Data sent: $data');
     }
@@ -178,22 +194,28 @@ class ResponseImpl implements Response {
   /// or
   /// res.json([1, 2, 3]);
   void json(dynamic data) async {
+    if (_finished) return;
+
     final jsonData = _toJson(data);
-    _res.headers.contentType = ContentType.json;
+    try {
+      _res.headers.contentType = ContentType.json;
 
-    final acceptsGzip = _acceptsGzip();
+      final acceptsGzip = _acceptsGzip();
 
-    if (_enableGzip && acceptsGzip) {
-      _res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
-      final gzipSink = gzip.encoder.startChunkedConversion(_res);
-      gzipSink.add(utf8.encode(jsonData));
-      gzipSink.close();
-    } else {
-      _res.write(jsonData);
-      await _res.close();
+      if (_enableGzip && acceptsGzip) {
+        _res.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+        final gzipSink = gzip.encoder.startChunkedConversion(_res);
+        gzipSink.add(utf8.encode(jsonData));
+        gzipSink.close();
+      } else {
+        _res.write(jsonData);
+        await _res.close();
+      }
+    } finally {
+      _finished = true;
+      _onResponseFinished?.call();
     }
 
-    _finished = true;
     if (_showLogger) {
       log.info('JSON data sent: $jsonData');
     }
@@ -393,17 +415,26 @@ class ResponseImpl implements Response {
     }
   }
 
+  @override
   void end([dynamic data]) {
+    if (_finished) return;
+
     if (data != null) {
       _res.write(data);
     }
-    _res.close();
-    _finished = true;
-    if (_showLogger) {
-      log.info('Response ended with data: $data');
+
+    try {
+      _res.close();
+    } finally {
+      _finished = true;
+      _onResponseFinished?.call();
+      if (_showLogger) {
+        log.info('Response ended with data: $data');
+      }
     }
   }
 
+  @override
   void download(String filePath, [dynamic filename, dynamic callback]) async {
     String? downloadName;
     Function? cb;
@@ -545,8 +576,7 @@ class ResponseImpl implements Response {
   }
 
   bool _acceptsGzip() {
-    final enc = _res.headers.value('accept-encoding') ?? '';
-    return enc.contains('gzip');
+    return _acceptEncoding.toLowerCase().contains('gzip');
   }
 
   /// Send a chunk data to response without close conection.

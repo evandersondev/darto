@@ -47,10 +47,15 @@ class RequestImpl implements Request {
   // Método interno para ler os bytes do corpo da requisição e armazenar em cache.
   Future<Uint8List> _readBytes() async {
     if (_cachedBytes != null) return _cachedBytes!;
-    final bytes =
-        await _req.fold<List<int>>([], (acc, chunk) => acc..addAll(chunk));
-    _cachedBytes = Uint8List.fromList(bytes);
-    return _cachedBytes!;
+
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in _req) {
+      builder.add(chunk);
+    }
+
+    final bytes = builder.takeBytes();
+    _cachedBytes = bytes;
+    return bytes;
   }
 
   Future<dynamic> get body async {
@@ -118,10 +123,10 @@ class RequestImpl implements Request {
 
   /// Transforma o corpo da requisição em uma String.
   Future<String> _bodyText() async {
-    final b = await body;
-    if (b is String) return b;
-    if (b is Map || b is List) return jsonEncode(b);
-    return b.toString();
+    if (timedOut)
+      throw TimeoutException('Request timed out while reading body');
+    final bytes = await _readBytes();
+    return utf8.decode(bytes);
   }
 
   Future<T> bodyParse<T>(T Function(dynamic body) parser) async {

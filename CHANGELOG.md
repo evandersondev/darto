@@ -1,3 +1,7 @@
+## 0.0.35
+
+- Chore methods and performace
+
 ## 0.0.34
 
 - Fix version darto_types in 0.0.2

@@ -49,7 +49,7 @@ Or add manually to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  darto: ^0.1.0
+  darto: ^1.0.0
 ```
 
 ```dart

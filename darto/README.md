@@ -36,7 +36,7 @@ Everything flows through a single concept: **Context**.
 
 ```yaml
 dependencies:
-  darto: ^0.1.0
+  darto: ^1.0.0
 ```
 
 ---

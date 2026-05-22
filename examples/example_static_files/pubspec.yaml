@@ -1,0 +1,16 @@
+name: example_static_files
+description: Darto v2 — static file serving example
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+  darto_static:
+    path: ../../darto_static
+
+dev_dependencies:
+  lints: ^5.0.0

@@ -1,0 +1,18 @@
+name: darto_view
+description: Template engine plugin for Darto. Configures views path and engine, enabling res.render() in route handlers.
+version: 1.0.0
+homepage: https://github.com/evandersondev/darto
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../darto
+  mustache_template: ^2.0.0
+  path: ^1.9.1
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0

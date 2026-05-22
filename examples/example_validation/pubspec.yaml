@@ -1,0 +1,16 @@
+name: example_validation
+description: Darto v2 — validation middleware example
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+  darto_validator:
+    path: ../../darto_validator
+
+dev_dependencies:
+  lints: ^5.0.0

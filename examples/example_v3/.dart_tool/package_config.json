@@ -1,0 +1,26 @@
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "darto",
+      "rootUri": "../../../darto",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "mime",
+      "rootUri": "file:///home/evandersondev/.pub-cache/hosted/pub.dev/mime-2.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "example_v3",
+      "rootUri": "../",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    }
+  ],
+  "generator": "pub",
+  "generatorVersion": "3.11.4",
+  "pubCache": "file:///home/evandersondev/.pub-cache"
+}

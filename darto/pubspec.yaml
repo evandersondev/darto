@@ -1,0 +1,16 @@
+name: darto
+description: Darto is a microframework inspired by Express for building web
+  applications in Dart.
+version: 0.1.1
+homepage: https://github.com/evandersondev/darto
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  mime: ^2.0.0
+  crypto: ^3.0.7
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0

@@ -1,0 +1,35 @@
+{
+  "roots": [
+    "example_error_handling"
+  ],
+  "packages": [
+    {
+      "name": "example_error_handling",
+      "version": "0.0.1",
+      "dependencies": [
+        "darto"
+      ],
+      "devDependencies": [
+        "lints"
+      ]
+    },
+    {
+      "name": "lints",
+      "version": "5.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "darto",
+      "version": "0.1.0",
+      "dependencies": [
+        "mime"
+      ]
+    },
+    {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
+    }
+  ],
+  "configVersion": 1
+}

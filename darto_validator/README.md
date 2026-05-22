@@ -1,0 +1,168 @@
+# darto_validator
+
+Request validation middleware for [Darto](https://github.com/evandersondev/darto), powered by [zard](https://pub.dev/packages/zard) — a Zod-inspired schema library for Dart.
+
+Ships with `zValidator` — a Hono `zod-validator`-style middleware — plus legacy helpers for backward compatibility.
+
+---
+
+## Install
+
+```yaml
+dependencies:
+  darto: ^0.1.0
+  darto_validator: ^1.0.0
+```
+
+`zard` is re-exported from `darto_validator`, so no separate dependency is needed.
+
+---
+
+## Quick start
+
+```dart
+import 'package:darto/darto.dart';
+import 'package:darto_validator/darto_validator.dart';
+
+final userSchema = z.map({
+  'name':  z.string().min(1),
+  'email': z.string().email(),
+  'age':   z.int().min(0).max(150),
+});
+
+void main() {
+  final app = Darto();
+
+  app.post('/users', [zValidator('json', userSchema)], (Context c) {
+    final data = c.valid<Map<String, dynamic>>('json');
+    return c.created({'user': data});
+  });
+
+  app.listen(3000);
+}
+```
+
+---
+
+## `zValidator(target, schema, [hook])`
+
+The primary middleware. Validates data from a specific part of the request and stores the coerced result for the handler.
+
+### Targets
+
+| Target | Source |
+|---|---|
+| `'json'` | Request body (`application/json`) |
+| `'query'` | URL query string parameters |
+| `'param'` | Route path parameters (e.g. `/:id`) |
+| `'form'` | Form body (`application/x-www-form-urlencoded` or `multipart/form-data`) |
+| `'header'` | Request headers |
+
+### Retrieve in handler — `c.valid<T>(target)`
+
+```dart
+// JSON body
+app.post('/users', [zValidator('json', userSchema)], (c) {
+  final data = c.valid<Map<String, dynamic>>('json');
+  return c.created({'user': data});
+});
+
+// Query params
+app.get('/search', [zValidator('query', z.map({'q': z.string().min(1)}))], (c) {
+  final q = c.valid<Map<String, dynamic>>('query');
+  return c.ok({'query': q['q']});
+});
+
+// Route params
+app.get('/posts/:id', [zValidator('param', z.map({'id': z.string()}))], (c) {
+  final params = c.valid<Map<String, dynamic>>('param');
+  return c.ok({'id': params['id']});
+});
+```
+
+### Hook — custom error handling
+
+The optional third argument is called for **every** request — success or failure.
+Return a `Response` to short-circuit; return `null` to fall through to default behaviour.
+
+```dart
+app.post('/items', [
+  zValidator('json', schema, (ZardResult result, c) {
+    if (!result.success) {
+      return c.status(422).json({
+        'message': 'Unprocessable entity',
+        'issues': result.error?.format(),
+      });
+    }
+    return null; // let it continue
+  }),
+], handler);
+```
+
+### Default error response (400)
+
+When no hook is provided and validation fails:
+
+```json
+{
+  "error": "Validation failed",
+  "target": "json",
+  "issues": ["name: Required", "email: Invalid email"]
+}
+```
+
+---
+
+## Schema DSL (`z`)
+
+`z` is re-exported directly from `darto_validator`:
+
+```dart
+import 'package:darto_validator/darto_validator.dart';
+
+final schema = z.map({
+  'name':    z.string().min(1).max(100),
+  'email':   z.string().email(),
+  'age':     z.int().min(0).max(150),
+  'active':  z.bool(),
+  'score':   z.double().min(0),
+  'tags':    z.list(z.string()),
+  'role':    z.enumerate(['admin', 'user', 'guest']),
+});
+```
+
+---
+
+## Legacy helpers
+
+The old `validate()` / `validateQuery()` helpers are still supported:
+
+```dart
+app.post('/users', [validate(schema)], handler);        // stores in c.validated()
+app.get('/search', [validateQuery(schema)], handler);   // stores in c.validated('validatedQuery')
+
+// Retrieve
+final data  = c.validated<Map<String, dynamic>>();
+final query = c.validated<Map<String, dynamic>>('validatedQuery');
+```
+
+---
+
+## API reference
+
+| Symbol | Description |
+|---|---|
+| `zValidator(target, schema, [hook])` | Primary middleware — Hono-style |
+| `c.valid<T>(target)` | Retrieve validated data in the handler |
+| `validate(schema)` | Legacy body validator |
+| `validateQuery(schema)` | Legacy query validator |
+| `z` | Zard schema builder (re-exported) |
+| `ZardResult` | Result type — `.success`, `.data`, `.error` |
+
+---
+
+## See also
+
+- [darto](https://github.com/evandersondev/darto) — core framework
+- [zard](https://pub.dev/packages/zard) — schema library
+- [examples/example_validation](../examples/example_validation/) — working example

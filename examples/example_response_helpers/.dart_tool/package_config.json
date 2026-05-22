@@ -1,0 +1,32 @@
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "darto",
+      "rootUri": "../../../darto",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "lints",
+      "rootUri": "file:///home/evandersondev/.pub-cache/hosted/pub.dev/lints-5.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "mime",
+      "rootUri": "file:///home/evandersondev/.pub-cache/hosted/pub.dev/mime-2.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "example_response_helpers",
+      "rootUri": "../",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    }
+  ],
+  "generator": "pub",
+  "generatorVersion": "3.11.4",
+  "pubCache": "file:///home/evandersondev/.pub-cache"
+}

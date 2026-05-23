@@ -463,24 +463,58 @@ class Darto {
 
     String pattern = path;
 
-    // Named wildcard: *path
+    // Wildcard compilation — two phases to avoid double-processing.
+    //
+    // Phase 1: replace each wildcard token with a unique placeholder char
+    // that cannot appear in a URL pattern.  This prevents later replacements
+    // from re-matching the `*` already embedded in an earlier expansion.
+    //
+    //   /*name  →  \x01  (slash + named wildcard — slash made optional)
+    //   /*      →  \x01  (slash + unnamed wildcard)
+    //   *name   →  \x02  (bare named wildcard)
+    //   *       →  \x02  (bare unnamed wildcard)
+    //
+    // Phase 2: expand placeholders to the real regex fragments.
+
+    // /*name
     pattern = pattern.replaceAllMapped(
-      RegExp(r'\*([a-zA-Z_]\w*)'),
+      RegExp(r'/\*([a-zA-Z_]\w*)'),
       (m) {
-        final name = m.group(1)!;
-        paramNames.add(name);
-        return '(.*)';
+        paramNames.add(m.group(1)!);
+        return '\x01';
       },
     );
 
-    // Unnamed wildcard: *
+    // /*
+    pattern = pattern.replaceAllMapped(
+      RegExp(r'/\*'),
+      (m) {
+        paramNames.add('wildcard');
+        return '\x01';
+      },
+    );
+
+    // *name  (bare, no preceding slash)
+    pattern = pattern.replaceAllMapped(
+      RegExp(r'\*([a-zA-Z_]\w*)'),
+      (m) {
+        paramNames.add(m.group(1)!);
+        return '\x02';
+      },
+    );
+
+    // *  (bare, no preceding slash)
     pattern = pattern.replaceAllMapped(
       RegExp(r'\*'),
       (m) {
         paramNames.add('wildcard');
-        return '(.*)';
+        return '\x02';
       },
     );
+
+    // Phase 2: expand placeholders
+    pattern = pattern.replaceAll('\x01', '(?:/(.*))?'); // /*  → optional slash + anything
+    pattern = pattern.replaceAll('\x02', '(.*)');       // *   → anything
 
     // Optional params: /:id?
     pattern = pattern.replaceAllMapped(

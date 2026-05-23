@@ -1,0 +1,60 @@
+@baseUrl = http://localhost:3000
+
+### GET / — list all routes
+GET {{baseUrl}}/
+
+###
+
+### ── API v1 ────────────────────────────────────────────────────────────────
+
+### GET /api/v1/users
+GET {{baseUrl}}/api/v1/users
+
+###
+
+### GET /api/v1/users/:id
+GET {{baseUrl}}/api/v1/users/1
+
+###
+
+### POST /api/v1/users
+POST {{baseUrl}}/api/v1/users
+Content-Type: application/json
+
+{
+  "name": "Alice"
+}
+
+###
+
+### ── API v2 ────────────────────────────────────────────────────────────────
+
+### GET /api/v2/users — includes meta
+GET {{baseUrl}}/api/v2/users
+
+###
+
+### GET /api/v2/users/:id
+GET {{baseUrl}}/api/v2/users/2
+
+###
+
+### POST /api/v2/users — includes timestamp
+POST {{baseUrl}}/api/v2/users
+Content-Type: application/json
+
+{
+  "name": "Bob"
+}
+
+###
+
+### ── Admin ─────────────────────────────────────────────────────────────────
+
+### GET /admin/dashboard
+GET {{baseUrl}}/admin/dashboard
+
+###
+
+### GET /admin/users
+GET {{baseUrl}}/admin/users

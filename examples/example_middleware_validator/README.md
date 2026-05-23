@@ -4,11 +4,11 @@ Schema-driven request validation using `zValidator` from `darto_validator` — b
 
 ## Features
 
-- `zValidator('json', schema)` — validates JSON body, stores result in `c.valid('json')`
+- `zValidator('json', schema)` — validates JSON body, stores result in `c.req.valid('json')`
 - `zValidator('query', schema)` — validates URL query parameters
 - `zValidator('param', schema)` — validates route path parameters
 - Custom error hook — return `422` instead of the default `400`
-- Retrieve validated data with `c.valid<T>(target)`
+- Retrieve validated data with `c.req.valid<T>(target)`
 
 ## Run
 

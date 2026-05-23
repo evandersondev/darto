@@ -1,0 +1,42 @@
+@baseUrl = http://localhost:3000
+
+# WebSocket routes cannot be tested with HTTP requests directly.
+# Use wscat, websocat, or a browser console instead.
+#
+#   npm i -g wscat
+#
+#   wscat -c ws://localhost:3000/ws
+#   wscat -c ws://localhost:3000/chat/general
+#   wscat -c ws://localhost:3000/ws/json
+
+###
+
+### GET / — REST info endpoint
+GET {{baseUrl}}/
+
+###
+
+### GET /ws — WebSocket upgrade (HTTP handshake only — use wscat for full WS)
+GET {{baseUrl}}/ws
+Connection: Upgrade
+Upgrade: websocket
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+
+###
+
+### GET /chat/:room — WebSocket upgrade for a specific room
+GET {{baseUrl}}/chat/general
+Connection: Upgrade
+Upgrade: websocket
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+
+###
+
+### GET /ws/json — WebSocket upgrade (JSON messages)
+GET {{baseUrl}}/ws/json
+Connection: Upgrade
+Upgrade: websocket
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13

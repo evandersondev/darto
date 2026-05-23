@@ -11,9 +11,9 @@ void main() async {
     {'id': '2', 'name': 'Bob', 'role': 'user'},
   ];
 
-  app.get('/users', [], (c) => c.ok(users));
+  app.get('/api/users', [], (c) => c.ok(users));
 
-  app.get('/users/:id', [], (c) {
+  app.get('/api/users/:id', [], (c) {
     final id = c.req.param('id');
     final user = users.firstWhere(
       (u) => u['id'] == id,
@@ -22,7 +22,7 @@ void main() async {
     return user.isEmpty ? c.notFound({'error': 'User not found'}) : c.ok(user);
   });
 
-  app.post('/users', [], (c) async {
+  app.post('/api/users', [], (c) async {
     final body = await c.body();
     final newUser = <String, dynamic>{...body, 'id': '${users.length + 1}'};
     users.add(newUser);

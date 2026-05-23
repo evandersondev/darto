@@ -1,0 +1,10 @@
+@baseUrl = http://localhost:3000
+
+### GET / — hint
+GET {{baseUrl}}/
+
+###
+
+### GET /pipeline — runs timer → requestId → logRequest middlewares
+# Watch the server terminal: each middleware prints before/after
+GET {{baseUrl}}/pipeline

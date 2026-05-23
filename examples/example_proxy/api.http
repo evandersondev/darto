@@ -1,5 +1,51 @@
-http://localhost:3000/api/products
+@baseUrl = http://localhost:3000
+
+### ── Users service (/api/users/*) ──────────────────────────────────────────
+
+### GET /api/users — list all users
+GET {{baseUrl}}/api/users
 
 ###
 
-http://localhost:3000/api/users
+### GET /api/users/:id — get user by id
+GET {{baseUrl}}/api/users/1
+
+###
+
+### GET /api/users/:id — not found (404 from upstream)
+GET {{baseUrl}}/api/users/999
+
+###
+
+### POST /api/users — create user (body forwarded)
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "name": "Carol",
+  "role": "editor"
+}
+
+###
+
+### ── Products service (/api/products/*) ─────────────────────────────────────
+
+### GET /api/products — list all products
+GET {{baseUrl}}/api/products
+
+###
+
+### GET /api/products/:id — get product by id
+GET {{baseUrl}}/api/products/2
+
+###
+
+### GET /api/products/:id — not found (404 from upstream)
+GET {{baseUrl}}/api/products/999
+
+###
+
+### ── Gateway ──────────────────────────────────────────────────────────────
+
+### GET /health — gateway health check
+GET {{baseUrl}}/health

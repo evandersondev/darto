@@ -137,6 +137,17 @@ class DartoRequest {
   dynamic get(String key) => _ctx[key];
   void set(String key, dynamic v) => _ctx[key] = v;
 
+  /// Retrieves the value stored by `validator()` or `zValidator()` for [target].
+  ///
+  /// Must be called in a handler that runs after one of those middlewares.
+  ///
+  /// ```dart
+  /// app.post('/users', [zValidator('json', schema)], (c) {
+  ///   final data = c.req.valid<Map<String, dynamic>>('json');
+  /// });
+  /// ```
+  T valid<T>(String target) => get('__v_$target') as T;
+
   Future<ByteBuffer> arrayBuffer() async {
     final bytes = await blob();
     return bytes.buffer;

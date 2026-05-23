@@ -1,0 +1,79 @@
+@baseUrl = http://localhost:3000
+
+### ── POST /users — zValidator('json') ───────────────────────────────────────
+
+### Valid body (201)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "age": 30
+}
+
+###
+
+### Invalid body — missing email (400)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "age": 30
+}
+
+###
+
+### Invalid body — bad email format (400)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "email": "not-an-email",
+  "age": 30
+}
+
+###
+
+### ── GET /search — zValidator('query') ──────────────────────────────────────
+
+### Valid query (200)
+GET {{baseUrl}}/search?q=darto
+
+###
+
+### Missing q (400)
+GET {{baseUrl}}/search
+
+###
+
+### ── GET /posts/:id — zValidator('param') ───────────────────────────────────
+
+### Valid param (200)
+GET {{baseUrl}}/posts/abc123
+
+###
+
+### ── POST /items — custom 422 hook ──────────────────────────────────────────
+
+### Valid body (201)
+POST {{baseUrl}}/items
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "age": 25
+}
+
+###
+
+### Invalid body — returns 422 (not 400)
+POST {{baseUrl}}/items
+Content-Type: application/json
+
+{
+  "name": ""
+}

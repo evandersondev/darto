@@ -1,0 +1,31 @@
+@baseUrl = http://localhost:3000
+
+### GET /context — c.set / c.get (injectRequestId middleware)
+GET {{baseUrl}}/context
+
+###
+
+### GET /users/:id — c.param / c.paramInt
+GET {{baseUrl}}/users/7
+
+###
+
+### GET /search — c.query / c.queryInt
+GET {{baseUrl}}/search?q=hello&page=3
+
+###
+
+### POST /echo — c.body
+POST {{baseUrl}}/echo
+Content-Type: application/json
+
+{
+  "message": "hello Darto",
+  "value": 42
+}
+
+###
+
+### GET /whoami — c.header, c.req.method, c.req.path, c.req.ip
+GET {{baseUrl}}/whoami
+User-Agent: api.http-client

@@ -11,9 +11,9 @@ void main() async {
     {'id': '2', 'name': 'Mouse', 'price': 89.90},
   ];
 
-  app.get('/products', [], (c) => c.ok(products));
+  app.get('/api/products', [], (c) => c.ok(products));
 
-  app.get('/products/:id', [], (c) {
+  app.get('/api/products/:id', [], (c) {
     final id = c.req.param('id');
     final product = products.firstWhere(
       (p) => p['id'] == id,

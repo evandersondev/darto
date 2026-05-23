@@ -18,7 +18,7 @@ import 'package:zard/zard.dart';
 /// | `'form'` | Form body (`application/x-www-form-urlencoded` or `multipart/form-data`) |
 /// | `'header'` | Request headers |
 ///
-/// On **success** — stores the coerced value; retrieve it with `c.valid<T>(target)`.
+/// On **success** — stores the coerced value; retrieve it with `c.req.valid<T>(target)`.
 ///
 /// On **failure** — responds `400` with a JSON error body (unless [hook] handles it).
 ///
@@ -29,19 +29,19 @@ import 'package:zard/zard.dart';
 /// ```dart
 /// // Basic usage
 /// app.post('/users', [zValidator('json', userSchema)], (c) {
-///   final data = c.valid<Map<String, dynamic>>('json');
+///   final data = c.req.valid<Map<String, dynamic>>('json');
 ///   return c.created({'user': data});
 /// });
 ///
 /// // Query params
 /// app.get('/search', [zValidator('query', z.map({'q': z.string().min(1)}))], (c) {
-///   final q = c.valid<Map<String, dynamic>>('query');
+///   final q = c.req.valid<Map<String, dynamic>>('query');
 ///   return c.ok({'query': q['q']});
 /// });
 ///
 /// // Route params
 /// app.get('/posts/:id', [zValidator('param', z.map({'id': z.string()}))], (c) {
-///   final params = c.valid<Map<String, dynamic>>('param');
+///   final params = c.req.valid<Map<String, dynamic>>('param');
 ///   return c.ok({'id': params['id']});
 /// });
 ///

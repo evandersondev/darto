@@ -34,7 +34,7 @@ void main() {
   final app = Darto();
 
   app.post('/users', [zValidator('json', userSchema)], (Context c) {
-    final data = c.valid<Map<String, dynamic>>('json');
+    final data = c.req.valid<Map<String, dynamic>>('json');
     return c.created({'user': data});
   });
 
@@ -58,24 +58,24 @@ Validates data from a specific part of the request against a zard schema and sto
 | `'form'` | Form body (`application/x-www-form-urlencoded` or `multipart/form-data`) |
 | `'header'` | Request headers |
 
-### Retrieve in handler — `c.valid<T>(target)`
+### Retrieve in handler — `c.req.valid<T>(target)`
 
 ```dart
 // JSON body
 app.post('/users', [zValidator('json', userSchema)], (c) {
-  final data = c.valid<Map<String, dynamic>>('json');
+  final data = c.req.valid<Map<String, dynamic>>('json');
   return c.created({'user': data});
 });
 
 // Query params
 app.get('/search', [zValidator('query', z.map({'q': z.string().min(1)}))], (c) {
-  final q = c.valid<Map<String, dynamic>>('query');
+  final q = c.req.valid<Map<String, dynamic>>('query');
   return c.ok({'query': q['q']});
 });
 
 // Route params
 app.get('/posts/:id', [zValidator('param', z.map({'id': z.string()}))], (c) {
-  final params = c.valid<Map<String, dynamic>>('param');
+  final params = c.req.valid<Map<String, dynamic>>('param');
   return c.ok({'id': params['id']});
 });
 ```
@@ -138,7 +138,7 @@ final schema = z.map({
 | Symbol | Description |
 |---|---|
 | `zValidator(target, schema, [hook])` | Validation middleware — Hono `zod-validator`-style |
-| `c.valid<T>(target)` | Retrieve validated data (from core `darto`) |
+| `c.req.valid<T>(target)` | Retrieve validated data (from core `darto`) |
 | `z` | Zard schema builder (re-exported) |
 | `ZardResult` | Result type — `.success`, `.data`, `.error` |
 

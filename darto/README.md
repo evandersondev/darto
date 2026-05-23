@@ -1,6 +1,6 @@
 # Darto
 
-**Minimal, fast and type-safe web framework for Dart — inspired by Hono.**
+**Minimal, fast and type-safe web framework for Dart — inspired by Express and Hono.**
 
 Everything flows through a single concept: **Context**.
 
@@ -301,13 +301,9 @@ final user = c.user; // Map<String, dynamic>?
 ### Validation result
 
 ```dart
-// zValidator (recommended) — retrieve with c.valid<T>(target)
-final data  = c.valid<Map<String, dynamic>>('json');
-final query = c.valid<Map<String, dynamic>>('query');
-
-// Legacy helpers — retrieve with c.validated<T>()
-final dto = c.validated<UserDto>();
-final dto = c.validated<UserDto>('myKey'); // custom key
+// retrieve data stored by validator() or zValidator()
+final data  = c.req.valid<Map<String, dynamic>>('json');
+final query = c.req.valid<Map<String, dynamic>>('query');
 ```
 
 ### Response introspection
@@ -856,19 +852,19 @@ final userSchema = z.map({
 
 // Validates JSON body — handler runs only when schema passes
 app.post('/users', [zValidator('json', userSchema)], (c) {
-  final data = c.valid<Map<String, dynamic>>('json');
+  final data = c.req.valid<Map<String, dynamic>>('json');
   return c.created({'user': data});
 });
 
 // Query params
 app.get('/search', [zValidator('query', z.map({'q': z.string().min(1)}))], (c) {
-  final q = c.valid<Map<String, dynamic>>('query');
+  final q = c.req.valid<Map<String, dynamic>>('query');
   return c.ok({'query': q['q']});
 });
 
 // Route params
 app.get('/posts/:id', [zValidator('param', z.map({'id': z.string()}))], (c) {
-  final params = c.valid<Map<String, dynamic>>('param');
+  final params = c.req.valid<Map<String, dynamic>>('param');
   return c.ok({'id': params['id']});
 });
 ```
@@ -888,13 +884,13 @@ app.post('/items', [
 
 ### Targets
 
-| `target` | Source |
-|---|---|
-| `'json'` | JSON body |
-| `'query'` | URL query string |
-| `'param'` | Route path parameters |
-| `'form'` | Form body (urlencoded or multipart) |
-| `'header'` | Request headers |
+| `target`   | Source                              |
+| ---------- | ----------------------------------- |
+| `'json'`   | JSON body                           |
+| `'query'`  | URL query string                    |
+| `'param'`  | Route path parameters               |
+| `'form'`   | Form body (urlencoded or multipart) |
+| `'header'` | Request headers                     |
 
 See [darto_validator README](../darto_validator/README.md) for full docs.
 
@@ -1093,21 +1089,21 @@ app.get('/ws/json', [], upgradeWebSocket((c) => WSHandler(
 
 ### `WSHandler` callbacks
 
-| Callback | Signature | When |
-|---|---|---|
-| `onOpen` | `(DartoWebSocket ws)` | Handshake complete |
-| `onMessage` | `(WSEvent event, DartoWebSocket ws)` | Frame received |
-| `onClose` | `()` | Connection closed |
-| `onError` | `(Object error)` | Protocol error |
+| Callback    | Signature                            | When               |
+| ----------- | ------------------------------------ | ------------------ |
+| `onOpen`    | `(DartoWebSocket ws)`                | Handshake complete |
+| `onMessage` | `(WSEvent event, DartoWebSocket ws)` | Frame received     |
+| `onClose`   | `()`                                 | Connection closed  |
+| `onError`   | `(Object error)`                     | Protocol error     |
 
 ### `DartoWebSocket` methods
 
-| Method | Description |
-|---|---|
-| `send(String)` | Send a text frame |
-| `sendJson(Map)` | Encode and send as JSON |
-| `sendBytes(List<int>)` | Send a binary frame |
-| `close([code, reason])` | Close the connection |
+| Method                  | Description             |
+| ----------------------- | ----------------------- |
+| `send(String)`          | Send a text frame       |
+| `sendJson(Map)`         | Encode and send as JSON |
+| `sendBytes(List<int>)`  | Send a binary frame     |
+| `close([code, reason])` | Close the connection    |
 
 ---
 
@@ -1117,7 +1113,7 @@ app.get('/ws/json', [], upgradeWebSocket((c) => WSHandler(
 
 Generic validator middleware — Hono-style, available via `package:darto/validator.dart`.
 
-`validate` receives the raw value extracted from the request and the `Context`. Return a `Response` to short-circuit with any status code, or return the parsed data to store it — retrieved with `c.valid<T>(target)`.
+`validate` receives the raw value extracted from the request and the `Context`. Return a `Response` to short-circuit with any status code, or return the parsed data to store it — retrieved with `c.req.valid<T>(target)`.
 
 Use with [zard](https://pub.dev/packages/zard) (via [`darto_validator`](../darto_validator/)) for schema-driven validation with full control over the error response:
 
@@ -1140,7 +1136,7 @@ app.post('/users', [
     return result.data;
   }),
 ], (Context c) {
-  final data = c.valid<Map<String, dynamic>>('json');
+  final data = c.req.valid<Map<String, dynamic>>('json');
   return c.created({'user': data});
 });
 
@@ -1152,18 +1148,18 @@ app.post('/login', [
     return result.data;
   }),
 ], (Context c) {
-  final credentials = c.valid<Map<String, dynamic>>('json');
+  final credentials = c.req.valid<Map<String, dynamic>>('json');
   return c.ok({'message': 'Welcome, ${credentials['email']}!'});
 });
 ```
 
 Supports the same targets as `zValidator`: `'json'`, `'query'`, `'param'`, `'form'`, `'header'`.
 
-| | `validator()` | `zValidator()` |
-|---|---|---|
-| Package | `darto` (core) | `darto_validator` |
-| Schema library | you choose | zard (built-in) |
-| Error response | you control | automatic `400` + optional hook |
+|                | `validator()`  | `zValidator()`                  |
+| -------------- | -------------- | ------------------------------- |
+| Package        | `darto` (core) | `darto_validator`               |
+| Schema library | you choose     | zard (built-in)                 |
+| Error response | you control    | automatic `400` + optional hook |
 
 > For automatic error responses without a callback, use [`zValidator`](../darto_validator/) from `darto_validator`.
 
@@ -1237,17 +1233,17 @@ app.post('/logout', [], (c) {
 });
 ```
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `secret` | `String` | required | HMAC-SHA256 signing key — use at least 32 random characters |
-| `duration` | `int` | `1800` | Cookie `Max-Age` in seconds |
-| `cookieName` | `String` | `'darto.session'` | Name of the session cookie |
+| Parameter    | Type     | Default           | Description                                                 |
+| ------------ | -------- | ----------------- | ----------------------------------------------------------- |
+| `secret`     | `String` | required          | HMAC-SHA256 signing key — use at least 32 random characters |
+| `duration`   | `int`    | `1800`            | Cookie `Max-Age` in seconds                                 |
+| `cookieName` | `String` | `'darto.session'` | Name of the session cookie                                  |
 
-| Method | Returns | Description |
-|---|---|---|
-| `sessionContext(c).get()` | `Map<String, dynamic>?` | Current session data; `null` if no valid session |
-| `sessionContext(c).update(data)` | `Future<void>` | Replace session data and write the signed cookie |
-| `sessionContext(c).delete()` | `void` | Clear session data and delete the cookie |
+| Method                           | Returns                 | Description                                      |
+| -------------------------------- | ----------------------- | ------------------------------------------------ |
+| `sessionContext(c).get()`        | `Map<String, dynamic>?` | Current session data; `null` if no valid session |
+| `sessionContext(c).update(data)` | `Future<void>`          | Replace session data and write the signed cookie |
+| `sessionContext(c).delete()`     | `void`                  | Clear session data and delete the cookie         |
 
 ---
 
@@ -1319,8 +1315,9 @@ app.get('/api/users/:id', [], (c) {
 ```dart
 import 'package:darto/proxy.dart';
 
-// Transparent reverse proxy — forwards method, headers, and body
-app.all('/api/*', [], (Context c) =>
+// /* matches both the exact path and any sub-path:
+//   /api/users  •  /api/users/1  •  /api/users/1/posts
+app.all('/api/users/*', [], (Context c) =>
     proxy(c, 'https://backend.com${c.req.path}'));
 
 // With header overrides
@@ -1520,26 +1517,26 @@ See [darto_cli](https://pub.dev/packages/darto_cli) and [darto_client_generator]
 
 Ready-to-run projects are available in the [`examples/`](https://github.com/evandersondev/darto_framework/tree/main/examples) folder of the monorepo:
 
-| Example | What it covers |
-|---|---|
-| [`example_basic_routing`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_basic_routing) | Route params, wildcards, optional params |
-| [`example_group_routes`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_group_routes) | Route groups, nested groups, standalone routers |
-| [`example_middleware_pipeline`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_middleware_pipeline) | Middleware chaining, short-circuit, `combine` |
-| [`example_auth_jwt`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_auth_jwt) | JWT middleware, sign/verify helpers, `c.user` |
-| [`example_middleware_validator`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_middleware_validator) | `zValidator` — schema-driven validation with zard |
-| [`example_validator`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_validator) | `validator()` + zard — full control over the error response |
-| [`example_context_usage`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_context_usage) | Full Context API, `c.req`, state, headers |
-| [`example_response_helpers`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_response_helpers) | `c.ok`, `c.json`, `c.html`, `c.binary`, redirects |
-| [`example_error_handling`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_error_handling) | `app.onError`, `app.notFound`, `DartoError` |
-| [`example_upload`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_upload) | In-memory and streamed-to-disk file upload |
-| [`example_static_files`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_static_files) | Static file serving with `darto_static` |
-| [`example_view_engine`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_view_engine) | Mustache templates with `darto_view` |
-| [`example_websocket`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_websocket) | WebSocket echo, JSON messages, room chat |
-| [`example_session`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_session) | Cookie-based signed sessions |
-| [`example_logger`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_logger) | Built-in logger middleware, custom printer |
-| [`example_proxy`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_proxy) | Reverse proxy, header overrides |
-| [`example_env`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_env) | `.env` loading with `darto_env` |
-| [`example_full_integration`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_full_integration) | Full app — auth, CORS, validation, WebSocket |
+| Example                                                                                                                            | What it covers                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [`example_basic_routing`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_basic_routing)               | Route params, wildcards, optional params                    |
+| [`example_group_routes`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_group_routes)                 | Route groups, nested groups, standalone routers             |
+| [`example_middleware_pipeline`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_middleware_pipeline)   | Middleware chaining, short-circuit, `combine`               |
+| [`example_auth_jwt`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_auth_jwt)                         | JWT middleware, sign/verify helpers, `c.user`               |
+| [`example_middleware_validator`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_middleware_validator) | `zValidator` — schema-driven validation with zard           |
+| [`example_validator`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_validator)                       | `validator()` + zard — full control over the error response |
+| [`example_context_usage`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_context_usage)               | Full Context API, `c.req`, state, headers                   |
+| [`example_response_helpers`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_response_helpers)         | `c.ok`, `c.json`, `c.html`, `c.binary`, redirects           |
+| [`example_error_handling`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_error_handling)             | `app.onError`, `app.notFound`, `DartoError`                 |
+| [`example_upload`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_upload)                             | In-memory and streamed-to-disk file upload                  |
+| [`example_static_files`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_static_files)                 | Static file serving with `darto_static`                     |
+| [`example_view_engine`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_view_engine)                   | Mustache templates with `darto_view`                        |
+| [`example_websocket`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_websocket)                       | WebSocket echo, JSON messages, room chat                    |
+| [`example_session`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_session)                           | Cookie-based signed sessions                                |
+| [`example_logger`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_logger)                             | Built-in logger middleware, custom printer                  |
+| [`example_proxy`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_proxy)                               | Reverse proxy, header overrides                             |
+| [`example_env`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_env)                                   | `.env` loading with `darto_env`                             |
+| [`example_full_integration`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_full_integration)         | Full app — auth, CORS, validation, WebSocket                |
 
 ---
 

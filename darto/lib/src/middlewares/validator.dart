@@ -45,7 +45,7 @@ Future<dynamic> extractValidatorInput(String target, Context c) async {
 ///
 /// [validate] receives the raw extracted value and the [Context]. Return:
 /// - A **[Response]** to short-circuit the pipeline (e.g. error response).
-/// - **Any other value** to store it; retrieve with `c.valid<T>(target)`.
+/// - **Any other value** to store it; retrieve with `c.req.valid<T>(target)`.
 ///
 /// ```dart
 /// import 'package:darto/darto.dart';
@@ -58,7 +58,7 @@ Future<dynamic> extractValidatorInput(String target, Context c) async {
 ///     return body;
 ///   }),
 /// ], (Context c) {
-///   final data = c.valid<Map<String, dynamic>>('json');
+///   final data = c.req.valid<Map<String, dynamic>>('json');
 ///   return c.created({'post': data});
 /// });
 /// ```
@@ -77,7 +77,7 @@ Future<dynamic> extractValidatorInput(String target, Context c) async {
 ///     return result.data;
 ///   }),
 /// ], (Context c) {
-///   final data = c.valid<Map<String, dynamic>>('json');
+///   final data = c.req.valid<Map<String, dynamic>>('json');
 ///   return c.created({'user': data});
 /// });
 /// ```

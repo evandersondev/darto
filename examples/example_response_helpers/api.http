@@ -1,0 +1,69 @@
+@baseUrl = http://localhost:3000
+
+### GET /json — c.json (200)
+GET {{baseUrl}}/json
+
+###
+
+### GET /text — c.text (200, text/plain)
+GET {{baseUrl}}/text
+
+###
+
+### GET /html — c.html (200, text/html)
+GET {{baseUrl}}/html
+
+###
+
+### GET /ok — c.ok (200)
+GET {{baseUrl}}/ok
+
+###
+
+### GET /created — c.created (201)
+GET {{baseUrl}}/created
+
+###
+
+### GET /no-content — c.noContent (204)
+GET {{baseUrl}}/no-content
+
+###
+
+### GET /bad-request — c.badRequest (400)
+GET {{baseUrl}}/bad-request
+
+###
+
+### GET /not-found — c.notFound (404)
+GET {{baseUrl}}/not-found
+
+###
+
+### GET /conflict — c.conflict (409)
+GET {{baseUrl}}/conflict
+
+###
+
+### GET /unauthorized — c.unauthorized (401)
+GET {{baseUrl}}/unauthorized
+
+###
+
+### GET /forbidden — c.forbidden (403)
+GET {{baseUrl}}/forbidden
+
+###
+
+### GET /internal — c.internalError (500)
+GET {{baseUrl}}/internal
+
+###
+
+### GET /status-custom — c.status(418).json (I'm a teapot)
+GET {{baseUrl}}/status-custom
+
+###
+
+### GET /redirect — c.redirect → /ok (302)
+GET {{baseUrl}}/redirect

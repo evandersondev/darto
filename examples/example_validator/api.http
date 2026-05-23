@@ -1,0 +1,90 @@
+@baseUrl = http://localhost:3000
+
+### ── POST /users — validator('json') — 400 on failure ──────────────────────
+
+### Valid body (201)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "age": 30
+}
+
+###
+
+### Invalid — missing name (400)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "age": 30
+}
+
+###
+
+### Invalid — bad email (400)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "email": "not-an-email",
+  "age": 30
+}
+
+###
+
+### ── GET /search — validator('query') ───────────────────────────────────────
+
+### Valid (200)
+GET {{baseUrl}}/search?q=darto
+
+###
+
+### Missing q (400)
+GET {{baseUrl}}/search
+
+###
+
+### ── GET /posts/:id — validator('param') ────────────────────────────────────
+
+### Valid param (200)
+GET {{baseUrl}}/posts/abc123
+
+###
+
+### ── POST /login — validator('json') — 401 on failure ──────────────────────
+
+### Valid credentials (200)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "secret123"
+}
+
+###
+
+### Short password — validation fails (401)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "123"
+}
+
+###
+
+### Bad email — validation fails (401)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "not-email",
+  "password": "secret123"
+}

@@ -8,7 +8,7 @@ Generic request validation using `validator()` from the core `darto` package wit
 - `validator('query', ...)` — validate URL query parameters
 - `validator('param', ...)` — validate route path parameters
 - Custom status code per route (`400`, `401`, `422`, …) — you decide
-- Retrieve validated data with `c.valid<T>(target)`
+- Retrieve validated data with `c.req.valid<T>(target)`
 
 ## Run
 

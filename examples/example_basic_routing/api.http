@@ -1,0 +1,42 @@
+@baseUrl = http://localhost:3000
+
+### GET / — welcome
+GET {{baseUrl}}/
+
+###
+
+### GET /users/:id — valid id
+GET {{baseUrl}}/users/42
+
+###
+
+### GET /users/:id — invalid id (bad request)
+GET {{baseUrl}}/users/abc
+
+###
+
+### GET /search — with query params
+GET {{baseUrl}}/search?q=dart&page=2
+
+###
+
+### GET /search — missing q
+GET {{baseUrl}}/search
+
+###
+
+### POST /users — create user
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Alice"
+}
+
+###
+
+### POST /users — missing name (400)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{}

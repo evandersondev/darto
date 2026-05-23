@@ -40,11 +40,12 @@ void main() {
   app.post('/users', [
     validator('json', (value, c) {
       final result = userSchema.safeParse(value);
-      if (!result.success) return c.badRequest({'errors': result.error?.format()});
-      return result.data; // stored → retrieve with c.valid('json')
+      if (!result.success)
+        return c.badRequest({'errors': result.error?.format()});
+      return result.data; // stored → retrieve with c.req.valid('json')
     }),
   ], (Context c) {
-    final data = c.valid<Map<String, dynamic>>('json');
+    final data = c.req.valid<Map<String, dynamic>>('json');
     return c.created({'user': data});
   });
 
@@ -52,11 +53,12 @@ void main() {
   app.get('/search', [
     validator('query', (value, c) {
       final result = searchSchema.safeParse(value);
-      if (!result.success) return c.badRequest({'errors': result.error?.format()});
+      if (!result.success)
+        return c.badRequest({'errors': result.error?.format()});
       return result.data;
     }),
   ], (Context c) {
-    final query = c.valid<Map<String, dynamic>>('query');
+    final query = c.req.valid<Map<String, dynamic>>('query');
     return c.ok({'results': [], 'query': query['q']});
   });
 
@@ -64,11 +66,12 @@ void main() {
   app.get('/posts/:id', [
     validator('param', (value, c) {
       final result = postParamSchema.safeParse(value);
-      if (!result.success) return c.badRequest({'errors': result.error?.format()});
+      if (!result.success)
+        return c.badRequest({'errors': result.error?.format()});
       return result.data;
     }),
   ], (Context c) {
-    final params = c.valid<Map<String, dynamic>>('param');
+    final params = c.req.valid<Map<String, dynamic>>('param');
     return c.ok({'post': params['id']});
   });
 
@@ -76,13 +79,15 @@ void main() {
   app.post('/login', [
     validator('json', (value, c) {
       final result = loginSchema.safeParse(value);
-      if (!result.success) return c.status(401).json({'errors': result.error?.format()});
+      if (!result.success)
+        return c.status(401).json({'errors': result.error?.format()});
       return result.data;
     }),
   ], (Context c) {
-    final credentials = c.valid<Map<String, dynamic>>('json');
+    final credentials = c.req.valid<Map<String, dynamic>>('json');
     return c.ok({'message': 'Welcome, ${credentials['email']}!'});
   });
 
-  app.listen(3000, () => print('Validator example running on http://localhost:3000'));
+  app.listen(
+      3000, () => print('Validator example running on http://localhost:3000'));
 }

@@ -1,5 +1,5 @@
-name: example_validation
-description: Darto v2 — validation middleware example
+name: example_middleware_validator
+description: Darto v2 — zValidator middleware example (schema-driven validation with zard)
 version: 0.0.1
 publish_to: none
 

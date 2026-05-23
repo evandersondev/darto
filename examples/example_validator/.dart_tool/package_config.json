@@ -33,9 +33,9 @@
     },
     {
       "name": "lints",
-      "rootUri": "file:///home/evandersondev/.pub-cache/hosted/pub.dev/lints-5.0.0",
+      "rootUri": "file:///home/evandersondev/.pub-cache/hosted/pub.dev/lints-5.1.1",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.6"
     },
     {
       "name": "mime",
@@ -62,7 +62,7 @@
       "languageVersion": "3.0"
     },
     {
-      "name": "example_validation",
+      "name": "example_validator",
       "rootUri": "../",
       "packageUri": "lib/",
       "languageVersion": "3.0"

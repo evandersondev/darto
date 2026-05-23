@@ -2,7 +2,7 @@
 
 Request validation middleware for [Darto](https://github.com/evandersondev/darto), powered by [zard](https://pub.dev/packages/zard) — a Zod-inspired schema library for Dart.
 
-Ships with `zValidator` — a Hono `zod-validator`-style middleware — plus legacy helpers for backward compatibility.
+> For a generic validator without zard, use `validator()` from the core `darto` package.
 
 ---
 
@@ -10,7 +10,7 @@ Ships with `zValidator` — a Hono `zod-validator`-style middleware — plus leg
 
 ```yaml
 dependencies:
-  darto: ^0.1.0
+  darto: ^1.0.0
   darto_validator: ^1.0.0
 ```
 
@@ -46,7 +46,7 @@ void main() {
 
 ## `zValidator(target, schema, [hook])`
 
-The primary middleware. Validates data from a specific part of the request and stores the coerced result for the handler.
+Validates data from a specific part of the request against a zard schema and stores the coerced result for the handler.
 
 ### Targets
 
@@ -133,29 +133,12 @@ final schema = z.map({
 
 ---
 
-## Legacy helpers
-
-The old `validate()` / `validateQuery()` helpers are still supported:
-
-```dart
-app.post('/users', [validate(schema)], handler);        // stores in c.validated()
-app.get('/search', [validateQuery(schema)], handler);   // stores in c.validated('validatedQuery')
-
-// Retrieve
-final data  = c.validated<Map<String, dynamic>>();
-final query = c.validated<Map<String, dynamic>>('validatedQuery');
-```
-
----
-
 ## API reference
 
 | Symbol | Description |
 |---|---|
-| `zValidator(target, schema, [hook])` | Primary middleware — Hono-style |
-| `c.valid<T>(target)` | Retrieve validated data in the handler |
-| `validate(schema)` | Legacy body validator |
-| `validateQuery(schema)` | Legacy query validator |
+| `zValidator(target, schema, [hook])` | Validation middleware — Hono `zod-validator`-style |
+| `c.valid<T>(target)` | Retrieve validated data (from core `darto`) |
 | `z` | Zard schema builder (re-exported) |
 | `ZardResult` | Result type — `.success`, `.data`, `.error` |
 
@@ -165,4 +148,4 @@ final query = c.validated<Map<String, dynamic>>('validatedQuery');
 
 - [darto](https://github.com/evandersondev/darto) — core framework
 - [zard](https://pub.dev/packages/zard) — schema library
-- [examples/example_validation](../examples/example_validation/) — working example
+- [examples/example_middleware_validator](../examples/example_middleware_validator/) — working example

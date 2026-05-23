@@ -25,6 +25,7 @@ Everything flows through a single concept: **Context**.
 - [File Download](#file-download)
 - [WebSocket](#websocket)
 - [Helpers](#helpers)
+  - [Validator](#validator)
 - [HTTP Status Codes](#http-status-codes)
 - [Error Handling](#error-handling)
 - [CLI](#cli)
@@ -1112,6 +1113,62 @@ app.get('/ws/json', [], upgradeWebSocket((c) => WSHandler(
 
 ## Helpers
 
+### Validator
+
+Generic validator middleware — Hono-style, available via `package:darto/validator.dart`.
+
+`validate` receives the raw value extracted from the request and the `Context`. Return a `Response` to short-circuit with any status code, or return the parsed data to store it — retrieved with `c.valid<T>(target)`.
+
+Use with [zard](https://pub.dev/packages/zard) (via [`darto_validator`](../darto_validator/)) for schema-driven validation with full control over the error response:
+
+```dart
+import 'package:darto/darto.dart';
+import 'package:darto/validator.dart';
+import 'package:darto_validator/darto_validator.dart';
+
+final userSchema = z.map({
+  'name':  z.string().min(1),
+  'email': z.string().email(),
+  'age':   z.int().min(0).max(150),
+});
+
+// 400 on failure — you decide the format
+app.post('/users', [
+  validator('json', (value, c) {
+    final result = userSchema.safeParse(value);
+    if (!result.success) return c.badRequest({'errors': result.error?.format()});
+    return result.data;
+  }),
+], (Context c) {
+  final data = c.valid<Map<String, dynamic>>('json');
+  return c.created({'user': data});
+});
+
+// 401 on failure — any status code works
+app.post('/login', [
+  validator('json', (value, c) {
+    final result = loginSchema.safeParse(value);
+    if (!result.success) return c.status(401).json({'errors': result.error?.format()});
+    return result.data;
+  }),
+], (Context c) {
+  final credentials = c.valid<Map<String, dynamic>>('json');
+  return c.ok({'message': 'Welcome, ${credentials['email']}!'});
+});
+```
+
+Supports the same targets as `zValidator`: `'json'`, `'query'`, `'param'`, `'form'`, `'header'`.
+
+| | `validator()` | `zValidator()` |
+|---|---|---|
+| Package | `darto` (core) | `darto_validator` |
+| Schema library | you choose | zard (built-in) |
+| Error response | you control | automatic `400` + optional hook |
+
+> For automatic error responses without a callback, use [`zValidator`](../darto_validator/) from `darto_validator`.
+
+---
+
 ### Cookie
 
 ```dart
@@ -1469,7 +1526,8 @@ Ready-to-run projects are available in the [`examples/`](https://github.com/evan
 | [`example_group_routes`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_group_routes) | Route groups, nested groups, standalone routers |
 | [`example_middleware_pipeline`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_middleware_pipeline) | Middleware chaining, short-circuit, `combine` |
 | [`example_auth_jwt`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_auth_jwt) | JWT middleware, sign/verify helpers, `c.user` |
-| [`example_validation`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_validation) | `zValidator` — JSON body, query, params, form |
+| [`example_middleware_validator`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_middleware_validator) | `zValidator` — schema-driven validation with zard |
+| [`example_validator`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_validator) | `validator()` + zard — full control over the error response |
 | [`example_context_usage`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_context_usage) | Full Context API, `c.req`, state, headers |
 | [`example_response_helpers`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_response_helpers) | `c.ok`, `c.json`, `c.html`, `c.binary`, redirects |
 | [`example_error_handling`](https://github.com/evandersondev/darto_framework/tree/main/examples/example_error_handling) | `app.onError`, `app.notFound`, `DartoError` |

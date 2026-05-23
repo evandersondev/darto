@@ -1,33 +1,12 @@
 import 'dart:async';
 
 import 'package:darto/darto.dart';
+import 'package:darto/src/middlewares/validator.dart';
 import 'package:zard/zard.dart';
-
-// ── Storage key ───────────────────────────────────────────────────────────────
-
-String _key(String target) => '__zv_$target';
-
-// ── Extension ─────────────────────────────────────────────────────────────────
-
-/// Retrieves the value validated by [zValidator] for [target].
-///
-/// Must be called in a handler that runs after `zValidator(target, schema)`.
-///
-/// ```dart
-/// app.post('/users', createUser, [zValidator('json', schema)]);
-///
-/// Response createUser(Context c) {
-///   final data = c.valid<Map<String, dynamic>>('json');
-///   return c.created({'user': data});
-/// }
-/// ```
-extension ZValidatorContext on Context {
-  T valid<T>(String target) => get<T>(_key(target));
-}
 
 // ── Middleware ─────────────────────────────────────────────────────────────────
 
-/// Zard schema validator — Hono `zValidator`-style middleware for Darto.
+/// Zard schema validator — Hono `zod-validator`-style middleware for Darto.
 ///
 /// [target] selects where to read data from:
 ///
@@ -49,37 +28,32 @@ extension ZValidatorContext on Context {
 ///
 /// ```dart
 /// // Basic usage
-/// app.post('/users', createUser, [
-///   zValidator('json', z.object({
-///     'name':  z.string().min(1),
-///     'email': z.string().email(),
-///   })),
-/// ]);
-///
-/// Response createUser(Context c) {
+/// app.post('/users', [zValidator('json', userSchema)], (c) {
 ///   final data = c.valid<Map<String, dynamic>>('json');
 ///   return c.created({'user': data});
-/// }
+/// });
 ///
 /// // Query params
-/// app.get('/search', handler, [
-///   zValidator('query', z.object({'q': z.string().min(1)})),
-/// ]);
+/// app.get('/search', [zValidator('query', z.map({'q': z.string().min(1)}))], (c) {
+///   final q = c.valid<Map<String, dynamic>>('query');
+///   return c.ok({'query': q['q']});
+/// });
 ///
 /// // Route params
-/// app.get('/posts/:id', handler, [
-///   zValidator('param', z.object({'id': z.string().min(1)})),
-/// ]);
+/// app.get('/posts/:id', [zValidator('param', z.map({'id': z.string()}))], (c) {
+///   final params = c.valid<Map<String, dynamic>>('param');
+///   return c.ok({'id': params['id']});
+/// });
 ///
 /// // Custom error via hook — return 422 instead of 400
-/// app.post('/items', handler, [
+/// app.post('/items', [
 ///   zValidator('json', schema, (result, c) {
 ///     if (!result.success) {
 ///       return c.status(422).json({'issues': result.error?.format()});
 ///     }
 ///     return null;
 ///   }),
-/// ]);
+/// ], handler);
 /// ```
 Middleware zValidator(
   String target,
@@ -87,7 +61,7 @@ Middleware zValidator(
   FutureOr<Response?> Function(ZardResult result, Context c)? hook,
 ]) {
   return (Context c, Next next) async {
-    final input = await _extract(target, c);
+    final input = await extractValidatorInput(target, c);
     final result = schema.safeParse(input);
 
     if (hook != null) {
@@ -107,30 +81,7 @@ Middleware zValidator(
       return;
     }
 
-    c.set(_key(target), result.data);
+    c.set(validatorKey(target), result.data);
     await next();
   };
-}
-
-// ── Data extraction ───────────────────────────────────────────────────────────
-
-Future<dynamic> _extract(String target, Context c) async {
-  switch (target) {
-    case 'json':
-      return await c.body();
-    case 'query':
-      return c.req.url.queryParameters;
-    case 'param':
-    case 'params':
-      return c.req.paramsMap;
-    case 'form':
-      return await c.req.parseBody();
-    case 'header':
-      return c.req.headers;
-    default:
-      throw ArgumentError(
-        'zValidator: unknown target "$target". '
-        'Valid targets: json, query, param, form, header.',
-      );
-  }
 }

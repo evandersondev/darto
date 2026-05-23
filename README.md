@@ -93,7 +93,8 @@ Explore ready-to-run examples inside the [`examples/`](./examples/) folder:
 | [`example_group_routes`](./examples/example_group_routes/) | Route groups, nested groups, standalone routers |
 | [`example_middleware_pipeline`](./examples/example_middleware_pipeline/) | Middleware chaining, short-circuit, `combine` |
 | [`example_auth_jwt`](./examples/example_auth_jwt/) | JWT middleware, sign/verify helpers, `c.user` |
-| [`example_validation`](./examples/example_validation/) | `zValidator` — JSON body, query, params, form |
+| [`example_middleware_validator`](./examples/example_middleware_validator/) | `zValidator` — schema-driven validation with zard |
+| [`example_validator`](./examples/example_validator/) | `validator()` + zard — full control over the error response |
 | [`example_context_usage`](./examples/example_context_usage/) | Full Context API, `c.req`, state, headers |
 | [`example_response_helpers`](./examples/example_response_helpers/) | `c.ok`, `c.json`, `c.html`, `c.binary`, redirects |
 | [`example_error_handling`](./examples/example_error_handling/) | `app.onError`, `app.notFound`, `DartoError` |

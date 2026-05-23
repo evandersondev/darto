@@ -67,7 +67,16 @@ class Context {
 
   // ── Validation ────────────────────────────────────────────────────────────
 
-  T validated<T>([String key = 'validated']) => _req.get(key) as T;
+  /// Retrieves the value stored by `validator()` or `zValidator()` for [target].
+  ///
+  /// Must be called in a handler that runs after one of those middlewares.
+  ///
+  /// ```dart
+  /// app.post('/users', [validator('json', (value, c) { ... })], (c) {
+  ///   final data = c.valid<Map<String, dynamic>>('json');
+  /// });
+  /// ```
+  T valid<T>(String target) => get<T>('__v_$target');
 
   // ── Response helpers ──────────────────────────────────────────────────────
 

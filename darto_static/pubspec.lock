@@ -74,7 +74,7 @@ packages:
     source: hosted
     version: "1.15.0"
   crypto:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: crypto
       sha256: c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf
@@ -84,10 +84,11 @@ packages:
   darto:
     dependency: "direct main"
     description:
-      path: "../darto"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: darto
+      sha256: "13284c31c9305d8a8f6375cb0aa9ab68102c412e0dbef55e1b1eeb0313221b81"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   file:
     dependency: transitive
     description:
@@ -177,7 +178,7 @@ packages:
     source: hosted
     version: "1.18.2"
   mime:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: mime
       sha256: "41a20518f0cb1256669420fdba0cd90d21561e560ac240f26ef8322e45bb7ed6"

@@ -8,7 +8,9 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
+  crypto: ^3.0.7
   darto: ^1.0.0
+  mime: ^2.0.0
   path: ^1.9.1
 
 dev_dependencies:

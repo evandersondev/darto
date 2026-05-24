@@ -1,0 +1,9 @@
+@baseUrl = http://localhost:3000
+
+### GET / — app info from .env
+GET {{baseUrl}}/
+
+###
+
+### GET /config — all env values
+GET {{baseUrl}}/config

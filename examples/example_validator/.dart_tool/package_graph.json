@@ -1,0 +1,83 @@
+{
+  "roots": [
+    "example_validator"
+  ],
+  "packages": [
+    {
+      "name": "example_validator",
+      "version": "0.0.1",
+      "dependencies": [
+        "darto",
+        "darto_validator"
+      ],
+      "devDependencies": [
+        "lints"
+      ]
+    },
+    {
+      "name": "lints",
+      "version": "5.1.1",
+      "dependencies": []
+    },
+    {
+      "name": "darto_validator",
+      "version": "1.0.0",
+      "dependencies": [
+        "darto",
+        "zard"
+      ]
+    },
+    {
+      "name": "darto",
+      "version": "1.0.0",
+      "dependencies": [
+        "crypto",
+        "mime"
+      ]
+    },
+    {
+      "name": "zard",
+      "version": "1.1.0",
+      "dependencies": [
+        "string_normalizer"
+      ]
+    },
+    {
+      "name": "crypto",
+      "version": "3.0.7",
+      "dependencies": [
+        "typed_data"
+      ]
+    },
+    {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "string_normalizer",
+      "version": "0.4.0",
+      "dependencies": [
+        "characters"
+      ]
+    },
+    {
+      "name": "typed_data",
+      "version": "1.4.0",
+      "dependencies": [
+        "collection"
+      ]
+    },
+    {
+      "name": "collection",
+      "version": "1.19.1",
+      "dependencies": []
+    },
+    {
+      "name": "characters",
+      "version": "1.4.1",
+      "dependencies": []
+    }
+  ],
+  "configVersion": 1
+}

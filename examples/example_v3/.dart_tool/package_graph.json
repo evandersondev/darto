@@ -1,0 +1,28 @@
+{
+  "roots": [
+    "example_v3"
+  ],
+  "packages": [
+    {
+      "name": "example_v3",
+      "version": "1.0.0",
+      "dependencies": [
+        "darto"
+      ],
+      "devDependencies": []
+    },
+    {
+      "name": "darto",
+      "version": "0.1.0",
+      "dependencies": [
+        "mime"
+      ]
+    },
+    {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
+    }
+  ],
+  "configVersion": 1
+}

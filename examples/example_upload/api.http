@@ -1,0 +1,49 @@
+@baseUrl = http://localhost:3000
+
+### GET / — list endpoints
+GET {{baseUrl}}/
+
+###
+
+### POST /upload/single — single file in memory
+# Replace the file path with a real file on your system
+POST {{baseUrl}}/upload/single
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="file"; filename="hello.txt"
+Content-Type: text/plain
+
+Hello, Darto!
+------FormBoundary--
+
+###
+
+### POST /upload/multiple — multiple files in memory
+POST {{baseUrl}}/upload/multiple
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="files"; filename="a.txt"
+Content-Type: text/plain
+
+File A content
+------FormBoundary
+Content-Disposition: form-data; name="files"; filename="b.txt"
+Content-Type: text/plain
+
+File B content
+------FormBoundary--
+
+###
+
+### POST /upload/disk — streamed to disk (uploads/ directory)
+POST {{baseUrl}}/upload/disk
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="file"; filename="large.txt"
+Content-Type: text/plain
+
+This file will be saved to disk instead of memory.
+------FormBoundary--

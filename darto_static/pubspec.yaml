@@ -1,0 +1,17 @@
+name: darto_static
+description: Static file serving plugin for Darto.
+version: 1.0.0
+homepage: https://github.com/evandersondev/darto
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../darto
+  path: ^1.9.1
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0

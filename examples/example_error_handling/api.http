@@ -1,0 +1,19 @@
+@baseUrl = http://localhost:3000
+
+### GET /ok — happy path (200)
+GET {{baseUrl}}/ok
+
+###
+
+### GET /throw-handler — exception inside handler → onError (500)
+GET {{baseUrl}}/throw-handler
+
+###
+
+### GET /throw-middleware — exception inside middleware → onError (500)
+GET {{baseUrl}}/throw-middleware
+
+###
+
+### GET /not-found — custom 404 handler
+GET {{baseUrl}}/route-that-does-not-exist

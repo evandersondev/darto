@@ -1,0 +1,75 @@
+{
+  "roots": [
+    "example_view_engine"
+  ],
+  "packages": [
+    {
+      "name": "example_view_engine",
+      "version": "0.0.1",
+      "dependencies": [
+        "darto",
+        "darto_view"
+      ],
+      "devDependencies": [
+        "lints"
+      ]
+    },
+    {
+      "name": "lints",
+      "version": "5.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "darto_view",
+      "version": "0.1.0",
+      "dependencies": [
+        "darto",
+        "mustache_template",
+        "path"
+      ]
+    },
+    {
+      "name": "darto",
+      "version": "0.1.1",
+      "dependencies": [
+        "crypto",
+        "mime"
+      ]
+    },
+    {
+      "name": "path",
+      "version": "1.9.1",
+      "dependencies": []
+    },
+    {
+      "name": "mustache_template",
+      "version": "2.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "crypto",
+      "version": "3.0.7",
+      "dependencies": [
+        "typed_data"
+      ]
+    },
+    {
+      "name": "typed_data",
+      "version": "1.4.0",
+      "dependencies": [
+        "collection"
+      ]
+    },
+    {
+      "name": "collection",
+      "version": "1.19.1",
+      "dependencies": []
+    }
+  ],
+  "configVersion": 1
+}

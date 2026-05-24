@@ -1,0 +1,16 @@
+name: example_view_engine
+description: Darto v2 — Mustache view engine example
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+  darto_view:
+    path: ../../darto_view
+
+dev_dependencies:
+  lints: ^5.0.0

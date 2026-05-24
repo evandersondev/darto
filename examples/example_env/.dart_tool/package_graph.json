@@ -1,0 +1,41 @@
+{
+  "roots": [
+    "example_env"
+  ],
+  "packages": [
+    {
+      "name": "example_env",
+      "version": "0.0.1",
+      "dependencies": [
+        "darto",
+        "darto_env"
+      ],
+      "devDependencies": [
+        "lints"
+      ]
+    },
+    {
+      "name": "lints",
+      "version": "5.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "darto_env",
+      "version": "0.1.0",
+      "dependencies": []
+    },
+    {
+      "name": "darto",
+      "version": "0.1.0",
+      "dependencies": [
+        "mime"
+      ]
+    },
+    {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
+    }
+  ],
+  "configVersion": 1
+}

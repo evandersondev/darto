@@ -1,0 +1,24 @@
+@baseUrl = http://localhost:3000
+
+### GET / — home
+GET {{baseUrl}}/
+
+###
+
+### GET /users — list users
+GET {{baseUrl}}/users
+
+###
+
+### GET /users/:id — get by id
+GET {{baseUrl}}/users/1
+
+###
+
+### POST /users — create user (body logged)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Carol"
+}

@@ -1,0 +1,14 @@
+name: example_upload
+description: Darto v2 — file upload example
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+
+dev_dependencies:
+  lints: ^5.0.0

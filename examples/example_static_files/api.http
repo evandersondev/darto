@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:3000
+
+### GET / — HTML page with links to static assets
+GET {{baseUrl}}/
+
+###
+
+### GET /assets/style.css — static file (if present)
+GET {{baseUrl}}/assets/style.css
+
+###
+
+### GET /assets/logo.png — static image (if present)
+GET {{baseUrl}}/assets/logo.png

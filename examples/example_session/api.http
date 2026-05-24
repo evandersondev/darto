@@ -1,0 +1,35 @@
+@baseUrl = http://localhost:3000
+
+# Sessions use signed cookies — run requests in order to test the full flow.
+# The REST client must forward the Set-Cookie header automatically.
+
+### POST /login — start session
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "username": "alice"
+}
+
+###
+
+### POST /login — missing username (400)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{}
+
+###
+
+### GET /me — active session (200) or no session (401)
+GET {{baseUrl}}/me
+
+###
+
+### POST /logout — destroy session
+POST {{baseUrl}}/logout
+
+###
+
+### GET /me — after logout (401)
+GET {{baseUrl}}/me

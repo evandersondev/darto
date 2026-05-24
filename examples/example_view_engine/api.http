@@ -1,0 +1,9 @@
+@baseUrl = http://localhost:3000
+
+### GET / — renders index template
+GET {{baseUrl}}/
+
+###
+
+### GET /about — renders about template
+GET {{baseUrl}}/about

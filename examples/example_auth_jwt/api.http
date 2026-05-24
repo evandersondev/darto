@@ -1,0 +1,51 @@
+@baseUrl = http://localhost:3000
+
+### POST /login — valid user (returns JWT)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "pass123"
+}
+
+###
+
+### POST /login — admin user
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### POST /login — invalid credentials (401)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "wrong"
+}
+
+###
+
+### GET /me — requires JWT (paste token from /login response)
+# @prompt token Enter JWT token
+GET {{baseUrl}}/me
+Authorization: Bearer {{token}}
+
+###
+
+### GET /admin — requires JWT + admin role
+GET {{baseUrl}}/admin
+Authorization: Bearer {{token}}
+
+###
+
+### GET /admin — with alice's token (403 — not admin)
+GET {{baseUrl}}/admin
+Authorization: Bearer {{token}}

@@ -1,0 +1,46 @@
+### CREATE USER
+
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "email": "johndoe@mail.com"
+}
+
+### GET ALL USERS
+GET http://localhost:8080/users
+
+### GET USER BY ID
+GET http://localhost:8080/users/1776301810290
+
+
+### Test
+GET http://localhost:8080/products/33/users/1/orders/135
+
+### Test
+GET http://localhost:8080/users/admin/dash?name=Evan&age=33
+
+### Basic Auth
+GET http://localhost:8080/auth/users
+Authorization: Basic user:pass
+
+### JWT
+GET http://localhost:8080/auth/page
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJpc3MiOiJteS10cnVzdGVkLWlzc3VlciJ9.axsEQiCEotSXWid7VukAf3o5o1Z1GDY2hJl6Xg8Uue0
+
+### Bearer Auth
+GET http://localhost:8080/api/v1/users
+Authorization: Bearer token
+
+### CHAIGING ROUTE GET
+GET http://localhost:8080/hello
+
+### CHAIGING ROUTE POST
+POST http://localhost:8080/hello
+
+### CHAIGING ROUTE PUT
+PUT http://localhost:8080/hello
+
+### CHAIGING ROUTE DELETE
+DELETE http://localhost:8080/hello

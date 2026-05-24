@@ -1,0 +1,8 @@
+.dart_tool/
+.git/
+.gitignore
+.env
+build/
+test/
+*.md
+pubspec.lock

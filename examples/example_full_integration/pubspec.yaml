@@ -1,0 +1,15 @@
+name: example_full_integration
+description: Darto v2 — full integration example
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+  zard: 1.1.0
+
+dev_dependencies:
+  lints: ^5.0.0

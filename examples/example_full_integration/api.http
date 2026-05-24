@@ -1,0 +1,61 @@
+@baseUrl = http://localhost:3000
+
+### GET / — list endpoints
+GET {{baseUrl}}/
+
+###
+
+### POST /auth/login — valid user (copy token for requests below)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "pass123"
+}
+
+###
+
+### POST /auth/login — admin user
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### POST /auth/login — wrong password (401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "wrong"
+}
+
+###
+
+### GET /api/profile — authenticated (paste token from /auth/login)
+# @prompt token Enter JWT token
+GET {{baseUrl}}/api/profile
+Authorization: Bearer {{token}}
+
+###
+
+### GET /api/profile — no token (401)
+GET {{baseUrl}}/api/profile
+
+###
+
+### POST /api/items — authenticated
+POST {{baseUrl}}/api/items
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Widget",
+  "price": 9.99
+}

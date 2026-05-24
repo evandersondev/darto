@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "darto_view",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "dependencies": [
         "darto",
         "mustache_template",
@@ -65,7 +65,7 @@
     },
     {
       "name": "darto",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "dependencies": [
         "crypto",
         "mime"
@@ -320,16 +320,16 @@
       ]
     },
     {
-      "name": "mime",
-      "version": "2.0.0",
-      "dependencies": []
-    },
-    {
       "name": "crypto",
       "version": "3.0.7",
       "dependencies": [
         "typed_data"
       ]
+    },
+    {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
     },
     {
       "name": "string_scanner",

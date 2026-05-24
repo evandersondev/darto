@@ -92,10 +92,11 @@ packages:
   darto:
     dependency: "direct main"
     description:
-      path: "../darto"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: darto
+      sha256: "13284c31c9305d8a8f6375cb0aa9ab68102c412e0dbef55e1b1eeb0313221b81"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   file:
     dependency: transitive
     description:

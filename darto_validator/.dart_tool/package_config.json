@@ -69,7 +69,7 @@
     },
     {
       "name": "darto",
-      "rootUri": "../../darto",
+      "rootUri": "file:///home/evandersondev/.pub-cache/hosted/pub.dev/darto-1.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },

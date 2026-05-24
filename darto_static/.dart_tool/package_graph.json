@@ -5,9 +5,11 @@
   "packages": [
     {
       "name": "darto_static",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "dependencies": [
+        "crypto",
         "darto",
+        "mime",
         "path"
       ],
       "devDependencies": [
@@ -58,11 +60,23 @@
       "dependencies": []
     },
     {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
+    },
+    {
       "name": "darto",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "dependencies": [
         "crypto",
         "mime"
+      ]
+    },
+    {
+      "name": "crypto",
+      "version": "3.0.7",
+      "dependencies": [
+        "typed_data"
       ]
     },
     {
@@ -311,18 +325,6 @@
         "source_span",
         "watcher",
         "yaml"
-      ]
-    },
-    {
-      "name": "mime",
-      "version": "2.0.0",
-      "dependencies": []
-    },
-    {
-      "name": "crypto",
-      "version": "3.0.7",
-      "dependencies": [
-        "typed_data"
       ]
     },
     {

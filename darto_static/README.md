@@ -8,7 +8,7 @@ Static file serving middleware for [Darto](https://github.com/evandersondev/dart
 
 ```yaml
 dependencies:
-  darto: ^0.1.0
+  darto: ^1.0.0
   darto_static: ^1.0.0
 ```
 

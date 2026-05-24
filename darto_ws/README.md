@@ -10,7 +10,7 @@ WebSocket routes live alongside HTTP routes on the same server and port. Middlew
 
 ```yaml
 dependencies:
-  darto: ^0.1.0
+  darto: ^1.0.0
   darto_ws: ^1.0.0
 ```
 

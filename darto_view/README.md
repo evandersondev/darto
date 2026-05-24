@@ -10,7 +10,7 @@ Ships with a **Mustache** engine out of the box. Any engine can be added by impl
 
 ```yaml
 dependencies:
-  darto: ^0.1.0
+  darto: ^1.0.0
   darto_view: ^1.0.0
   mustache_template: ^2.0.0
   path: ^1.9.0

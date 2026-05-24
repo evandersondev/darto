@@ -8,7 +8,7 @@
 
 ```yaml
 dependencies:
-  darto: ^0.1.0
+  darto: ^1.0.0
   darto_env: ^1.0.0
 ```
 

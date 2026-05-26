@@ -25,7 +25,7 @@ void main() {
 
   // POST /users — request body
   app.post('/users', [], (Context c) async {
-    final body = await c.body();
+    final body = await c.req.json();
     final name = body['name'] as String?;
 
     if (name == null || name.isEmpty) {

@@ -30,7 +30,7 @@ void main() {
   // POST /auth/login — returns JWT
   app.route('/auth', (r) {
     r.post('/login', [], (Context c) async {
-      final body = await c.body();
+      final body = await c.req.json();
       final email = body['email'] as String?;
       final password = body['password'] as String?;
 
@@ -60,7 +60,7 @@ void main() {
 
     // POST /api/items — protected + validated body
     r.post('/items', [], (Context c) async {
-      final body = await c.body();
+      final body = await c.req.json();
       return c.created({'item': body, 'createdBy': c.user?['email']});
     });
   });

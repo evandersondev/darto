@@ -13,7 +13,7 @@ import 'package:darto/darto.dart';
 /// app.post(
 ///   '/upload',
 ///   (c) async {
-///     final body = await c.body();
+///     final body = await c.req.json();
 ///     return c.text('pass :)');
 ///   },
 ///   [bodyLimit(
@@ -46,9 +46,9 @@ Middleware bodyLimit({
     }
 
     // ── Slow path: buffer the body and measure ────────────────────────────────
-    // bodyRaw() caches the bytes on DartoRequest, so the handler can still
-    // call c.body() / c.bodyRaw() normally after this check passes.
-    final bytes = await c.bodyRaw();
+    // blob() caches the bytes on DartoRequest, so the handler can still
+    // call c.req.json() / c.req.blob() normally after this check passes.
+    final bytes = await c.req.blob();
     if (bytes.length > maxSize) {
       await reject(c);
       return;

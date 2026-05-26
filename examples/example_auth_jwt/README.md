@@ -18,3 +18,15 @@ What it demonstrates: JWT authentication and role-based access control with dart
 ```bash
 dart run bin/main.dart
 ```
+
+<br/>
+
+---
+
+<br/>
+
+### Support 💖
+
+If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
+
+<br/>

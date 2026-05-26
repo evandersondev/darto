@@ -30,14 +30,14 @@ class ${pascal}Controller {
       };
 
   Handler get create => (Context c) async {
-        final body = await c.body();
+        final body = await c.req.json();
         final item = await _service.create(body);
         return c.created(item);
       };
 
   Handler get update => (Context c) async {
         final id = c.req.param('id')!;
-        final body = await c.body();
+        final body = await c.req.json();
         final item = await _service.update(id, body);
         if (item == null) return c.notFound({'error': '$pascal not found'});
         return c.ok(item);

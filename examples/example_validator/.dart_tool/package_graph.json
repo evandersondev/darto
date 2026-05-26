@@ -15,11 +15,6 @@
       ]
     },
     {
-      "name": "lints",
-      "version": "5.1.1",
-      "dependencies": []
-    },
-    {
       "name": "darto_validator",
       "version": "1.0.0",
       "dependencies": [
@@ -29,11 +24,16 @@
     },
     {
       "name": "darto",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "dependencies": [
         "crypto",
         "mime"
       ]
+    },
+    {
+      "name": "lints",
+      "version": "5.1.1",
+      "dependencies": []
     },
     {
       "name": "zard",
@@ -43,16 +43,16 @@
       ]
     },
     {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
+    },
+    {
       "name": "crypto",
       "version": "3.0.7",
       "dependencies": [
         "typed_data"
       ]
-    },
-    {
-      "name": "mime",
-      "version": "2.0.0",
-      "dependencies": []
     },
     {
       "name": "string_normalizer",
@@ -69,13 +69,13 @@
       ]
     },
     {
-      "name": "collection",
-      "version": "1.19.1",
+      "name": "characters",
+      "version": "1.4.1",
       "dependencies": []
     },
     {
-      "name": "characters",
-      "version": "1.4.1",
+      "name": "collection",
+      "version": "1.19.1",
       "dependencies": []
     }
   ],

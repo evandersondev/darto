@@ -138,3 +138,15 @@ app.get('/ping', [], (c) => c.html('<h1>pong</h1>'));
 - [darto](https://github.com/evandersondev/darto) — core framework
 - [mustache_template](https://pub.dev/packages/mustache_template) — Mustache for Dart
 - [examples/example_view_engine](../examples/example_view_engine/) — working example
+
+<br/>
+
+---
+
+<br/>
+
+### Support 💖
+
+If you find Darto View useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
+
+<br/>

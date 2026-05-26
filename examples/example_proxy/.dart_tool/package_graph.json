@@ -14,8 +14,13 @@
       ]
     },
     {
+      "name": "lints",
+      "version": "5.1.1",
+      "dependencies": []
+    },
+    {
       "name": "darto",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "dependencies": [
         "crypto",
         "mime"
@@ -32,11 +37,6 @@
       "dependencies": [
         "typed_data"
       ]
-    },
-    {
-      "name": "lints",
-      "version": "5.1.1",
-      "dependencies": []
     },
     {
       "name": "typed_data",

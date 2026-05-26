@@ -19,7 +19,7 @@ void main() {
       return c.ok({'id': id});
     });
     r.post('/', [], (c) async {
-      final body = await c.body();
+      final body = await c.req.json();
       return c.created(body);
     });
   });

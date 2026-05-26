@@ -206,3 +206,15 @@ docker run -p 3000:3000 shop_api
 ## See also
 
 - [darto](https://github.com/evandersondev/darto) — core framework
+
+<br/>
+
+---
+
+<br/>
+
+### Support 💖
+
+If you find Darto CLI useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
+
+<br/>

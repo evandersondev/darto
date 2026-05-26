@@ -1,3 +1,17 @@
+## 1.1.0
+
+- **BREAKING:** HonoJS-aligned request/response body API.
+  - `c.body()` is now a **response** helper (sends the response body): accepts a
+    `String` (→ `text/plain`), `List<int>` (→ `application/octet-stream`, with
+    optional headers) or `null` (empty body).
+  - Removed `c.body()` / `c.bodyRaw()` as request-body readers from `Context`.
+  - Read the request body via `c.req`: `c.req.json()`, `c.req.text()` (new),
+    `c.req.blob()`, `c.req.arrayBuffer()`, `c.req.parseBody()`, `c.req.formData()`.
+  - Added `c.req.body` getter — the raw request body `Stream<List<int>>`
+    (HonoJS-style). `c.req.rawStream` is kept as an alias.
+  - Migration: replace `await c.body()` with `await c.req.json()` and
+    `await c.bodyRaw()` with `await c.req.blob()`.
+
 ## 0.0.35
 
 - Chore methods and performace

@@ -155,25 +155,30 @@ class DartoRequest {
 
   Future<dynamic> formData() async {
     final contentType = _req.headers.contentType?.mimeType ?? "";
-    final text = await _bodyText();
+    final body = await text();
     if (contentType == "application/x-www-form-urlencoded") {
-      return Uri.splitQueryString(text);
+      return Uri.splitQueryString(body);
     }
     // Para multipart/form-data, uma implementação mais completa é necessária.
-    return text;
+    return body;
   }
 
-  Future<String> _bodyText() async {
+  /// The request body decoded as UTF-8 text — HonoJS-style `c.req.text()`.
+  Future<String> text() async {
     final bytes = await _readBytes();
     return utf8.decode(bytes);
   }
 
   // ── Raw stream ────────────────────────────────────────────────────────────
 
-  /// The raw body stream of the HTTP request.
+  /// The raw request body stream — HonoJS-style `c.req.body`.
   ///
-  /// Consumed once — do not mix with [blob] / [json] on the same request.
-  /// Used by [Upload] middleware and [parseBody] for streaming multipart parsing.
+  /// Consumed once — do not mix with [blob] / [json] / [text] on the same
+  /// request. Used by [Upload] middleware and [parseBody] for streaming
+  /// multipart parsing.
+  Stream<List<int>> get body => _req;
+
+  /// Alias of [body], kept for backward compatibility.
   Stream<List<int>> get rawStream => _req;
 
   /// The underlying [HttpRequest] — used by protocol-upgrade handlers such as
@@ -219,8 +224,8 @@ class DartoRequest {
     }
 
     if (mime == 'application/x-www-form-urlencoded') {
-      final text = await _bodyText();
-      return Uri.splitQueryString(text).cast<String, dynamic>();
+      final raw = await text();
+      return Uri.splitQueryString(raw).cast<String, dynamic>();
     }
 
     if (mime == 'multipart/form-data') {

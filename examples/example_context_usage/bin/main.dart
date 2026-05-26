@@ -31,9 +31,9 @@ void main() {
     });
   });
 
-  // c.body
+  // c.req.json
   app.post('/echo', [], (Context c) async {
-    final body = await c.body();
+    final body = await c.req.json();
     return c.ok({'received': body});
   });
 

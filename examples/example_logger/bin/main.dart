@@ -11,7 +11,7 @@ void main() {
   app.get('/users', [], (Context c) => c.ok({'users': ['Alice', 'Bob']}));
   app.get('/users/:id', [], (Context c) => c.ok({'id': c.req.param('id')}));
   app.post('/users', [], (Context c) async {
-    final body = await c.body();
+    final body = await c.req.json();
     return c.created({'created': body});
   });
 

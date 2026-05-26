@@ -28,7 +28,7 @@
     },
     {
       "name": "darto",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "dependencies": [
         "crypto",
         "mime"
@@ -54,6 +54,11 @@
       ]
     },
     {
+      "name": "characters",
+      "version": "1.4.1",
+      "dependencies": []
+    },
+    {
       "name": "typed_data",
       "version": "1.4.0",
       "dependencies": [
@@ -63,11 +68,6 @@
     {
       "name": "collection",
       "version": "1.19.1",
-      "dependencies": []
-    },
-    {
-      "name": "characters",
-      "version": "1.4.1",
       "dependencies": []
     }
   ],

@@ -11,7 +11,7 @@ void main() {
         (Context c) => c.ok({'version': 'v1', 'id': c.req.param('id')}));
 
     r.post('/users', [], (Context c) async {
-      final body = await c.body();
+      final body = await c.req.json();
       return c.created({'version': 'v1', 'created': body});
     });
   });
@@ -28,7 +28,7 @@ void main() {
         (Context c) => c.ok({'version': 'v2', 'id': c.req.paramInt('id')}));
 
     r.post('/users', [], (Context c) async {
-      final body = await c.body();
+      final body = await c.req.json();
       return c.created({
         'version': 'v2',
         'created': body,

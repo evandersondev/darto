@@ -129,3 +129,15 @@ app.get('/ws/json', [], upgradeWebSocket((c) => WSHandler(
 
 - [darto](https://github.com/evandersondev/darto) — core framework
 - [examples/example_websocket](../examples/example_websocket/) — working example
+
+<br/>
+
+---
+
+<br/>
+
+### Support 💖
+
+If you find Darto WS useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
+
+<br/>

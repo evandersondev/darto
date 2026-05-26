@@ -29,9 +29,6 @@ class Context {
   // ── Request ───────────────────────────────────────────────────────────────
   DartoRequest get req => _req;
   DartoResponse get res => _res;
-  Future<T> body<T>([T Function(Map<String, dynamic>)? fromJson]) =>
-      _req.json<T>(fromJson);
-  Future<List<int>> bodyRaw() async => (await _req.blob()).toList();
 
   // ── State ─────────────────────────────────────────────────────────────────
 
@@ -78,6 +75,39 @@ class Context {
       _r(Response.text(data, status: status));
   Response html(String data, [int status = 200]) =>
       _r(Response.html(data, status: status));
+
+  /// Sends [data] as the response body — HonoJS-style `c.body()`.
+  ///
+  /// To **read** the request body use `c.req` instead
+  /// (`c.req.json()`, `c.req.text()`, `c.req.blob()`, …).
+  ///
+  /// - `String`    → `text/plain; charset=utf-8`
+  /// - `List<int>` → `application/octet-stream` (override via [headers])
+  /// - `null`      → empty body
+  ///
+  /// ```dart
+  /// app.get('/', (c) => c.body('Thank you!'));
+  /// app.get('/png', (c) => c.body(bytes, 200, {'Content-Type': 'image/png'}));
+  /// ```
+  Response body(
+    Object? data, [
+    int status = 200,
+    Map<String, String> headers = const {},
+  ]) {
+    if (data == null) return _r(Response.empty(status: status));
+    if (data is List<int>) {
+      final ct = headers['Content-Type'] ??
+          headers['content-type'] ??
+          'application/octet-stream';
+      return _r(Response.bytes(
+        data,
+        status: status,
+        contentType: ct,
+        headers: headers,
+      ));
+    }
+    return _r(Response.text(data.toString(), status: status, headers: headers));
+  }
 
   PendingResponse status(int code) => PendingResponse._(this, code);
 

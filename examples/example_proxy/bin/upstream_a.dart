@@ -23,7 +23,7 @@ void main() async {
   });
 
   app.post('/api/users', [], (c) async {
-    final body = await c.body();
+    final body = await c.req.json();
     final newUser = <String, dynamic>{...body, 'id': '${users.length + 1}'};
     users.add(newUser);
     return c.created(newUser);

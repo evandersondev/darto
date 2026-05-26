@@ -156,7 +156,7 @@ Future<Response> proxy(
 
     // ── Forward body ─────────────────────────────────────────────────────────
     if (opts.forwardBody && _methodHasBody(method)) {
-      final body = await c.bodyRaw();
+      final body = await c.req.blob();
       if (body.isNotEmpty) {
         upstreamReq.contentLength = body.length;
         upstreamReq.add(body);

@@ -67,3 +67,15 @@ Platform environment variables (`Platform.environment`) always take priority ove
 ## See also
 
 - [darto](https://github.com/evandersondev/darto) — core framework
+
+<br/>
+
+---
+
+<br/>
+
+### Support 💖
+
+If you find Darto Env useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
+
+<br/>

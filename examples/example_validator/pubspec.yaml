@@ -14,3 +14,11 @@ dependencies:
 
 dev_dependencies:
   lints: ^5.0.0
+
+# Force the local path packages so darto_validator's hosted `darto: ^1.0.0`
+# constraint resolves to this monorepo's darto instead of a pub.dev release.
+dependency_overrides:
+  darto:
+    path: ../../darto
+  darto_validator:
+    path: ../../darto_validator

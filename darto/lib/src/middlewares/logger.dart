@@ -20,7 +20,7 @@ import 'package:darto/darto.dart';
 /// app.use(logger(log));
 ///
 /// app.post('/blog', (Context c) async {
-///   final blog = await c.body();
+///   final blog = await c.req.json();
 ///   log('Blog saved:', ['Path: ${blog['url']},', 'ID: ${blog['id']}']);
 ///   // --> POST /blog
 ///   // Blog saved: Path: /blog/example, ID: 1

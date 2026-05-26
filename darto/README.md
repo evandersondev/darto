@@ -1,6 +1,14 @@
-# Darto
+<p align="center">
+  <img src="./assets/logo.png" width="200px" align="center" alt="Darto logo" />
+  <h1 align="center">Darto</h1>
+  <p align="center">
+    <a href="https://github.com/evandersondev/darto">🎯 Darto Github</a>
+    <br/>
+    Minimal, fast and type-safe web framework for Dart — inspired by Express and Hono.
+  </p>
+</p>
 
-**Minimal, fast and type-safe web framework for Dart — inspired by Express and Hono.**
+<br/>
 
 Everything flows through a single concept: **Context**.
 
@@ -245,6 +253,11 @@ c.json(data, [status])  // application/json
 c.text(str, [status])   // text/plain
 c.html(str, [status])   // text/html
 
+// Raw body — HonoJS-style c.body()
+c.body('Thank you!')                                  // text/plain
+c.body(bytes, 200, {'Content-Type': 'image/png'})     // bytes + headers
+c.body(null, 204)                                     // empty body
+
 // Custom status + body
 c.status(206).json(data)
 c.status(418).text("I'm a teapot")
@@ -273,15 +286,21 @@ c.header('X-Request-Id', uuid);
 
 ### Body reading
 
+Read the request body through **`c.req`** (HonoJS-style). `c.body()` is now a
+**response** helper — see [Response helpers](#response-helpers).
+
 ```dart
 // JSON → Map<String, dynamic>
-final body = await c.body();
+final body = await c.req.json();
 
 // JSON → typed DTO
-final user = await c.body<User>(User.fromJson);
+final user = await c.req.json<User>(User.fromJson);
+
+// Text
+final raw = await c.req.text();
 
 // Raw bytes
-final bytes = await c.bodyRaw(); // List<int>
+final bytes = await c.req.blob(); // Uint8List
 ```
 
 ### State (per-request storage)
@@ -512,9 +531,13 @@ Map<String, String> c.req.headers         // all headers (unmodifiable)
 final map  = await c.req.json();                     // Map<String, dynamic>
 final dto  = await c.req.json<User>(User.fromJson);  // typed
 
+// Text
+final str = await c.req.text();           // String (UTF-8)
+
 // Raw
 final bytes  = await c.req.blob();         // Uint8List
 final buffer = await c.req.arrayBuffer(); // ByteBuffer
+final stream = c.req.body;                 // Stream<List<int>> (raw, consumed once)
 
 // Form
 final form = await c.req.formData();      // Map (url-encoded) or String (multipart)
@@ -1574,7 +1597,7 @@ void main() async {
       return c.ok({'page': page, 'posts': []});
     })
     .post([bodyLimit(maxSize: 100 * 1024)], (Context c) async {
-      final body = await c.body();
+      final body = await c.req.json();
       return c.created(body);
     });
 
@@ -1591,3 +1614,15 @@ void main() async {
   await app.listen(3000, () => print('Listening on http://localhost:3000'));
 }
 ```
+
+<br/>
+
+---
+
+<br/>
+
+### Support 💖
+
+If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
+
+<br/>

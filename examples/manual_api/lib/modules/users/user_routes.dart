@@ -14,7 +14,7 @@ void userRoutes(Router router) {
   });
 
   router.post('/', [], (Context c) async {
-    final dto = CreateUserDto.fromJson(await c.body());
+    final dto = CreateUserDto.fromJson(await c.req.json());
     final user = await userService.createUser(dto);
 
     log('User created:', ['ID: ${user.id},', 'Name: ${user.name}']);

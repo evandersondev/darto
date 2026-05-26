@@ -1,3 +1,8 @@
+## 1.0.1
+
+- Module template uses `c.req.json()` instead of the removed `c.body()`
+  request reader (aligns generated code with darto 1.1.0).
+
 ## 0.0.1
 
 - Initial release

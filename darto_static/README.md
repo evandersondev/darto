@@ -55,3 +55,15 @@ app.mount('/assets/*', serveStatic('dist', urlPrefix: '/assets'));
 
 - [darto](https://github.com/evandersondev/darto) — core framework
 - [examples/example_static_files](../examples/example_static_files/) — working example
+
+<br/>
+
+---
+
+<br/>
+
+### Support 💖
+
+If you find Darto Static useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
+
+<br/>

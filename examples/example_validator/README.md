@@ -39,3 +39,15 @@ dart run bin/main.dart
 - [`example_middleware_validator`](../example_middleware_validator/) — `zValidator()` with automatic error handling
 - [darto validator docs](../../darto/README.md#validator)
 - [zard](https://pub.dev/packages/zard) — schema library
+
+<br/>
+
+---
+
+<br/>
+
+### Support 💖
+
+If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
+
+<br/>

@@ -112,7 +112,7 @@ export const translations = {
 app.route('/users')
   .get([], (c) => c.ok(users))
   .post([requireAdmin()], (c) async {
-    final body = await c.body();
+    final body = await c.req.json();
     return c.created({'id': '42', ...body});
   });`,
         auth: `import 'package:darto/jwt.dart';
@@ -324,7 +324,7 @@ app.get('/api/me', [], (c) {
 app.route('/users')
   .get([], (c) => c.ok(users))
   .post([requireAdmin()], (c) async {
-    final body = await c.body();
+    final body = await c.req.json();
     return c.created({'id': '42', ...body});
   });`,
         auth: `import 'package:darto/jwt.dart';

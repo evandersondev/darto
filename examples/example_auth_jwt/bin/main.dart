@@ -27,7 +27,7 @@ void main() {
 
   // POST /login — issues a JWT
   app.post('/login', [], (Context c) async {
-    final body = await c.body();
+    final body = await c.req.json();
     final email = body['email'] as String?;
     final password = body['password'] as String?;
 

@@ -11,7 +11,7 @@ String validatorKey(String target) => '__v_$target';
 Future<dynamic> extractValidatorInput(String target, Context c) async {
   switch (target) {
     case 'json':
-      return await c.body();
+      return await c.req.json();
     case 'query':
       return c.req.url.queryParameters;
     case 'param':

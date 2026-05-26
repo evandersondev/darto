@@ -1,3 +1,7 @@
+## 1.0.2
+
+- Require `darto: ^1.1.0`.
+
 ## 1.0.1
 
 - Module template uses `c.req.json()` instead of the removed `c.body()`

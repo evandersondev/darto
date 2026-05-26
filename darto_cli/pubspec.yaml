@@ -1,6 +1,6 @@
 name: darto_cli
 description: Official CLI for the Darto framework — scaffold projects, generate modules, run dev server.
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/evandersondev/darto/tree/main/darto_cli
 repository: https://github.com/evandersondev/darto
 
@@ -11,7 +11,7 @@ dependencies:
   args: ^2.5.0
   path: ^1.9.1
   watcher: ^1.1.0
-  darto: ^1.0.0
+  darto: ^1.1.0
 
 dev_dependencies:
   lints: ^5.0.0

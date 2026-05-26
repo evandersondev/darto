@@ -4,7 +4,7 @@ export const translations = {
   en: {
     nav: { docs: "Documentation", github: "GitHub", getStarted: "Get Started" },
     hero: {
-      badge: "v0.1 · Minimal Dart web framework",
+      badge: "v1.1 · Minimal Dart web framework",
       title1: "A minimal, fast web framework",
       title2: "for Dart, done right.",
       subtitle:
@@ -14,7 +14,7 @@ export const translations = {
       installNote: "dart pub add darto",
       tagline: "One Context. Familiar API. Zero JS bridges.",
       credibility: {
-        version: "v0.1.0",
+        version: "v1.1.0",
         oss: "Open source · MIT",
         pub: "pub.dev",
         github: "GitHub",
@@ -216,7 +216,7 @@ app.get('/api/me', [], (c) {
   pt: {
     nav: { docs: "Documentação", github: "GitHub", getStarted: "Começar" },
     hero: {
-      badge: "v0.1 · Framework web minimalista para Dart",
+      badge: "v1.1 · Framework web minimalista para Dart",
       title1: "Um framework web rápido e mínimo",
       title2: "para Dart, do jeito certo.",
       subtitle:
@@ -226,7 +226,7 @@ app.get('/api/me', [], (c) {
       installNote: "dart pub add darto",
       tagline: "Um único Context. API familiar. Zero pontes JS.",
       credibility: {
-        version: "v0.1.0",
+        version: "v1.1.0",
         oss: "Código aberto · MIT",
         pub: "pub.dev",
         github: "GitHub",

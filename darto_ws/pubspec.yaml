@@ -1,6 +1,6 @@
 name: darto_ws
 description: WebSocket plugin for Darto — route-integrated, same port, Hono-style.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/evandersondev/darto/tree/main/darto_ws
 repository: https://github.com/evandersondev/darto
 
@@ -8,7 +8,7 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
-  darto: ^1.0.0
+  darto: ^1.1.0
 
 dev_dependencies:
   lints: ^5.0.0

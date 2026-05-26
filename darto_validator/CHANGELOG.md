@@ -1,3 +1,8 @@
+## 1.0.1
+
+- Require `darto: ^1.1.0`.
+- docs: add Support section to README.
+
 ## 0.0.1
 
 - Initial release — replaces `zard_darto_middleware` with a cleaner API

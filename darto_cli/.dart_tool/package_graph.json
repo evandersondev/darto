@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "darto_cli",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": [
         "args",
         "darto",
@@ -329,16 +329,16 @@
       ]
     },
     {
-      "name": "mime",
-      "version": "2.0.0",
-      "dependencies": []
-    },
-    {
       "name": "crypto",
       "version": "3.0.7",
       "dependencies": [
         "typed_data"
       ]
+    },
+    {
+      "name": "mime",
+      "version": "2.0.0",
+      "dependencies": []
     },
     {
       "name": "string_scanner",

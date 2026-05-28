@@ -1,0 +1,20 @@
+# Dart / Pub build artifacts
+.dart_tool/
+.packages
+build/
+*.snapshot
+
+# Coverage
+coverage/
+*.info
+
+# IDE / editor
+.idea/
+*.iml
+*.iws
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
+*.swp

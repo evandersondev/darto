@@ -1,3 +1,12 @@
+## 1.1.0
+
+- Require `darto: ^1.2.0`.
+- Add `zardToOpenApiSchema()` and the `Schema.toOpenApiSchema()` extension —
+  convert a zard schema into an OpenAPI 3.1 Schema Object map (object shape +
+  `required`, arrays, enums, nullability, defaults, unions). Pairs with
+  `darto_openapi`'s `Schema.raw(...)`.
+- Require `zard: ^1.1.2` (uses its introspection getters/exports).
+
 ## 1.0.1
 
 - Require `darto: ^1.1.0`.

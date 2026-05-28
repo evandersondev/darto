@@ -4,6 +4,8 @@ import 'commands/build_command.dart';
 import 'commands/create_command.dart';
 import 'commands/dev_command.dart';
 import 'commands/gen_client_command.dart';
+import 'commands/gen_feature_command.dart';
+import 'commands/gen_service_command.dart';
 
 const _version = '0.0.1';
 
@@ -20,6 +22,8 @@ const _help = '''
   start [binary]         Run the compiled binary
 
   gen client flutter     Generate a typed Flutter/Dart HTTP client
+  gen feature <name>     Scaffold a darto_di Feature (service + provider + routes)
+  gen service <name>     Scaffold a standalone service + provider
 
 \x1B[1mOptions:\x1B[0m
   -h, --help             Show this help
@@ -30,6 +34,8 @@ const _help = '''
   darto create my_api --blank
   darto dev
   darto gen client flutter
+  darto gen feature users
+  darto gen service mailer
   darto build --output build/server
   darto start build/server
 ''';
@@ -82,9 +88,13 @@ Future<void> _runGen(List<String> args) async {
   switch (sub) {
     case 'client':
       await runGenClient(rest);
+    case 'feature':
+      await runGenFeature(rest);
+    case 'service':
+      await runGenService(rest);
     default:
       stderr.writeln('\x1B[31mUnknown gen subcommand "$sub".\x1B[0m');
-      stderr.writeln('Available: client');
+      stderr.writeln('Available: client, feature, service');
       exit(1);
   }
 }

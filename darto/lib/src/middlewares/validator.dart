@@ -63,10 +63,12 @@ Future<dynamic> extractValidatorInput(String target, Context c) async {
 /// });
 /// ```
 ///
-/// Works with any library — zard, custom logic, etc.:
+/// Works with any library — custom logic, [zard](https://pub.dev/packages/zard),
+/// etc. To use zard schemas just add `zard` to your pubspec (you do **not** need
+/// the `darto_validator` package — that's only for `zValidator`):
 ///
 /// ```dart
-/// import 'package:darto_validator/darto_validator.dart'; // for z.*
+/// import 'package:zard/zard.dart'; // add `zard` to pubspec — for z.*
 ///
 /// final schema = z.map({'name': z.string().min(1)});
 ///

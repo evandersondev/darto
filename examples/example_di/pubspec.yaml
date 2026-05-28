@@ -1,0 +1,21 @@
+name: example_di
+description: Darto — typed dependency injection with darto_di
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+  darto_di:
+    path: ../../darto_di
+
+dev_dependencies:
+  lints: ^5.0.0
+
+# Plugins pin `darto` from hosted; force-resolve to the in-repo path.
+dependency_overrides:
+  darto:
+    path: ../../darto

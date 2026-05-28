@@ -33,6 +33,28 @@ class Response {
   String get contentType => _contentType;
   Map<String, String> get extraHeaders => Map.unmodifiable(_extraHeaders);
 
+  /// Returns a copy of this response with [key]: [value] merged into its
+  /// headers. Used by middleware (e.g. `etag`) to annotate a response without
+  /// mutating it.
+  Response withHeader(String key, String value) => Response._raw(
+        statusCode,
+        _body,
+        _contentType,
+        {..._extraHeaders, key: value},
+        alreadySent,
+      );
+
+  /// The response body serialized to bytes exactly as [writeTo] would send it.
+  /// Returns an empty list for empty / already-sent responses.
+  List<int> bodyBytes() {
+    if (_body == null) return const [];
+    if (_contentType == 'application/json') {
+      return utf8.encode(jsonEncode(_encode(_body)));
+    }
+    if (_body is List<int>) return _body as List<int>;
+    return utf8.encode(_body.toString());
+  }
+
   // ── factories ─────────────────────────────────────────────────────────────
 
   factory Response.json(

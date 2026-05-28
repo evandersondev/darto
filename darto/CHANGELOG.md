@@ -1,3 +1,38 @@
+## 1.2.0
+
+- **Server hardening:**
+  - `serve({port, host, securityContext, shutdownSignals, onListen})` — full
+    control over host binding and **HTTPS/TLS** (`securityContext`).
+  - `listenSecure(port, securityContext, [callback])` — HTTPS convenience.
+  - **Graceful shutdown:** `stop({drainTimeout})` now stops accepting new
+    connections and drains in-flight requests before force-closing; by default
+    `serve`/`listen` trap `SIGINT`/`SIGTERM` and shut down gracefully.
+  - `port` / `address` getters — useful for ephemeral binds (`serve(port: 0)`).
+- **New middleware** `requestId()` (`package:darto/request_id.dart`) — assigns a
+  UUID v4 per request (honors an incoming header), stored in context and echoed
+  in the response. Read it with `requestIdOf(c)`.
+- **New middleware** `etag()` (`package:darto/etag.dart`) — ETag for dynamic
+  responses with automatic `304 Not Modified` on `If-None-Match`.
+- **New middleware** `rateLimit()` (`package:darto/rate_limit.dart`) — caps
+  requests per key within a window, in-memory and zero-dep by default
+  (`MemoryRateLimitStore`), with a pluggable `RateLimitStore` interface for
+  distributed backends. Emits `RateLimit-*` headers and `Retry-After`.
+- **New helper** `health()` (`package:darto/health.dart`) — a liveness/readiness
+  handler returning `200`/`503` from named checks (`/healthz`, `/readyz`).
+- `Response.withHeader()` and `Response.bodyBytes()` helpers.
+- **Router performance:** literal routes (no params, wildcards or regex
+  metacharacters) are now matched with a direct string compare instead of a
+  compiled `RegExp` — the common case on the hot dispatch path (~100× cheaper
+  per match in a micro-benchmark). Dispatch also short-circuits on HTTP method
+  before evaluating the matcher. Matching semantics are unchanged (params,
+  optional/regex params, wildcards, mounts and strict mode all behave exactly
+  as before).
+- **Fix:** cookie helpers read the **request** `Cookie` header (not the
+  response), parse values containing `=` (base64url), and emit multiple
+  `Set-Cookie` headers via `headers.add`. This also fixes session reads.
+- **Fix:** `sessionContext(c).get()` now returns `null` (instead of throwing a
+  `TypeError`) when there is no active session.
+
 ## 1.1.0
 
 - **BREAKING:** HonoJS-aligned request/response body API.

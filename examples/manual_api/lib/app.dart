@@ -51,13 +51,6 @@ Darto createApp() {
     return await c.file('assets/test.txt');
   });
 
-  Middleware myCustomLogger() {
-    return (Context c, Next next) async {
-      print("My custom logger");
-      await next();
-    };
-  }
-
   // Context: render, setRender, error, env
   // Request: parseBody
 

@@ -1,3 +1,11 @@
+## 1.1.0
+
+- Require `darto: ^1.2.0`.
+- New `darto gen feature <name>` — scaffolds a single-file `darto_di` Feature
+  (service + provider + routes wired together) under `lib/features/<name>/`.
+- New `darto gen service <name>` — scaffolds a standalone service + provider
+  under `lib/services/`.
+
 ## 1.0.2
 
 - Require `darto: ^1.1.0`.

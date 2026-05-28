@@ -1,5 +1,5 @@
 name: example_logger
-description: Darto v2 — logger middleware example
+description: Darto — structured logging with darto_logger
 version: 0.0.1
 publish_to: none
 
@@ -14,3 +14,8 @@ dependencies:
 
 dev_dependencies:
   lints: ^5.0.0
+
+# Plugins pin `darto` from hosted; force-resolve to the in-repo path.
+dependency_overrides:
+  darto:
+    path: ../../darto

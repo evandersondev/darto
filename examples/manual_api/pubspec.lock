@@ -87,14 +87,14 @@ packages:
       path: "../../darto"
       relative: true
     source: path
-    version: "1.0.0"
+    version: "1.2.0"
   darto_env:
     dependency: "direct main"
     description:
       path: "../../darto_env"
       relative: true
     source: path
-    version: "1.0.0"
+    version: "1.0.1"
   file:
     dependency: transitive
     description:

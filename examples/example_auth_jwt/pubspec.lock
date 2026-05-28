@@ -23,21 +23,7 @@ packages:
       path: "../../darto"
       relative: true
     source: path
-    version: "0.1.0"
-  darto_auth:
-    dependency: "direct main"
-    description:
-      path: "../../darto_auth"
-      relative: true
-    source: path
-    version: "0.1.0"
-  darto_types:
-    dependency: transitive
-    description:
-      path: "../../darto_types"
-      relative: true
-    source: path
-    version: "0.1.0"
+    version: "1.2.0"
   lints:
     dependency: "direct dev"
     description:

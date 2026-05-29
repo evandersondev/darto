@@ -68,7 +68,7 @@ final dead = await queue.store.deadLetter(); // inspect failures
 `job.attempts` is the 1-based current attempt; handlers should be **idempotent**
 (at-least-once delivery means a job may run more than once on worker crashes).
 
-## With `darto_di`
+## With `darto_inject`
 
 ```dart
 final queueProvider = Provider<JobQueue>(

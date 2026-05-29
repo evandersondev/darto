@@ -6,7 +6,7 @@
 
 <br>
 
-# darto_di
+# darto_inject
 
 Typed **dependency injection** for the [Darto](https://pub.dev/packages/darto)
 web framework — `Provider<T>` factories with **app** and **request** scopes,
@@ -19,14 +19,14 @@ to the HonoJS-style `Context` Darto already gives you.
 
 ```yaml
 dependencies:
-  darto_di: ^1.0.0
+  darto_inject: ^1.0.0
 ```
 
 ## Quick start
 
 ```dart
 import 'package:darto/darto.dart';
-import 'package:darto_di/darto_di.dart';
+import 'package:darto_inject/darto_inject.dart';
 
 // 1. Declare providers — pure values, no annotations.
 final envProvider = Provider<Env>((di) => Env.fromFile('.env'));

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git config *)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/RELEASE_NOTES.md)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/ROADMAP.md)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/darto_cache/README.md)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/darto_jobs/README.md)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/darto_mailer/README.md)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/darto_cli/CHANGELOG.md)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/darto_cli/lib/src/cli_runner.dart)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/darto_cli/lib/src/templates/di_templates.dart)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/darto_cli/lib/src/commands/gen_feature_command.dart)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/examples/example_di/bin/main.dart)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/examples/example_di/README.md)",
+      "Bash(sed -i 's/darto_di/darto_inject/g' /home/evandersondev/www/darto/examples/example_di/pubspec.yaml)",
+      "Bash(git -C /home/evandersondev/www/darto add -A)",
+      "Bash(git -C /home/evandersondev/www/darto commit -m ' *)"
+    ]
+  }
+}

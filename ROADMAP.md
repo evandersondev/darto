@@ -186,7 +186,7 @@ alto sinal, porque a intenção já está estabelecida:
 | **`darto_rate_limit`** | Stores **distribuídos** (Redis/Memcached) por baixo do `rateLimit()` do core; algoritmos token-bucket/janela deslizante. (A versão in-memory zero-dep fica no core — veja §3.2; pode compartilhar infra com `darto_cache`) | P1 |
 | ✅ **`darto_auth`** | Hashing de senha (PBKDF2) + auth por sessão (`signIn`/`authGuard`) entregues (1.0.0). *Falta:* OAuth2/OIDC, providers | ✅ 1.0.0 (parcial) |
 | **`darto_logger`** | Logging JSON estruturado, níveis, correlação de request | P1 |
-| **`darto_di`** | Container leve de DI/IoC (ou integração first-class com `get_it`) | P1 |
+| **`darto_inject`** | Container leve de DI/IoC (ou integração first-class com `get_it`) | P1 |
 | **`darto_cache`** | Adapters de cache distribuído (Redis/Memcached) atrás da API `cache` | P1 |
 | **`darto_mailer`** | SMTP + e-mail transacional com template | P1 |
 | **`darto_jobs`** | Jobs em background / cron / filas | P2 |
@@ -245,7 +245,7 @@ integrando o **Dartonic** (query builder/ORM já existente) aos handlers do Dart
 - ✅ Otimização de performance do router — matcher compilado: rotas literais (sem params/wildcards) casam por comparação direta de string (sem `RegExp`) e o dispatch faz short-circuit por método HTTP antes de avaliar o matcher (darto 1.2.0; semântica de roteamento inalterada). Trie/radix completo → futuro, se necessário.
 
 **Fase 3 — Arquitetura para escalar**
-- ✅ `darto_di` 1.0.0 — `Provider<T>` / `AsyncProvider<T>` com escopo app/request, `contextProvider`, lifecycle (`onDispose` em ordem reversa), `override` para testes, `Feature(providers, routes)` + `app.install(...)` e scaffolds `darto gen feature/service` no `darto_cli` 1.1.0.
+- ✅ `darto_inject` 1.0.0 — `Provider<T>` / `AsyncProvider<T>` com escopo app/request, `contextProvider`, lifecycle (`onDispose` em ordem reversa), `override` para testes, `Feature(providers, routes)` + `app.install(...)` e scaffolds `darto gen feature/service` no `darto_cli` 1.1.0.
 - ✅ `darto_ws` 1.1.0 — Rooms/broadcast via `WsHub` (registry de conexões, `to(room).except(ws)`/`broadcast()`, helpers `ws.id`/`join`/`leave`/`to`/`broadcast`), `hub.middleware()` para wiring automático, e `RedisWsAdapter` para fanout multi-instância (Pub/Sub com origin-id tagging). Breaking: `onClose`/`onError` agora recebem o socket. 10 testes (7 hub end-to-end + 3 Redis via Docker).
 - ✅ `darto_mailer` 1.0.0 — `Mailer` + `Message`/`Attachment`, `SmtpTransport` (via package `mailer`, com `SmtpSecurity none/ssl/starttls`) e transports `ConsoleTransport`/`MemoryTransport` para dev/teste. 14 testes (12 unit + 2 SMTP via Mailpit no Docker). Templates → BYO (combina com `darto_view`).
 - ✅ `darto_jobs` 1.0.0 — `JobQueue` (`add` imediato/`delay`/`scheduledAt`, `handle`, `work`, `onFailed`) + `Worker` (concorrência, sweep periódico, `stop()` com drain). Retry com backoff exponencial + dead-letter. `MemoryJobStore` (dev) e `RedisJobStore` at-least-once (reserve atômico via Lua + lease/sweep para crash recovery). 12 testes (7 memory + 5 Redis via Docker: durabilidade, dead-letter, recovery, sem double-processing entre workers).

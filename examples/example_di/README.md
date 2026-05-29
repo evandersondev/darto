@@ -1,6 +1,6 @@
 # example_di
 
-Typed dependency injection with [`darto_di`](../../darto_di/).
+Typed dependency injection with [`darto_inject`](../../darto_inject/).
 
 ## What it shows
 - **App-scope** provider (`userServiceProvider`) — one instance shared by every request.

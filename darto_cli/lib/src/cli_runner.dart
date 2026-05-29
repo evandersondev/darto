@@ -22,7 +22,7 @@ const _help = '''
   start [binary]         Run the compiled binary
 
   gen client flutter     Generate a typed Flutter/Dart HTTP client
-  gen feature <name>     Scaffold a darto_di Feature (service + provider + routes)
+  gen feature <name>     Scaffold a darto_inject Feature (service + provider + routes)
   gen service <name>     Scaffold a standalone service + provider
 
 \x1B[1mOptions:\x1B[0m

@@ -5,7 +5,7 @@ import 'package:darto/darto.dart';
 import 'provider.dart';
 
 /// State-bag key under which the per-request scope is stored on the [Context].
-const _diScopeKey = '__darto_di_scope';
+const _diScopeKey = '__darto_inject_scope';
 
 /// Built-in [Provider] that yields the current request's [Context].  Only
 /// readable from a **request-scoped** factory — otherwise there is no Context

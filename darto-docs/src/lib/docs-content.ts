@@ -2300,16 +2300,16 @@ const SECTIONS: BiSection[] = [
   {
     id: "plugin-di",
     group: "plugins",
-    title: bi("darto_di", "darto_di"),
+    title: bi("darto_inject", "darto_inject"),
     blocks: bi(
       [
         {
           kind: "links",
           links: [
-            { label: "pub.dev", href: "https://pub.dev/packages/darto_di" },
+            { label: "pub.dev", href: "https://pub.dev/packages/darto_inject" },
             {
               label: "GitHub",
-              href: "https://github.com/evandersondev/darto/tree/main/darto_di",
+              href: "https://github.com/evandersondev/darto/tree/main/darto_inject",
             },
           ],
         },
@@ -2323,11 +2323,11 @@ const SECTIONS: BiSection[] = [
           text: "Typed dependency injection — Provider<T> factories with app- and request-scope, lifecycle hooks (onDispose), test overrides, and a built-in contextProvider. No build_runner, no decorators.",
         },
         { kind: "h3", text: "Install", id: "di-install" },
-        { kind: "code", lang: "yaml", code: `dependencies:\n  darto_di: ^1.0.0` },
+        { kind: "code", lang: "yaml", code: `dependencies:\n  darto_inject: ^1.0.0` },
         { kind: "h3", text: "Declare providers", id: "di-providers" },
         {
           kind: "code",
-          code: `import 'package:darto_di/darto_di.dart';\n\nfinal envProvider = Provider<Env>((di) => Env.fromFile('.env'));\n\nfinal dbProvider = Provider<Db>(\n  (di) => Db.connect(di.read(envProvider).dbUrl),\n  onDispose: (db) => db.close(),\n);\n\nfinal userServiceProvider = Provider<UserService>(\n  (di) => UserService(di.read(dbProvider)),\n);`,
+          code: `import 'package:darto_inject/darto_inject.dart';\n\nfinal envProvider = Provider<Env>((di) => Env.fromFile('.env'));\n\nfinal dbProvider = Provider<Db>(\n  (di) => Db.connect(di.read(envProvider).dbUrl),\n  onDispose: (db) => db.close(),\n);\n\nfinal userServiceProvider = Provider<UserService>(\n  (di) => UserService(di.read(dbProvider)),\n);`,
         },
         { kind: "h3", text: "Install on the app", id: "di-install-app" },
         {
@@ -2380,10 +2380,10 @@ const SECTIONS: BiSection[] = [
         {
           kind: "links",
           links: [
-            { label: "pub.dev", href: "https://pub.dev/packages/darto_di" },
+            { label: "pub.dev", href: "https://pub.dev/packages/darto_inject" },
             {
               label: "GitHub",
-              href: "https://github.com/evandersondev/darto/tree/main/darto_di",
+              href: "https://github.com/evandersondev/darto/tree/main/darto_inject",
             },
           ],
         },
@@ -2397,11 +2397,11 @@ const SECTIONS: BiSection[] = [
           text: "Injeção de dependência tipada — fábricas Provider<T> com escopo app/request, lifecycle (onDispose), override para testes e um contextProvider embutido. Sem build_runner, sem decorators.",
         },
         { kind: "h3", text: "Instalação", id: "di-install" },
-        { kind: "code", lang: "yaml", code: `dependencies:\n  darto_di: ^1.0.0` },
+        { kind: "code", lang: "yaml", code: `dependencies:\n  darto_inject: ^1.0.0` },
         { kind: "h3", text: "Declarar providers", id: "di-providers" },
         {
           kind: "code",
-          code: `import 'package:darto_di/darto_di.dart';\n\nfinal envProvider = Provider<Env>((di) => Env.fromFile('.env'));\n\nfinal dbProvider = Provider<Db>(\n  (di) => Db.connect(di.read(envProvider).dbUrl),\n  onDispose: (db) => db.close(),\n);\n\nfinal userServiceProvider = Provider<UserService>(\n  (di) => UserService(di.read(dbProvider)),\n);`,
+          code: `import 'package:darto_inject/darto_inject.dart';\n\nfinal envProvider = Provider<Env>((di) => Env.fromFile('.env'));\n\nfinal dbProvider = Provider<Db>(\n  (di) => Db.connect(di.read(envProvider).dbUrl),\n  onDispose: (db) => db.close(),\n);\n\nfinal userServiceProvider = Provider<UserService>(\n  (di) => UserService(di.read(dbProvider)),\n);`,
         },
         { kind: "h3", text: "Instalar no app", id: "di-install-app" },
         {
@@ -2498,7 +2498,7 @@ const SECTIONS: BiSection[] = [
           kind: "code",
           code: `final user = await cache.remember<Map<String, dynamic>>(\n  'user:\$id',\n  ttl: Duration(minutes: 5),\n  builder: () => db.users.findById(id),\n);`,
         },
-        { kind: "h3", text: "Wiring with darto_di", id: "cache-di" },
+        { kind: "h3", text: "Wiring with darto_inject", id: "cache-di" },
         {
           kind: "code",
           code: `final cacheProvider = AsyncProvider<Cache>(\n  (di) => RedisCache.connect(\n    host: di.read(envProvider).redisHost,\n    prefix: 'app:',\n  ),\n  onDispose: (c) => c.close(),\n);\n\napp.get('/users/:id', [], (c) async {\n  final cache = await c.readAsync(cacheProvider);\n  final user = await cache.remember(\n    'user:\${c.req.param('id')}',\n    ttl: Duration(minutes: 5),\n    builder: () => userService.findById(c.req.param('id')!),\n  );\n  return c.ok(user);\n});`,
@@ -2556,7 +2556,7 @@ const SECTIONS: BiSection[] = [
           kind: "code",
           code: `final user = await cache.remember<Map<String, dynamic>>(\n  'user:\$id',\n  ttl: Duration(minutes: 5),\n  builder: () => db.users.findById(id),\n);`,
         },
-        { kind: "h3", text: "Integração com darto_di", id: "cache-di" },
+        { kind: "h3", text: "Integração com darto_inject", id: "cache-di" },
         {
           kind: "code",
           code: `final cacheProvider = AsyncProvider<Cache>(\n  (di) => RedisCache.connect(\n    host: di.read(envProvider).redisHost,\n    prefix: 'app:',\n  ),\n  onDispose: (c) => c.close(),\n);\n\napp.get('/users/:id', [], (c) async {\n  final cache = await c.readAsync(cacheProvider);\n  final user = await cache.remember(\n    'user:\${c.req.param('id')}',\n    ttl: Duration(minutes: 5),\n    builder: () => userService.findById(c.req.param('id')!),\n  );\n  return c.ok(user);\n});`,

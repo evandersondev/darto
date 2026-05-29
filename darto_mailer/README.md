@@ -76,7 +76,7 @@ await mailer.send(Message(to: 'x@y.com', subject: 'Hi', text: '…'));
 expect(box.sent.single.message.subject, 'Hi');
 ```
 
-## With `darto_di`
+## With `darto_inject`
 
 ```dart
 final mailerProvider = Provider<Mailer>(

@@ -24,10 +24,10 @@ packages:
       relative: true
     source: path
     version: "1.2.0"
-  darto_di:
+  darto_inject:
     dependency: "direct main"
     description:
-      path: "../../darto_di"
+      path: "../../darto_inject"
       relative: true
     source: path
     version: "1.0.0"

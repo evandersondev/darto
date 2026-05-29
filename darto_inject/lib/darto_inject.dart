@@ -2,7 +2,7 @@
 ///
 /// ```dart
 /// import 'package:darto/darto.dart';
-/// import 'package:darto_di/darto_di.dart';
+/// import 'package:darto_inject/darto_inject.dart';
 ///
 /// final envProvider = Provider<Env>((di) => Env.fromFile('.env'));
 /// final dbProvider  = Provider<Db>(

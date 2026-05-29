@@ -1,4 +1,4 @@
-/// Templates for `darto gen feature|service <name>` — the darto_di scaffolds.
+/// Templates for `darto gen feature|service <name>` — the darto_inject scaffolds.
 library;
 
 import '../utils.dart';
@@ -12,7 +12,7 @@ String featureTemplate(String name) {
   final snake = toSnakeCase(name);
   return '''
 import 'package:darto/darto.dart';
-import 'package:darto_di/darto_di.dart';
+import 'package:darto_inject/darto_inject.dart';
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ String serviceTemplate(String name) {
   final pascal = toPascalCase(name);
   final camel = toCamelCase(name);
   return '''
-import 'package:darto_di/darto_di.dart';
+import 'package:darto_inject/darto_inject.dart';
 
 class ${pascal}Service {
   // TODO: implement.

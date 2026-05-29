@@ -59,7 +59,7 @@ binding seguro, shutdown limpo, middlewares de operação e um router mais rápi
 
 ## Plugins novos
 
-### `darto_di` 1.0.0 — Injeção de dependência tipada
+### `darto_inject` 1.0.0 — Injeção de dependência tipada
 **Pra que serve:** organizar serviços/dependências sem boilerplate, sem codegen e
 sem decorators.
 - `Provider<T>` / `AsyncProvider<T>` com escopo **app** (singleton) ou **request**.
@@ -144,7 +144,7 @@ relatórios, webhooks).
 
 ### `darto_cli` 1.1.0 — CLI
 - Novos scaffolds `darto gen feature <name>` e `darto gen service <name>`
-  (geram o boilerplate de `darto_di`).
+  (geram o boilerplate de `darto_inject`).
 
 ### `darto_validator` 1.1.0 / `darto_static` 1.0.2 / `darto_view` 1.0.2
 - Requerem `darto: ^1.2.0` (e `darto_validator` ganhou `toOpenApiSchema()`).
@@ -170,7 +170,7 @@ Plugins versionam suas deps internas, então a ordem importa:
 1. **`darto`** (core) — todos dependem dele.
 2. **`zard`** (repo separado) — antes do `darto_validator`.
 3. **`darto_test`** — usado como `dev_dependency` por vários.
-4. **Demais plugins** — `darto_di`, `darto_cache`, `darto_rate_limit`,
+4. **Demais plugins** — `darto_inject`, `darto_cache`, `darto_rate_limit`,
    `darto_auth`, `darto_logger`, `darto_mailer`, `darto_jobs`, `darto_ws`,
    `darto_openapi`, `darto_cli`, `darto_static`, `darto_validator`, `darto_view`,
    `darto_env`.

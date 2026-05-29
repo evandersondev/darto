@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:darto/darto.dart';
-import 'package:darto_di/darto_di.dart';
+import 'package:darto_inject/darto_inject.dart';
 import 'package:darto_test/darto_test.dart';
 import 'package:test/test.dart';
 

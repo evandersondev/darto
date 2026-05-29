@@ -1,5 +1,5 @@
 name: example_di
-description: Darto — typed dependency injection with darto_di
+description: Darto — typed dependency injection with darto_inject
 version: 0.0.1
 publish_to: none
 
@@ -9,8 +9,8 @@ environment:
 dependencies:
   darto:
     path: ../../darto
-  darto_di:
-    path: ../../darto_di
+  darto_inject:
+    path: ../../darto_inject
 
 dev_dependencies:
   lints: ^5.0.0

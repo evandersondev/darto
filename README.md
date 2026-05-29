@@ -32,7 +32,7 @@ This repository is a **monorepo** containing the entire Darto ecosystem.
 | [`darto_test`](./darto_test/)           | Ergonomic test client (boot + assert, supertest-style) | [![pub](https://img.shields.io/pub/v/darto_test.svg)](https://pub.dev/packages/darto_test)           |
 | [`darto_logger`](./darto_logger/)       | Structured logging + request-logging middleware        | [![pub](https://img.shields.io/pub/v/darto_logger.svg)](https://pub.dev/packages/darto_logger)       |
 | [`darto_auth`](./darto_auth/)           | Password hashing (PBKDF2) + session-based auth guards   | [![pub](https://img.shields.io/pub/v/darto_auth.svg)](https://pub.dev/packages/darto_auth)           |
-| [`darto_di`](./darto_di/)               | Typed DI — `Provider<T>` + request scope + overrides   | [![pub](https://img.shields.io/pub/v/darto_di.svg)](https://pub.dev/packages/darto_di)               |
+| [`darto_inject`](./darto_inject/)               | Typed DI — `Provider<T>` + request scope + overrides   | [![pub](https://img.shields.io/pub/v/darto_inject.svg)](https://pub.dev/packages/darto_inject)               |
 | [`darto_cache`](./darto_cache/)         | Cache interface + `MemoryCache` (LRU/TTL) + `RedisCache` | [![pub](https://img.shields.io/pub/v/darto_cache.svg)](https://pub.dev/packages/darto_cache)         |
 | [`darto_rate_limit`](./darto_rate_limit/) | Distributed `RateLimitStore` (Redis) for the core rateLimit() | [![pub](https://img.shields.io/pub/v/darto_rate_limit.svg)](https://pub.dev/packages/darto_rate_limit) |
 | [`darto_mailer`](./darto_mailer/)       | Email — `Mailer` + SMTP / console / memory transports   | [![pub](https://img.shields.io/pub/v/darto_mailer.svg)](https://pub.dev/packages/darto_mailer)       |
@@ -90,7 +90,7 @@ darto/
 ├── darto_test/         # Test client
 ├── darto_logger/       # Structured logging
 ├── darto_auth/         # Password hashing + session auth
-├── darto_di/           # Typed DI (Provider<T> + request scope)
+├── darto_inject/           # Typed DI (Provider<T> + request scope)
 ├── darto_cache/        # Cache primitives (Memory + Redis)
 ├── darto_rate_limit/   # Distributed RateLimitStore (Redis)
 ├── darto_mailer/       # Email (SMTP + console/memory transports)

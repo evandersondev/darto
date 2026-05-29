@@ -49,7 +49,7 @@ final post = await cache.remember<Map<String, dynamic>>(
 returns it.  **`null` is not cached** — if `builder` returns null the next
 call will rebuild.
 
-## With `darto_di`
+## With `darto_inject`
 
 ```dart
 final cacheProvider = AsyncProvider<Cache>(

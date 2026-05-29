@@ -29,8 +29,8 @@ Future<void> runGenFeature(List<String> args) async {
   file.writeAsStringSync(featureTemplate(name));
 
   stdout.writeln('\x1B[32m✓  ${p.relative(file.path)}\x1B[0m');
-  stdout.writeln('\x1B[90m   Add `darto_di` to pubspec if not already present:\x1B[0m');
-  stdout.writeln('\x1B[36m   dart pub add darto_di\x1B[0m');
+  stdout.writeln('\x1B[90m   Add `darto_inject` to pubspec if not already present:\x1B[0m');
+  stdout.writeln('\x1B[36m   dart pub add darto_inject\x1B[0m');
 }
 
 String? _flag(List<String> args, String flag) {

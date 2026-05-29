@@ -20,13 +20,13 @@ dependencies:
 import 'package:darto/darto.dart';
 import 'package:darto_static/darto_static.dart';
 
-void main() async {
+void main() {
   final app = Darto();
 
   // Serve files from ./public at /public/*
   app.mount('/public/*', serveStatic('public'));
 
-  await app.listen(3000);
+  app.listen(3000);
 }
 ```
 

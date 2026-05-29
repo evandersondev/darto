@@ -20,7 +20,7 @@ dependencies:
 import 'package:darto/darto.dart';
 import 'package:darto_openapi/darto_openapi.dart';
 
-void main() async {
+void main() {
   final app = Darto();
   final api = OpenApi(
     app,
@@ -48,7 +48,7 @@ void main() async {
   );
 
   app.use(api.docs()); // GET /openapi.json + GET /docs (Scalar UI)
-  await app.listen(3000);
+  app.listen(3000);
 }
 ```
 

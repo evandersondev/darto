@@ -1,0 +1,29 @@
+@baseUrl = http://localhost:3000
+
+### GET / — first request (check RateLimit-* headers in response)
+GET {{baseUrl}}/
+
+###
+
+### GET / — second request
+GET {{baseUrl}}/
+
+###
+
+### GET / — third request
+GET {{baseUrl}}/
+
+###
+
+### GET / — fourth request
+GET {{baseUrl}}/
+
+###
+
+### GET / — fifth request
+GET {{baseUrl}}/
+
+###
+
+### GET / — sixth request — exceeds limit of 5/10s (expects 429 + Retry-After)
+GET {{baseUrl}}/

@@ -5,10 +5,10 @@ GET {{baseUrl}}/
 
 ###
 
-### GET /assets/style.css — static file (if present)
-GET {{baseUrl}}/assets/style.css
+### GET /public/style.css — static file (if present)
+GET {{baseUrl}}/public/style.css
 
 ###
 
-### GET /assets/logo.png — static image (if present)
-GET {{baseUrl}}/assets/logo.png
+### GET /pulic/index.html — static file (if present)
+GET {{baseUrl}}/public/index.html

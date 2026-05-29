@@ -1,0 +1,24 @@
+@baseUrl = http://localhost:3000
+
+### GET /users/:id — first call hits the fake DB (~300ms), second is instant (cached for 10s)
+GET {{baseUrl}}/users/1
+
+###
+
+### GET /users/:id — same id again, served from cache
+GET {{baseUrl}}/users/1
+
+###
+
+### GET /users/:id — different id, cache miss
+GET {{baseUrl}}/users/2
+
+###
+
+### DELETE /users/:id — evict user 1 from cache
+DELETE {{baseUrl}}/users/1
+
+###
+
+### GET /users/:id — cache was evicted, hits the DB again
+GET {{baseUrl}}/users/1

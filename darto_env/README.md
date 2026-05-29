@@ -20,7 +20,7 @@ dependencies:
 import 'package:darto/darto.dart';
 import 'package:darto_env/darto_env.dart';
 
-void main() async {
+void main() {
   // Load .env before anything else
   DartoEnv.load();
 
@@ -31,7 +31,7 @@ void main() async {
     'debug': DartoEnv.getBool('DEBUG', false),
   }));
 
-  await app.listen(DartoEnv.getInt('PORT', 3000));
+  app.listen(DartoEnv.getInt('PORT', 3000));
 }
 ```
 

@@ -20,14 +20,14 @@ import 'package:darto_logger/darto_logger.dart';
 
 final log = Logger(minLevel: LogLevel.debug);
 
-void main() async {
+void main() {
   final app = Darto();
 
   app.use(requestId());        // adds X-Request-Id
   app.use(requestLogger(log)); // logs each request with that id
 
   app.get('/', [], (c) => c.ok({'ok': true}));
-  await app.listen(3000, () => log.info('listening', {'port': 3000}));
+  app.listen(3000, () => log.info('listening', {'port': 3000}));
 }
 ```
 

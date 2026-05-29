@@ -45,7 +45,7 @@ void main() async {
       store: store, // ← all instances share this counter
     ));
 
-  await app.listen(3000);
+  app.listen(3000);
   await store.close();
 }
 ```

@@ -109,8 +109,8 @@ app.get('/users', [], handler); // registered as /v1/users
 ### Starting and stopping
 
 ```dart
-await app.listen(3000);
-await app.listen(3000, () => print('ready'));
+app.listen(3000);
+app.listen(3000, () => print('ready'));
 
 // Full control: host binding, HTTPS/TLS, graceful-shutdown signals
 await app.serve(port: 8080, host: 'localhost');
@@ -1665,7 +1665,7 @@ import 'package:darto/logger.dart';
 import 'package:darto/jwt.dart';
 import 'package:darto/body_limit.dart';
 
-void main() async {
+void main() {
   final app = Darto().basePath('/v1');
 
   // Global middleware
@@ -1704,7 +1704,7 @@ void main() async {
   app.onError((err, c) => c.internalError({'error': err.message}));
   app.notFound((c) => c.notFound({'error': 'Not found'}));
 
-  await app.listen(3000, () => print('Listening on http://localhost:3000'));
+  app.listen(3000, () => print('Listening on http://localhost:3000'));
 }
 ```
 

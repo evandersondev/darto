@@ -30,7 +30,7 @@ packages:
       path: "../../darto_view"
       relative: true
     source: path
-    version: "1.0.1"
+    version: "1.0.2"
   lints:
     dependency: "direct dev"
     description:

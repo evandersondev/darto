@@ -51,7 +51,7 @@ void main() async {
     return c.ok(svc.list());
   });
 
-  await app.listen(3000);
+  app.listen(3000);
   await di.dispose(); // runs every onDispose in reverse-creation order
 }
 ```

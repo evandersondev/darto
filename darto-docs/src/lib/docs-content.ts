@@ -1534,7 +1534,7 @@ const SECTIONS: BiSection[] = [
         },
         {
           kind: "code",
-          code: `import 'package:darto/dev.dart';\n\nfinal app = Darto();\napp.get('/users', [], handler);\napp.post('/users', [], handler);\n\nshowRoutes(app); // GET  /users\n                 // POST /users\nawait app.listen(3000);`,
+          code: `import 'package:darto/dev.dart';\n\nfinal app = Darto();\napp.get('/users', [], handler);\napp.post('/users', [], handler);\n\nshowRoutes(app); // GET  /users\n                 // POST /users\napp.listen(3000);`,
         },
       ],
       [
@@ -1654,7 +1654,7 @@ const SECTIONS: BiSection[] = [
         },
         {
           kind: "code",
-          code: `import 'package:darto/dev.dart';\n\nfinal app = Darto();\napp.get('/users', [], handler);\napp.post('/users', [], handler);\n\nshowRoutes(app); // GET  /users\n                 // POST /users\nawait app.listen(3000);`,
+          code: `import 'package:darto/dev.dart';\n\nfinal app = Darto();\napp.get('/users', [], handler);\napp.post('/users', [], handler);\n\nshowRoutes(app); // GET  /users\n                 // POST /users\napp.listen(3000);`,
         },
       ],
     ),
@@ -2332,7 +2332,7 @@ const SECTIONS: BiSection[] = [
         { kind: "h3", text: "Install on the app", id: "di-install-app" },
         {
           kind: "code",
-          code: `final di = Di(providers: [envProvider, dbProvider, userServiceProvider]);\nawait di.warmup(); // eagerly build app-scope singletons\n\nfinal app = Darto()..use(di.middleware());\n\napp.get('/users', [], (c) {\n  final svc = c.read(userServiceProvider);\n  return c.ok(svc.list());\n});\n\nawait app.listen(3000);\nawait di.dispose(); // runs every onDispose in reverse order`,
+          code: `final di = Di(providers: [envProvider, dbProvider, userServiceProvider]);\nawait di.warmup(); // eagerly build app-scope singletons\n\nfinal app = Darto()..use(di.middleware());\n\napp.get('/users', [], (c) {\n  final svc = c.read(userServiceProvider);\n  return c.ok(svc.list());\n});\n\napp.listen(3000);\nawait di.dispose(); // runs every onDispose in reverse order`,
         },
         { kind: "h3", text: "Request scope + contextProvider", id: "di-request" },
         {
@@ -2406,7 +2406,7 @@ const SECTIONS: BiSection[] = [
         { kind: "h3", text: "Instalar no app", id: "di-install-app" },
         {
           kind: "code",
-          code: `final di = Di(providers: [envProvider, dbProvider, userServiceProvider]);\nawait di.warmup(); // constrói os singletons de app-scope antes do primeiro request\n\nfinal app = Darto()..use(di.middleware());\n\napp.get('/users', [], (c) {\n  final svc = c.read(userServiceProvider);\n  return c.ok(svc.list());\n});\n\nawait app.listen(3000);\nawait di.dispose(); // dispara onDispose em ordem reversa`,
+          code: `final di = Di(providers: [envProvider, dbProvider, userServiceProvider]);\nawait di.warmup(); // constrói os singletons de app-scope antes do primeiro request\n\nfinal app = Darto()..use(di.middleware());\n\napp.get('/users', [], (c) {\n  final svc = c.read(userServiceProvider);\n  return c.ok(svc.list());\n});\n\napp.listen(3000);\nawait di.dispose(); // dispara onDispose em ordem reversa`,
         },
         { kind: "h3", text: "Escopo por request + contextProvider", id: "di-request" },
         {

@@ -32,5 +32,6 @@ void main() async {
     return c.created({'email': email});
   });
 
-  await app.listen(3000, () => print('Mailer example on http://localhost:3000'));
+  await app.listen(
+      3000, () => print('Mailer example on http://localhost:3000'));
 }

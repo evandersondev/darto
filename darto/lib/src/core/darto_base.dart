@@ -498,8 +498,6 @@ class Darto {
     Context c,
   ) async {
     Future<void> dispatch(int i) async {
-      if (c._response != null) return;
-
       if (i >= middlewares.length) {
         c._response ??= await handler(c);
         return;

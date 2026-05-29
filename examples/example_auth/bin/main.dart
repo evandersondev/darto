@@ -34,7 +34,8 @@ void main() async {
   app.post('/login', [], (Context c) async {
     final body = await c.req.json();
     final user = _users[body['email']];
-    if (user == null || !verifyPassword(body['password'] as String, user['hash'] as String)) {
+    if (user == null ||
+        !verifyPassword(body['password'] as String, user['hash'] as String)) {
       return c.unauthorized({'error': 'invalid credentials'});
     }
     await signIn(c, {'id': user['id'], 'email': user['email']});

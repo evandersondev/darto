@@ -64,12 +64,12 @@ dependencies:
 ```dart
 import 'package:darto/darto.dart';
 
-void main() async {
+void main() {
   final app = Darto();
 
   app.get('/hello', [], (Context c) => c.ok({'message': 'Hello, Darto!'}));
 
-  await app.listen(3000, () => print('🚀 Listening on http://localhost:3000'));
+  app.listen(3000, () => print('🚀 Listening on http://localhost:3000'));
 }
 ```
 

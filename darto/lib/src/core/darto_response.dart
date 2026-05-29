@@ -58,7 +58,7 @@ class Response {
   // ── factories ─────────────────────────────────────────────────────────────
 
   factory Response.json(
-    dynamic body, {
+    Object body, {
     int status = 200,
     Map<String, String> headers = const {},
   }) =>

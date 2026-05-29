@@ -22,7 +22,7 @@ dependencies:
 import 'package:darto/darto.dart';
 import 'package:darto_ws/darto_ws.dart';
 
-void main() async {
+void main() {
   final app = Darto();
 
   app.get('/ws', [], upgradeWebSocket((c) => WSHandler(
@@ -31,7 +31,7 @@ void main() async {
     onClose:   () => print('client disconnected'),
   )));
 
-  await app.listen(3000);
+  app.listen(3000);
 }
 ```
 
@@ -103,7 +103,7 @@ fan messages out from anywhere.  Install one per app via middleware so every
 import 'package:darto/darto.dart';
 import 'package:darto_ws/darto_ws.dart';
 
-void main() async {
+void main() {
   final hub = WsHub();
   final app = Darto()..use(hub.middleware());
 
@@ -129,12 +129,9 @@ void main() async {
     return c.noContent();
   });
 
-  await app.listen(3000);
+  app.listen(3000);
 }
 ```
-
-`ws.to(room).send(...)` includes the sender by default; chain `.except(ws)`
-to skip them.  `hub.broadcast().send(...)` reaches every connected socket.
 
 | Member | Description |
 |---|---|
@@ -144,6 +141,29 @@ to skip them.  `hub.broadcast().send(...)` reaches every connected socket.
 | `ws.id / ws.rooms` | Per-connection UUID + the rooms it is in |
 | `ws.join(room) / ws.leave(room)` | Mutate room membership (auto-leaves all rooms on close) |
 | `ws.to(room) / ws.broadcast()` | Shortcuts to the hub — same as `hub.to(...)` |
+
+### Fanout patterns
+
+```dart
+// Send to everyone in the room, including the sender
+ws.to(room).send('hello everyone');
+
+// Send to everyone in the room, except the sender
+ws.to(room).except(ws).send('someone else joined');
+
+// Send to ALL connected sockets across every room, including the sender
+ws.broadcast().send('server announcement');
+
+// Send to ALL connected sockets, except the sender
+ws.broadcast().except(ws).send('someone connected');
+```
+
+The same methods are available on `hub` from outside a WS callback (e.g. an HTTP route):
+
+```dart
+hub.to('lobby').send('hello lobby');
+hub.broadcast().sendJson({'event': 'shutdown'});
+```
 
 ---
 

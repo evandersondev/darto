@@ -24,7 +24,7 @@ dependencies:
 import 'package:darto/darto.dart';
 import 'package:darto_view/darto_view.dart';
 
-void main() async {
+void main() {
   final app = Darto();
 
   // Register the engine once — all handlers can call c.render().
@@ -40,7 +40,7 @@ void main() async {
     'version': '1.0.0',
   }));
 
-  await app.listen(3000);
+  app.listen(3000);
 }
 ```
 

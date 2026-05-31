@@ -16,7 +16,7 @@ class SessionController {
   SessionController(this._c, this._secret, this._duration, this._cookieName);
 
   /// Returns the current session data, or null if no active session.
-  Map<String, dynamic>? get() => _c.get<Map<String, dynamic>>(_sessionDataKey);
+  Map<String, dynamic>? get() => _c.get<Map<String, dynamic>?>(_sessionDataKey);
 
   /// Replaces the session data and writes the signed cookie to the response.
   Future<void> update(Map<String, dynamic> data) async {

@@ -141,6 +141,30 @@ final schema = z.map({
 | `c.req.valid<T>(target)` | Retrieve validated data (from core `darto`) |
 | `z` | Zard schema builder (re-exported) |
 | `ZardResult` | Result type — `.success`, `.data`, `.error` |
+| `schema.toOpenApiSchema()` | Convert a zard schema to an OpenAPI 3.1 Schema Object map |
+
+---
+
+## OpenAPI integration
+
+Reuse a zard schema for documentation: `toOpenApiSchema()` converts it to an
+OpenAPI 3.1 Schema Object map, ready for `darto_openapi`'s `Schema.raw(...)`.
+
+```dart
+import 'package:darto_openapi/darto_openapi.dart';
+
+final userSchema = z.map({'name': z.string(), 'age': z.int().optional()});
+
+api.post('/users',
+  request: Req(json: Schema.raw(userSchema.toOpenApiSchema())),
+  responses: {201: Res('Created')},
+  handler: (c) => c.created(c.req.valid('json')),
+);
+```
+
+It captures object shape + `required`, arrays, enums, nullability, defaults and
+unions. Fine-grained constraints (`min`/`max`/`format`) live in zard closures and
+are not introspectable, so they are omitted.
 
 ---
 

@@ -14,3 +14,9 @@ dependencies:
 
 dev_dependencies:
   lints: ^5.0.0
+
+# darto_ws asks for `darto: ^1.2.0` from hosted; force-resolve to the local
+# path so the example uses the in-repo version of both packages.
+dependency_overrides:
+  darto:
+    path: ../../darto

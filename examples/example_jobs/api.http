@@ -1,0 +1,24 @@
+@baseUrl = http://localhost:3000
+
+### POST /signup — enqueue a welcome email job (runs immediately in background)
+POST {{baseUrl}}/signup
+Content-Type: application/json
+
+{
+  "email": "carol@example.com"
+}
+
+###
+
+### POST /remind — schedule a welcome email 5s from now
+POST {{baseUrl}}/remind
+Content-Type: application/json
+
+{
+  "email": "dave@example.com"
+}
+
+###
+
+### GET /stats — queue stats (pending, running, failed counts)
+GET {{baseUrl}}/stats

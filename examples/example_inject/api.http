@@ -1,0 +1,25 @@
+@baseUrl = http://localhost:3000
+
+### GET /users — list all users (UserService is a singleton injected by DI)
+GET {{baseUrl}}/users
+
+###
+
+### GET /users/:id — find user by id
+GET {{baseUrl}}/users/1
+
+###
+
+### GET /users/:id — not found
+GET {{baseUrl}}/users/999
+
+###
+
+### GET /whoami — request-scoped provider reads X-Request-Id header
+GET {{baseUrl}}/whoami
+X-Request-Id: abc-123
+
+###
+
+### GET /whoami — no header, returns "none"
+GET {{baseUrl}}/whoami

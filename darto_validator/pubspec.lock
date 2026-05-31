@@ -92,11 +92,10 @@ packages:
   darto:
     dependency: "direct main"
     description:
-      name: darto
-      sha256: "52dd3d36e8289f4235b6267461eb8615c34425962940b5dc6a5c87d9efd43e4f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
+      path: "../darto"
+      relative: true
+    source: path
+    version: "1.2.0"
   file:
     dependency: transitive
     description:
@@ -420,10 +419,9 @@ packages:
   zard:
     dependency: "direct main"
     description:
-      name: zard
-      sha256: aeb94314ca0bbeacaba736d86929968db64f811a48a2be78e8ec4007e7545c43
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
+      path: "../../zard"
+      relative: true
+    source: path
+    version: "1.1.2"
 sdks:
   dart: ">=3.5.0 <4.0.0"

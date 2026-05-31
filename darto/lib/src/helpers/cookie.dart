@@ -74,20 +74,27 @@ String _formatHttpDate(DateTime date) {
 
 void setCookie(Context c, String name, String value, [CookieOptions? opt]) {
   final cookie = generateCookie(name, value, opt);
-  c.res.setHeader('Set-Cookie', cookie);
+  // Use `add` (not `set`) so multiple cookies produce multiple Set-Cookie
+  // headers instead of overwriting each other.
+  c.res.raw.headers.add('Set-Cookie', cookie);
 }
 
+/// Parses the cookies sent by the client (the request `Cookie` header).
 Map<String, String> getCookies(Context c) {
-  final header = c.res.header('cookie');
+  final header = c.req.header('cookie');
   if (header == null) return {};
 
   final cookies = <String, String>{};
 
   for (final part in header.split(';')) {
-    final kv = part.trim().split('=');
-    if (kv.length == 2) {
-      cookies[kv[0]] = kv[1];
-    }
+    final trimmed = part.trim();
+    if (trimmed.isEmpty) continue;
+    // Split on the FIRST '=' only — cookie values may contain '=' (e.g. the
+    // base64url padding used by signed/session cookies).
+    final eq = trimmed.indexOf('=');
+    if (eq <= 0) continue;
+    final name = trimmed.substring(0, eq).trim();
+    cookies[name] = trimmed.substring(eq + 1).trim();
   }
 
   return cookies;
@@ -128,7 +135,7 @@ Future<void> setSignedCookie(
   CookieOptions? opt,
 ]) async {
   final cookie = await generateSignedCookie(name, value, secret, opt);
-  c.res.setHeader('Set-Cookie', cookie);
+  c.res.raw.headers.add('Set-Cookie', cookie);
 }
 
 Future<String?> getSignedCookie(
@@ -136,20 +143,17 @@ Future<String?> getSignedCookie(
   String secret,
   String key,
 ) async {
-  final cookies = getCookies(c);
-  final raw = cookies[key];
-
+  final raw = getCookies(c)[key];
   if (raw == null) return null;
 
-  final parts = raw.split('.');
-  if (parts.length != 2) return null;
+  // Signature is the segment after the last '.', so values may contain dots.
+  final dot = raw.lastIndexOf('.');
+  if (dot <= 0) return null;
 
-  final value = parts[0];
-  final sig = parts[1];
+  final value = raw.substring(0, dot);
+  final sig = raw.substring(dot + 1);
 
-  final expected = _sign(value, secret);
-
-  if (sig != expected) return null;
+  if (sig != _sign(value, secret)) return null;
 
   return value;
 }

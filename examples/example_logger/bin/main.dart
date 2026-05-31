@@ -1,19 +1,37 @@
 import 'package:darto/darto.dart';
-import 'package:darto/logger.dart';
+import 'package:darto/request_id.dart';
+import 'package:darto_logger/darto_logger.dart';
 
-void main() {
+void main() async {
+  // Structured logger — pretty output in dev, switch `pretty: false` for JSON.
+  final log = Logger(minLevel: LogLevel.debug, pretty: true);
+
   final app = Darto();
 
-  // Global logger middleware — logs every request
-  app.use(logger());
+  // requestId() stamps each request with an X-Request-Id; requestLogger()
+  // logs method/path/status/duration and correlates them by that id.
+  app.use(requestId());
+  app.use(requestLogger(log));
 
   app.get('/', [], (Context c) => c.ok({'message': 'Home'}));
-  app.get('/users', [], (Context c) => c.ok({'users': ['Alice', 'Bob']}));
-  app.get('/users/:id', [], (Context c) => c.ok({'id': c.req.param('id')}));
+
+  app.get('/users/:id', [], (Context c) {
+    // A child logger carries extra fields on every line it writes.
+    final reqLog = log.child({'route': 'users.show'});
+    reqLog.debug('looking up user', {'id': c.req.param('id')});
+    return c.ok({'id': c.req.param('id')});
+  });
+
   app.post('/users', [], (Context c) async {
     final body = await c.req.json();
+    log.info('user created', {'email': body['email']});
     return c.created({'created': body});
   });
 
-  app.listen(3000, () => print('Logger server running on port 3000'));
+  app.get('/boom', [], (Context c) {
+    log.error('something went wrong', error: StateError('demo failure'));
+    return c.internalError({'error': 'demo'});
+  });
+
+  await app.listen(3000, () => log.info('listening', {'port': 3000}));
 }

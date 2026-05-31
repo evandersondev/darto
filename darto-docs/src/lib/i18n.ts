@@ -4,7 +4,7 @@ export const translations = {
   en: {
     nav: { docs: "Documentation", github: "GitHub", getStarted: "Get Started" },
     hero: {
-      badge: "v1.1 · Minimal Dart web framework",
+      badge: "v1.2· Minimal Dart web framework",
       title1: "A minimal, fast web framework",
       title2: "for Dart, done right.",
       subtitle:
@@ -14,7 +14,7 @@ export const translations = {
       installNote: "dart pub add darto",
       tagline: "One Context. Familiar API. Zero JS bridges.",
       credibility: {
-        version: "v1.1.0",
+        version: "v1.2.0",
         oss: "Open source · MIT",
         pub: "pub.dev",
         github: "GitHub",
@@ -198,6 +198,8 @@ app.get('/api/me', [], (c) {
     docs: {
       search: "Search the docs…",
       onThisPage: "On this page",
+      previous: "Previous",
+      next: "Next",
       badge: "Documentation",
       title: "Darto Docs",
       subtitle: "Routing, Context, middleware, validation, WebSockets and more.",
@@ -205,10 +207,11 @@ app.get('/api/me', [], (c) {
       noMatches: "No matches.",
       groups: {
         start: "Getting Started",
-        core: "Core Concepts",
-        validation: "Validation",
+        api: "API",
+        helpers: "Helpers",
+        middlewares: "Middlewares",
+        plugins: "Official Plugins",
         advanced: "Advanced",
-        reference: "Reference",
         migration: "Migration Guide",
       },
     },
@@ -216,7 +219,7 @@ app.get('/api/me', [], (c) {
   pt: {
     nav: { docs: "Documentação", github: "GitHub", getStarted: "Começar" },
     hero: {
-      badge: "v1.1 · Framework web minimalista para Dart",
+      badge: "v1.2· Framework web minimalista para Dart",
       title1: "Um framework web rápido e mínimo",
       title2: "para Dart, do jeito certo.",
       subtitle:
@@ -226,7 +229,7 @@ app.get('/api/me', [], (c) {
       installNote: "dart pub add darto",
       tagline: "Um único Context. API familiar. Zero pontes JS.",
       credibility: {
-        version: "v1.1.0",
+        version: "v1.2.0",
         oss: "Código aberto · MIT",
         pub: "pub.dev",
         github: "GitHub",
@@ -410,6 +413,8 @@ app.get('/api/me', [], (c) {
     docs: {
       search: "Buscar na documentação…",
       onThisPage: "Nesta página",
+      previous: "Anterior",
+      next: "Próximo",
       badge: "Documentação",
       title: "Documentação Darto",
       subtitle: "Rotas, Context, middleware, validação, WebSockets e mais.",
@@ -417,10 +422,11 @@ app.get('/api/me', [], (c) {
       noMatches: "Nenhum resultado.",
       groups: {
         start: "Primeiros passos",
-        core: "Conceitos centrais",
-        validation: "Validação",
+        api: "API",
+        helpers: "Helpers",
+        middlewares: "Middlewares",
+        plugins: "Plugins oficiais",
         advanced: "Avançado",
-        reference: "Referência",
         migration: "Guia de Migração",
       },
     },

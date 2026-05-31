@@ -4,6 +4,10 @@ import 'package:darto_static/darto_static.dart';
 void main() {
   final app = Darto();
 
+  app.mount('/public', (Context c, Next next) async {
+    print('HIT: ${c.req.path}');
+    await next();
+  });
   // Serve files from the public/ directory under /public
   app.mount('/public', serveStatic('public'));
 
@@ -24,11 +28,6 @@ void main() {
 </body>
 </html>
 '''));
-
-  app.mount('/public', (Context c, Next next) async {
-    print('HIT: ${c.req.path}');
-    await next();
-  });
 
   app.listen(3000, () => print('Static files server running on port 3000'));
 }

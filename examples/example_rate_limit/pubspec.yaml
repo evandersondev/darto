@@ -1,0 +1,20 @@
+name: example_rate_limit
+description: Darto — distributed rate limiting with darto_rate_limit
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+  darto_rate_limit:
+    path: ../../darto_rate_limit
+
+dev_dependencies:
+  lints: ^5.0.0
+
+dependency_overrides:
+  darto:
+    path: ../../darto

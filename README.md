@@ -28,6 +28,15 @@ This repository is a **monorepo** containing the entire Darto ecosystem.
 | [`darto_view`](./darto_view/)           | Pluggable template engine (Mustache, Jinja, …)         | [![pub](https://img.shields.io/pub/v/darto_view.svg)](https://pub.dev/packages/darto_view)           |
 | [`darto_static`](./darto_static/)       | Static file serving middleware                         | [![pub](https://img.shields.io/pub/v/darto_static.svg)](https://pub.dev/packages/darto_static)       |
 | [`darto_env`](./darto_env/)             | `.env` file loader                                     | [![pub](https://img.shields.io/pub/v/darto_env.svg)](https://pub.dev/packages/darto_env)             |
+| [`darto_openapi`](./darto_openapi/)     | OpenAPI 3.1 spec generation + Scalar API docs          | [![pub](https://img.shields.io/pub/v/darto_openapi.svg)](https://pub.dev/packages/darto_openapi)     |
+| [`darto_test`](./darto_test/)           | Ergonomic test client (boot + assert, supertest-style) | [![pub](https://img.shields.io/pub/v/darto_test.svg)](https://pub.dev/packages/darto_test)           |
+| [`darto_logger`](./darto_logger/)       | Structured logging + request-logging middleware        | [![pub](https://img.shields.io/pub/v/darto_logger.svg)](https://pub.dev/packages/darto_logger)       |
+| [`darto_auth`](./darto_auth/)           | Password hashing (PBKDF2) + session-based auth guards   | [![pub](https://img.shields.io/pub/v/darto_auth.svg)](https://pub.dev/packages/darto_auth)           |
+| [`darto_inject`](./darto_inject/)               | Typed DI — `Provider<T>` + request scope + overrides   | [![pub](https://img.shields.io/pub/v/darto_inject.svg)](https://pub.dev/packages/darto_inject)               |
+| [`darto_cache`](./darto_cache/)         | Cache interface + `MemoryCache` (LRU/TTL) + `RedisCache` | [![pub](https://img.shields.io/pub/v/darto_cache.svg)](https://pub.dev/packages/darto_cache)         |
+| [`darto_rate_limit`](./darto_rate_limit/) | Distributed `RateLimitStore` (Redis) for the core rateLimit() | [![pub](https://img.shields.io/pub/v/darto_rate_limit.svg)](https://pub.dev/packages/darto_rate_limit) |
+| [`darto_mailer`](./darto_mailer/)       | Email — `Mailer` + SMTP / console / memory transports   | [![pub](https://img.shields.io/pub/v/darto_mailer.svg)](https://pub.dev/packages/darto_mailer)       |
+| [`darto_jobs`](./darto_jobs/)           | Background jobs — queue + retries, Memory / Redis stores | [![pub](https://img.shields.io/pub/v/darto_jobs.svg)](https://pub.dev/packages/darto_jobs)           |
 
 ---
 
@@ -49,18 +58,18 @@ Or add manually to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  darto: ^1.0.0
+  darto: ^1.2.0
 ```
 
 ```dart
 import 'package:darto/darto.dart';
 
-void main() async {
+void main() {
   final app = Darto();
 
   app.get('/hello', [], (Context c) => c.ok({'message': 'Hello, Darto!'}));
 
-  await app.listen(3000, () => print('🚀 Listening on http://localhost:3000'));
+  app.listen(3000, () => print('🚀 Listening on http://localhost:3000'));
 }
 ```
 
@@ -69,7 +78,7 @@ void main() async {
 ## 🗂️ Repository Structure
 
 ```
-darto_framework/
+darto/
 ├── darto/              # Core framework
 ├── darto_cli/          # CLI tool
 ├── darto_validator/    # Request validation
@@ -77,6 +86,15 @@ darto_framework/
 ├── darto_view/         # Template engines
 ├── darto_static/       # Static file serving
 ├── darto_env/          # .env loader
+├── darto_openapi/      # OpenAPI 3.1 + Scalar docs
+├── darto_test/         # Test client
+├── darto_logger/       # Structured logging
+├── darto_auth/         # Password hashing + session auth
+├── darto_inject/           # Typed DI (Provider<T> + request scope)
+├── darto_cache/        # Cache primitives (Memory + Redis)
+├── darto_rate_limit/   # Distributed RateLimitStore (Redis)
+├── darto_mailer/       # Email (SMTP + console/memory transports)
+├── darto_jobs/         # Background jobs (Memory + Redis)
 ├── darto-docs/         # Documentation site
 └── examples/           # Example projects (see below)
 ```
@@ -120,7 +138,7 @@ Explore ready-to-run examples inside the [`examples/`](./examples/) folder:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open an issue or PR on [GitHub](https://github.com/evandersondev/darto_framework).
+Contributions are welcome! Please open an issue or PR on [GitHub](https://github.com/evandersondev/darto).
 
 ---
 

@@ -8,7 +8,7 @@ void main() {
   app.use(logger());
   app.use(sessionMiddleware(
     secret: 'super-secret-key-with-at-least-32-chars!!',
-    duration: 60 * 30, // 30 minutes
+    duration: 60 * 1, // 1 minute
   ));
 
   app.post('/login', [], (c) async {

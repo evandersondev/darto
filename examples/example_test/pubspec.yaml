@@ -1,0 +1,21 @@
+name: example_test
+description: Darto — in-app integration testing with darto_test
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+
+dev_dependencies:
+  darto_test:
+    path: ../../darto_test
+  test: ^1.24.0
+  lints: ^5.0.0
+
+dependency_overrides:
+  darto:
+    path: ../../darto

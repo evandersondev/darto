@@ -1,6 +1,6 @@
 name: darto_validator
 description: Request validation middleware for Darto powered by zard — a Zod-inspired schema library for Dart.
-version: 1.0.1
+version: 1.1.0
 homepage: https://github.com/evandersondev/darto/tree/main/darto_validator
 repository: https://github.com/evandersondev/darto
 
@@ -8,9 +8,17 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
-  darto: ^1.1.0
-  zard: ^1.1.0
+  darto: ^1.2.0
+  zard: ^1.1.2
 
 dev_dependencies:
   lints: ^5.0.0
   test: ^1.24.0
+
+# Local development against the monorepo's darto + zard. Ignored by consumers
+# of the published package.
+dependency_overrides:
+  darto:
+    path: ../darto
+  zard:
+    path: ../../zard

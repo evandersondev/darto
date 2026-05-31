@@ -1,0 +1,40 @@
+@baseUrl = http://localhost:3000
+
+### GET /openapi.json — generated OpenAPI 3.1 spec
+GET {{baseUrl}}/openapi.json
+
+###
+
+### GET /docs — Scalar UI (open in browser)
+GET {{baseUrl}}/docs
+
+###
+
+### GET /posts/:id — get a post by id
+GET {{baseUrl}}/posts/1
+
+###
+
+### GET /posts/:id — invalid id (expects 400 from schema validation)
+GET {{baseUrl}}/posts/abc
+
+###
+
+### POST /posts — create a post
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "title": "Hello Darto",
+  "tags": ["dart", "backend"]
+}
+
+###
+
+### POST /posts — missing required field (expects 400)
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "tags": ["dart"]
+}

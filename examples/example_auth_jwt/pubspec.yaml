@@ -9,8 +9,6 @@ environment:
 dependencies:
   darto:
     path: ../../darto
-  darto_auth:
-    path: ../../darto_auth
 
 dev_dependencies:
   lints: ^5.0.0

@@ -6,7 +6,7 @@
 //   validator()  → you return any Response with any status code
 import 'package:darto/darto.dart';
 import 'package:darto/validator.dart';
-import 'package:darto_validator/darto_validator.dart'; // provides z.* from zard
+import 'package:zard/zard.dart';
 
 // ── Schemas (zard) ────────────────────────────────────────────────────────────
 

@@ -69,8 +69,26 @@ class Context {
     return r;
   }
 
-  Response json(dynamic data, [int status = 200]) =>
-      _r(Response.json(data, status: status));
+  /// Sends [data] as a JSON response with an optional [status] code.
+  ///
+  /// [data] must be a [Map] or [List] — any other type throws an [ArgumentError].
+  ///
+  /// Example:
+  /// ```dart
+  /// app.get('/user', [], (c) => c.json({'id': 1, 'name': 'Alice'}));
+  /// app.get('/users', [], (c) => c.json([{'id': 1}, {'id': 2}]));
+  /// app.get('/error', [], (c) => c.json('oops')); // throws ArgumentError
+  /// ```
+  Response json(Object data, [int status = 200]) {
+    if (data is! Map && data is! List) {
+      throw ArgumentError.value(
+        data,
+        'data',
+        'c.json() requires a Map or List, got ${data.runtimeType}',
+      );
+    }
+    return _r(Response.json(data, status: status));
+  }
   Response text(String data, [int status = 200]) =>
       _r(Response.text(data, status: status));
   Response html(String data, [int status = 200]) =>
@@ -252,7 +270,16 @@ class PendingResponse {
   final int _status;
   PendingResponse._(this._c, this._status);
 
-  Response json(dynamic data) => _c._r(Response.json(data, status: _status));
+  Response json(Object data) {
+    if (data is! Map && data is! List) {
+      throw ArgumentError.value(
+        data,
+        'data',
+        'c.json() requires a Map or List, got ${data.runtimeType}',
+      );
+    }
+    return _c._r(Response.json(data, status: _status));
+  }
   Response text(String data) => _c._r(Response.text(data, status: _status));
   Response html(String data) => _c._r(Response.html(data, status: _status));
   Response binary(

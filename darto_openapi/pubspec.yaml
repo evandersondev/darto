@@ -1,0 +1,24 @@
+name: darto_openapi
+description: OpenAPI 3.1 spec generation and Scalar API docs for the Darto web framework — describe a route once to validate requests and document them.
+version: 1.0.0
+homepage: https://github.com/evandersondev/darto/tree/main/darto_openapi
+repository: https://github.com/evandersondev/darto
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto: ^1.2.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0
+  darto_test: ^1.1.0
+
+# Local development against this monorepo's packages. Ignored by consumers of
+# the published package.
+dependency_overrides:
+  darto:
+    path: ../darto
+  darto_test:
+    path: ../darto_test

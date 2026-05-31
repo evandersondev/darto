@@ -1,0 +1,24 @@
+name: example_jobs
+description: Darto — background jobs with darto_jobs
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+  darto_jobs:
+    path: ../../darto_jobs
+  darto_mailer:
+    path: ../../darto_mailer
+  darto_env:
+    path: ../../darto_env
+
+dev_dependencies:
+  lints: ^5.0.0
+
+dependency_overrides:
+  darto:
+    path: ../../darto

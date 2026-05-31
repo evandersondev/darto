@@ -1,26 +1,32 @@
 # example_websocket
 
-What it demonstrates: Running an HTTP server and WebSocket server side by side.
+WebSocket with [`darto_ws`](../../darto_ws/) — same port as HTTP, with rooms and broadcast.
 
-## Features
-- HTTP server on port 3000 (Darto)
-- WebSocket echo server on port 3001 (DartoWs)
-- Both started concurrently with `Future.wait`
+## What it shows
+- `upgradeWebSocket()` on a normal route — HTTP and WS share port 3000.
+- A **room chat** using `WsHub`: `ws.join(room)` + `ws.to(room).except(ws)` for real fanout (not just an echo).
+- A server-initiated broadcast into a room from a plain HTTP `POST`.
+
+## Endpoints
+- `WS   /ws` — echo
+- `WS   /chat/:room` — room chat (broadcast to everyone in the room)
+- `WS   /ws/json` — JSON round-trip
+- `POST /announce/:room` — broadcast into a room over HTTP
 
 ## Run
 ```bash
 dart run bin/main.dart
 ```
-Connect a WebSocket client to `ws://localhost:3001` and send any message — it will be echoed back.
+Open two WS clients on `ws://localhost:3000/chat/lobby` and send a message from
+one — the other receives it. Or push from HTTP:
+```bash
+curl -X POST localhost:3000/announce/lobby \
+  -H 'Content-Type: application/json' -d '{"text":"hello room"}'
+```
 
-<br/>
+## Multi-instance
+Behind a load balancer, attach the Redis adapter so broadcasts cross instances:
 
----
-
-<br/>
-
-### Support 💖
-
-If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the package and make it even better!
-
-<br/>
+```dart
+await hub.attachAdapter(await RedisWsAdapter.connect(host: 'localhost'));
+```

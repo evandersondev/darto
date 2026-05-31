@@ -1,0 +1,20 @@
+name: example_auth
+description: Darto — password hashing + session auth with darto_auth
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto:
+    path: ../../darto
+  darto_auth:
+    path: ../../darto_auth
+
+dev_dependencies:
+  lints: ^5.0.0
+
+dependency_overrides:
+  darto:
+    path: ../../darto

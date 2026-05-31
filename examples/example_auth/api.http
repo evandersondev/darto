@@ -1,0 +1,42 @@
+@baseUrl = http://localhost:3000
+
+### POST /register — create a new account
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "email": "bob@example.com",
+  "password": "s3cret"
+}
+
+###
+
+### POST /login — sign in with alice (seeded at boot)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "s3cret"
+}
+
+###
+
+### POST /login — wrong password (expects 401)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "wrong"
+}
+
+###
+
+### GET /me — protected route (requires active session cookie)
+GET {{baseUrl}}/me
+
+###
+
+### POST /logout — end the session
+POST {{baseUrl}}/logout

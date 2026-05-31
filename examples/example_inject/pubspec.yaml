@@ -1,5 +1,5 @@
-name: example_jobs
-description: Darto — background jobs with darto_jobs
+name: example_inject
+description: Darto — typed dependency injection with darto_inject
 version: 0.0.1
 publish_to: none
 
@@ -9,16 +9,13 @@ environment:
 dependencies:
   darto:
     path: ../../darto
-  darto_jobs:
-    path: ../../darto_jobs
-  darto_mailer:
-    path: ../../darto_mailer
-  darto_env:
-    path: ../../darto_env
+  darto_inject:
+    path: ../../darto_inject
 
 dev_dependencies:
   lints: ^5.0.0
 
+# Plugins pin `darto` from hosted; force-resolve to the in-repo path.
 dependency_overrides:
   darto:
     path: ../../darto

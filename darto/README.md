@@ -86,7 +86,7 @@ Ready-to-run projects are available in the [`examples/`](https://github.com/evan
 | [`example_logger`](https://github.com/evandersondev/darto/tree/main/examples/example_logger)                             | Structured logging + request logger (`darto_logger`)        |
 | [`example_proxy`](https://github.com/evandersondev/darto/tree/main/examples/example_proxy)                               | Reverse proxy, header overrides                             |
 | [`example_env`](https://github.com/evandersondev/darto/tree/main/examples/example_env)                                   | `.env` loading with `darto_env`                             |
-| [`example_di`](https://github.com/evandersondev/darto/tree/main/examples/example_di)                                     | Typed DI — providers, scopes, `c.read` (`darto_di`)         |
+| [`example_inject`](https://github.com/evandersondev/darto/tree/main/examples/example_inject)                             | Typed DI — providers, scopes, `c.read` (`darto_di`)         |
 | [`example_cache`](https://github.com/evandersondev/darto/tree/main/examples/example_cache)                               | Read-through cache with `remember()` (`darto_cache`)        |
 | [`example_rate_limit`](https://github.com/evandersondev/darto/tree/main/examples/example_rate_limit)                     | Distributed rate limiting (`darto_rate_limit`)              |
 | [`example_auth`](https://github.com/evandersondev/darto/tree/main/examples/example_auth)                                 | Password hashing + session auth + OAuth (`darto_auth`)      |

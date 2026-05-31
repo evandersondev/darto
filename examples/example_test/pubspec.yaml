@@ -1,5 +1,5 @@
-name: example_di
-description: Darto — typed dependency injection with darto_inject
+name: example_test
+description: Darto — in-app integration testing with darto_test
 version: 0.0.1
 publish_to: none
 
@@ -9,13 +9,13 @@ environment:
 dependencies:
   darto:
     path: ../../darto
-  darto_inject:
-    path: ../../darto_inject
 
 dev_dependencies:
+  darto_test:
+    path: ../../darto_test
+  test: ^1.24.0
   lints: ^5.0.0
 
-# Plugins pin `darto` from hosted; force-resolve to the in-repo path.
 dependency_overrides:
   darto:
     path: ../../darto

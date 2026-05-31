@@ -18,3 +18,11 @@ coverage/
 .DS_Store
 Thumbs.db
 *.swp
+
+# Claude / repo meta
+.claude/
+CLAUDE.md
+ROADMAP.md
+
+# Secrets
+.env

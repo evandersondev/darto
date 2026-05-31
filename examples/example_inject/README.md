@@ -1,4 +1,4 @@
-# example_di
+# example_inject
 
 Typed dependency injection with [`darto_inject`](../../darto_inject/).
 

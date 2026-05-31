@@ -1899,11 +1899,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
-        },
-        {
           kind: "p",
           text: "OpenAPI 3.1 spec generation + Scalar API docs. Describe a route once: it validates the request and is documented from the same source.",
         },
@@ -1913,6 +1908,28 @@ const SECTIONS: BiSection[] = [
         {
           kind: "code",
           code: `import 'package:darto_openapi/darto_openapi.dart';\n\nfinal api = OpenApi(app, info: Info(title: 'API', version: '1.0.0'));\n\napi.post('/posts',\n  request: Req(json: Schema.object({'title': Schema.string(minLength: 1)}, required: ['title'])),\n  responses: {201: Res('Created')},\n  handler: (c) => c.created(c.req.valid('json')),\n);\n\napp.use(api.docs()); // serves /openapi.json + /docs (Scalar)`,
+        },
+        { kind: "h3", text: "Schema builders", id: "openapi-schema" },
+        {
+          kind: "table",
+          headers: ["Builder", "Description"],
+          rows: [
+            [
+              "Schema.string({minLength, maxLength, format})",
+              "String — format: 'email' | 'uri' | 'date-time' | …",
+            ],
+            ["Schema.integer({minimum, maximum})", "Integer number"],
+            ["Schema.number({minimum})", "Floating-point number"],
+            ["Schema.boolean()", "Boolean"],
+            ["Schema.array(schema, {minItems})", "Array of items matching schema"],
+            ["Schema.object({fields}, {required})", "Object with named properties"],
+            ["Schema.raw(Map)", "Pass raw OpenAPI schema through unchanged"],
+          ],
+        },
+        { kind: "h3", text: "Security schemes", id: "openapi-security" },
+        {
+          kind: "code",
+          code: `final api = OpenApi(app,\n  info: Info(title: 'My API', version: '1.0.0'),\n  securitySchemes: {\n    'bearer': SecurityScheme.bearer(),\n    'apiKey': SecurityScheme.apiKey(name: 'x-api-key', location: 'header'),\n  },\n);\n\napi.get('/me',\n  security: ['bearer'],\n  responses: {200: Res('User profile')},\n  handler: (c) => c.ok({'user': 'me'}),\n);`,
         },
         { kind: "h3", text: "Typed client", id: "openapi-client" },
         {
@@ -1936,11 +1953,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
-        },
-        {
           kind: "p",
           text: "Geração de spec OpenAPI 3.1 + docs Scalar. Descreva a rota uma vez: ela valida a requisição e é documentada a partir da mesma fonte.",
         },
@@ -1950,6 +1962,28 @@ const SECTIONS: BiSection[] = [
         {
           kind: "code",
           code: `import 'package:darto_openapi/darto_openapi.dart';\n\nfinal api = OpenApi(app, info: Info(title: 'API', version: '1.0.0'));\n\napi.post('/posts',\n  request: Req(json: Schema.object({'title': Schema.string(minLength: 1)}, required: ['title'])),\n  responses: {201: Res('Created')},\n  handler: (c) => c.created(c.req.valid('json')),\n);\n\napp.use(api.docs()); // serve /openapi.json + /docs (Scalar)`,
+        },
+        { kind: "h3", text: "Schema builders", id: "openapi-schema" },
+        {
+          kind: "table",
+          headers: ["Builder", "Descrição"],
+          rows: [
+            [
+              "Schema.string({minLength, maxLength, format})",
+              "String — format: 'email' | 'uri' | 'date-time' | …",
+            ],
+            ["Schema.integer({minimum, maximum})", "Número inteiro"],
+            ["Schema.number({minimum})", "Número de ponto flutuante"],
+            ["Schema.boolean()", "Booleano"],
+            ["Schema.array(schema, {minItems})", "Array com itens que casam com o schema"],
+            ["Schema.object({fields}, {required})", "Objeto com propriedades nomeadas"],
+            ["Schema.raw(Map)", "Passa um schema OpenAPI cru sem alteração"],
+          ],
+        },
+        { kind: "h3", text: "Esquemas de segurança", id: "openapi-security" },
+        {
+          kind: "code",
+          code: `final api = OpenApi(app,\n  info: Info(title: 'My API', version: '1.0.0'),\n  securitySchemes: {\n    'bearer': SecurityScheme.bearer(),\n    'apiKey': SecurityScheme.apiKey(name: 'x-api-key', location: 'header'),\n  },\n);\n\napi.get('/me',\n  security: ['bearer'],\n  responses: {200: Res('Perfil do usuário')},\n  handler: (c) => c.ok({'user': 'me'}),\n);`,
         },
         { kind: "h3", text: "Client tipado", id: "openapi-client" },
         {
@@ -1980,11 +2014,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
-        },
-        {
           kind: "p",
           text: "Ergonomic test client — boot an app on an ephemeral port and assert responses without managing a server (supertest-style).",
         },
@@ -1995,23 +2024,47 @@ const SECTIONS: BiSection[] = [
           kind: "code",
           code: `import 'package:darto_test/darto_test.dart';\n\nfinal client = await TestClient.create(buildApp());\n\nfinal res = await client.get('/hello');\nexpect(res.statusCode, 200);\nexpect(res.json['msg'], 'hi');\n\nawait client.close();`,
         },
-        { kind: "h3", text: "API", id: "test-api" },
+        { kind: "h3", text: "setUp / tearDown pattern", id: "test-setup" },
+        {
+          kind: "code",
+          code: `import 'package:darto_test/darto_test.dart';\nimport 'package:test/test.dart';\n\nvoid main() {\n  late TestClient client;\n\n  setUp(() async => client = await TestClient.create(buildApp()));\n  tearDown(() => client.close());\n\n  test('GET /hello returns 200', () async {\n    final res = await client.get('/hello');\n    expect(res.statusCode, 200);\n    expect(res.json['msg'], 'hi');\n  });\n\n  test('POST /users creates a user', () async {\n    final res = await client.post('/users', json: {'name': 'Alice'});\n    expect(res.statusCode, 201);\n    expect(res.json['name'], 'Alice');\n  });\n}`,
+        },
+        { kind: "h3", text: "json: vs body:", id: "test-json-body" },
+        {
+          kind: "p",
+          text: "json: accepts a Map/List, encodes it with jsonEncode and sets Content-Type: application/json automatically. body: sends the value raw — a String is written as-is, a List<int> is sent as bytes. Use json: for APIs (the common case), body: when you need to control the payload format.",
+        },
+        {
+          kind: "code",
+          code: `// json: → auto-encode + Content-Type: application/json\nclient.post('/users', json: {'name': 'Alice'});\n\n// body: → raw String (no Content-Type set)\nclient.post('/login', body: 'username=alice&password=s3cret',\n  headers: {'content-type': 'application/x-www-form-urlencoded'});\n\n// body: → raw bytes\nclient.post('/upload', body: imageBytes);`,
+        },
+        { kind: "h3", text: "TestClient API", id: "test-client-api" },
         {
           kind: "table",
           headers: ["Member", "Description"],
           rows: [
             ["TestClient.create(app)", "Boots the app on a free loopback port; returns a client"],
-            ["client.get / head / options(path, {headers})", "Send a request without a body"],
+            ["client.get / head / options(path, {headers})", "Request without a body"],
             [
               "client.post / put / patch / delete(path, {headers, body, json})",
-              "Send a request with an optional body (json sets Content-Type)",
+              "Request with an optional body",
             ],
             ["client.request(method, path, {...})", "Generic request"],
             ["client.port", "The bound ephemeral port"],
             ["client.close()", "Stops the app and closes the client"],
-            ["res.statusCode / res.body / res.json", "Status code, raw text, parsed JSON"],
-            ["res.header(name) / res.headers", "Response header lookup / all headers"],
-            ["res.cookie(name) / res.cookies", "Set-Cookie value lookup / list"],
+          ],
+        },
+        { kind: "h3", text: "TestResponse API", id: "test-response-api" },
+        {
+          kind: "table",
+          headers: ["Member", "Description"],
+          rows: [
+            ["res.statusCode", "HTTP status code"],
+            ["res.body", "Raw response body as UTF-8 text"],
+            ["res.json", "Body parsed as JSON (null when empty)"],
+            ["res.header(name)", "Response header value (case-insensitive)"],
+            ["res.headers", "All headers as Map<String, String>"],
+            ["res.cookie(name) / res.cookies", "Set-Cookie lookup / full list"],
             ["res.isOk", "true for 2xx status codes"],
           ],
         },
@@ -2028,11 +2081,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
-        },
-        {
           kind: "p",
           text: "Client de teste ergonômico — sobe o app numa porta efêmera e faz asserts sem gerenciar servidor (estilo supertest).",
         },
@@ -2043,7 +2091,21 @@ const SECTIONS: BiSection[] = [
           kind: "code",
           code: `import 'package:darto_test/darto_test.dart';\n\nfinal client = await TestClient.create(buildApp());\n\nfinal res = await client.get('/hello');\nexpect(res.statusCode, 200);\nexpect(res.json['msg'], 'hi');\n\nawait client.close();`,
         },
-        { kind: "h3", text: "API", id: "test-api" },
+        { kind: "h3", text: "Padrão setUp / tearDown", id: "test-setup" },
+        {
+          kind: "code",
+          code: `import 'package:darto_test/darto_test.dart';\nimport 'package:test/test.dart';\n\nvoid main() {\n  late TestClient client;\n\n  setUp(() async => client = await TestClient.create(buildApp()));\n  tearDown(() => client.close());\n\n  test('GET /hello retorna 200', () async {\n    final res = await client.get('/hello');\n    expect(res.statusCode, 200);\n    expect(res.json['msg'], 'hi');\n  });\n\n  test('POST /users cria usuário', () async {\n    final res = await client.post('/users', json: {'name': 'Alice'});\n    expect(res.statusCode, 201);\n    expect(res.json['name'], 'Alice');\n  });\n}`,
+        },
+        { kind: "h3", text: "json: vs body:", id: "test-json-body" },
+        {
+          kind: "p",
+          text: "json: aceita Map/List, codifica com jsonEncode e define Content-Type: application/json automaticamente. body: envia o valor cru — String é escrita diretamente, List<int> é enviado como bytes. Use json: para APIs (o caso comum), body: quando precisar controlar o formato do payload.",
+        },
+        {
+          kind: "code",
+          code: `// json: → codifica + Content-Type: application/json\nclient.post('/users', json: {'name': 'Alice'});\n\n// body: → String crua (sem Content-Type)\nclient.post('/login', body: 'username=alice&password=s3cret',\n  headers: {'content-type': 'application/x-www-form-urlencoded'});\n\n// body: → bytes crus\nclient.post('/upload', body: imageBytes);`,
+        },
+        { kind: "h3", text: "API TestClient", id: "test-client-api" },
         {
           kind: "table",
           headers: ["Membro", "Descrição"],
@@ -2052,17 +2114,27 @@ const SECTIONS: BiSection[] = [
               "TestClient.create(app)",
               "Sobe o app numa porta de loopback livre; retorna um client",
             ],
-            ["client.get / head / options(path, {headers})", "Envia uma requisição sem body"],
+            ["client.get / head / options(path, {headers})", "Requisição sem body"],
             [
               "client.post / put / patch / delete(path, {headers, body, json})",
-              "Envia uma requisição com body opcional (json define o Content-Type)",
+              "Requisição com body opcional",
             ],
             ["client.request(method, path, {...})", "Requisição genérica"],
             ["client.port", "A porta efêmera vinculada"],
             ["client.close()", "Para o app e fecha o client"],
-            ["res.statusCode / res.body / res.json", "Status, texto cru, JSON parseado"],
-            ["res.header(name) / res.headers", "Header da resposta / todos os headers"],
-            ["res.cookie(name) / res.cookies", "Valor do Set-Cookie / lista"],
+          ],
+        },
+        { kind: "h3", text: "API TestResponse", id: "test-response-api" },
+        {
+          kind: "table",
+          headers: ["Membro", "Descrição"],
+          rows: [
+            ["res.statusCode", "Código de status HTTP"],
+            ["res.body", "Body da resposta como texto UTF-8"],
+            ["res.json", "Body parseado como JSON (null quando vazio)"],
+            ["res.header(name)", "Valor do header (case-insensitive)"],
+            ["res.headers", "Todos os headers como Map<String, String>"],
+            ["res.cookie(name) / res.cookies", "Busca no Set-Cookie / lista completa"],
             ["res.isOk", "true para status 2xx"],
           ],
         },
@@ -2086,11 +2158,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
-        },
-        {
           kind: "p",
           text: "Structured logging — JSON or pretty output, levels, bound fields, and a request-logging middleware with request-id correlation.",
         },
@@ -2100,6 +2167,36 @@ const SECTIONS: BiSection[] = [
         {
           kind: "code",
           code: `import 'package:darto/request_id.dart';\nimport 'package:darto_logger/darto_logger.dart';\n\nfinal log = Logger();\n\napp.use(requestId());        // adds X-Request-Id\napp.use(requestLogger(log)); // logs each request with that id\n\napp.get('/', [], (c) {\n  log.info('home hit', {'q': c.req.query('q')});\n  return c.ok({'ok': true});\n});`,
+        },
+        { kind: "h3", text: "Child loggers", id: "logger-child" },
+        {
+          kind: "p",
+          text: "child() returns a new Logger with fields bound to every subsequent message — useful for adding context (request-id, user-id, service name) once instead of repeating it.",
+        },
+        {
+          kind: "code",
+          code: `final reqLog = log.child({'requestId': c.req.header('x-request-id')});\nreqLog.info('processing order', {'orderId': 42});\n// → {level: info, msg: "processing order", requestId: "…", orderId: 42}`,
+        },
+        { kind: "h3", text: "API", id: "logger-api" },
+        {
+          kind: "table",
+          headers: ["Symbol", "Description"],
+          rows: [
+            [
+              "Logger({minLevel, pretty, output})",
+              "Creates a logger; pretty=true for human-readable output",
+            ],
+            [
+              "log.debug / info / warn / error(msg, [fields])",
+              "Log at the given level with optional fields",
+            ],
+            ["log.child(fields)", "Returns a new Logger with bound fields added to every message"],
+            ["LogLevel.debug / info / warn / error", "Enum — messages below minLevel are dropped"],
+            [
+              "requestLogger(logger)",
+              "Middleware — logs method, path, status, duration per request",
+            ],
+          ],
         },
       ],
       [
@@ -2114,11 +2211,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
-        },
-        {
           kind: "p",
           text: "Logging estruturado — saída JSON ou pretty, níveis, campos fixados e um middleware de log de requisições com correlação por request-id.",
         },
@@ -2128,6 +2220,42 @@ const SECTIONS: BiSection[] = [
         {
           kind: "code",
           code: `import 'package:darto/request_id.dart';\nimport 'package:darto_logger/darto_logger.dart';\n\nfinal log = Logger();\n\napp.use(requestId());        // adiciona X-Request-Id\napp.use(requestLogger(log)); // loga cada requisição com esse id\n\napp.get('/', [], (c) {\n  log.info('home hit', {'q': c.req.query('q')});\n  return c.ok({'ok': true});\n});`,
+        },
+        { kind: "h3", text: "Child loggers", id: "logger-child" },
+        {
+          kind: "p",
+          text: "child() devolve um novo Logger com campos fixados em todas as mensagens seguintes — útil para adicionar contexto (request-id, user-id, nome do serviço) uma vez só.",
+        },
+        {
+          kind: "code",
+          code: `final reqLog = log.child({'requestId': c.req.header('x-request-id')});\nreqLog.info('processando pedido', {'orderId': 42});\n// → {level: info, msg: "processando pedido", requestId: "…", orderId: 42}`,
+        },
+        { kind: "h3", text: "API", id: "logger-api" },
+        {
+          kind: "table",
+          headers: ["Símbolo", "Descrição"],
+          rows: [
+            [
+              "Logger({minLevel, pretty, output})",
+              "Cria um logger; pretty=true para saída legível por humanos",
+            ],
+            [
+              "log.debug / info / warn / error(msg, [fields])",
+              "Loga no nível dado com campos opcionais",
+            ],
+            [
+              "log.child(fields)",
+              "Devolve um novo Logger com campos fixados em todas as mensagens",
+            ],
+            [
+              "LogLevel.debug / info / warn / error",
+              "Enum — mensagens abaixo de minLevel são descartadas",
+            ],
+            [
+              "requestLogger(logger)",
+              "Middleware — loga método, path, status e duração por request",
+            ],
+          ],
         },
       ],
     ),
@@ -2147,11 +2275,6 @@ const SECTIONS: BiSection[] = [
               href: "https://github.com/evandersondev/darto/tree/main/darto_auth",
             },
           ],
-        },
-        {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
         },
         {
           kind: "p",
@@ -2226,11 +2349,6 @@ const SECTIONS: BiSection[] = [
               href: "https://github.com/evandersondev/darto/tree/main/darto_auth",
             },
           ],
-        },
-        {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
         },
         {
           kind: "p",
@@ -2314,11 +2432,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
-        },
-        {
           kind: "p",
           text: "Typed dependency injection — Provider<T> factories with app- and request-scope, lifecycle hooks (onDispose), test overrides, and a built-in contextProvider. No build_runner, no decorators.",
         },
@@ -2386,11 +2499,6 @@ const SECTIONS: BiSection[] = [
               href: "https://github.com/evandersondev/darto/tree/main/darto_inject",
             },
           ],
-        },
-        {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
         },
         {
           kind: "p",
@@ -2469,11 +2577,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
-        },
-        {
           kind: "p",
           text: "Cache primitives — a tiny Cache interface with a zero-dep MemoryCache (LRU + TTL) and a RedisCache adapter for shared / distributed caching.",
         },
@@ -2525,11 +2628,6 @@ const SECTIONS: BiSection[] = [
               href: "https://github.com/evandersondev/darto/tree/main/darto_cache",
             },
           ],
-        },
-        {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
         },
         {
           kind: "p",
@@ -2592,11 +2690,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
-        },
-        {
           kind: "p",
           text: "Distributed RateLimitStore for the core rateLimit() middleware. The in-process store is fine for one instance; this package adds a Redis-backed store so multiple replicas behind a load balancer share the same counter.",
         },
@@ -2641,11 +2734,6 @@ const SECTIONS: BiSection[] = [
               href: "https://github.com/evandersondev/darto/tree/main/darto_rate_limit",
             },
           ],
-        },
-        {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
         },
         {
           kind: "p",
@@ -2701,11 +2789,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
-        },
-        {
           kind: "p",
           text: "Email sending — a small Mailer API with an SMTP transport (pure-Dart) plus console and memory transports for development and tests.",
         },
@@ -2754,11 +2837,6 @@ const SECTIONS: BiSection[] = [
               href: "https://github.com/evandersondev/darto/tree/main/darto_mailer",
             },
           ],
-        },
-        {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
         },
         {
           kind: "p",
@@ -2818,11 +2896,6 @@ const SECTIONS: BiSection[] = [
           ],
         },
         {
-          kind: "callout",
-          variant: "tip",
-          text: "New — available in the monorepo; publishing to pub.dev soon.",
-        },
-        {
           kind: "p",
           text: "Background job queue — enqueue work, process it with retries and backoff, backed by an in-memory or Redis store (at-least-once).",
         },
@@ -2876,11 +2949,6 @@ const SECTIONS: BiSection[] = [
               href: "https://github.com/evandersondev/darto/tree/main/darto_jobs",
             },
           ],
-        },
-        {
-          kind: "callout",
-          variant: "tip",
-          text: "Novo — disponível no monorepo; publicação no pub.dev em breve.",
         },
         {
           kind: "p",
@@ -3047,6 +3115,19 @@ const SECTIONS: BiSection[] = [
           kind: "code",
           code: `import 'package:darto_static/darto_static.dart';\n\napp.mount('/public/*', serveStatic('public'));\napp.mount('/assets/*', serveStatic('dist', urlPrefix: '/assets', maxAge: Duration(days: 7)));`,
         },
+        { kind: "h3", text: "serveStatic options", id: "static-options" },
+        {
+          kind: "table",
+          headers: ["Option", "Description"],
+          rows: [
+            ["dir (positional)", "Directory to serve files from (relative to cwd)"],
+            [
+              "urlPrefix",
+              "URL prefix to strip — defaults to '/dir'. Set when the mount path differs from the folder name.",
+            ],
+            ["maxAge", "Sets Cache-Control: public, max-age=N. Omit to disable client caching."],
+          ],
+        },
         {
           kind: "callout",
           variant: "tip",
@@ -3074,6 +3155,22 @@ const SECTIONS: BiSection[] = [
         {
           kind: "code",
           code: `import 'package:darto_static/darto_static.dart';\n\napp.mount('/public/*', serveStatic('public'));\napp.mount('/assets/*', serveStatic('dist', urlPrefix: '/assets', maxAge: Duration(days: 7)));`,
+        },
+        { kind: "h3", text: "Opções do serveStatic", id: "static-options" },
+        {
+          kind: "table",
+          headers: ["Opção", "Descrição"],
+          rows: [
+            ["dir (posicional)", "Diretório para servir arquivos (relativo ao cwd)"],
+            [
+              "urlPrefix",
+              "Prefixo de URL a remover — padrão '/dir'. Use quando o path de montagem difere do nome da pasta.",
+            ],
+            [
+              "maxAge",
+              "Define Cache-Control: public, max-age=N. Omita para desativar o cache do cliente.",
+            ],
+          ],
         },
         {
           kind: "callout",

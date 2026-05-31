@@ -1,10 +1,17 @@
+import 'dart:io';
+
 import 'package:darto/darto.dart';
 import 'package:darto_cache/darto_cache.dart';
 
 void main() async {
-  // In-process cache with LRU + TTL. For multiple instances, swap for:
-  //   final cache = await RedisCache.connect(host: 'localhost', prefix: 'app:');
-  final Cache cache = MemoryCache(maxEntries: 1000);
+  // Set REDIS_HOST=localhost to use RedisCache (run `docker compose up -d` first).
+  // Without it, falls back to in-process MemoryCache.
+  final redisHost = Platform.environment['REDIS_HOST'];
+  final Cache cache = redisHost != null
+      ? await RedisCache.connect(host: redisHost, prefix: 'app:')
+      : MemoryCache(maxEntries: 1000);
+
+  print('Cache backend: ${redisHost != null ? 'Redis @ $redisHost' : 'MemoryCache'}');
 
   // Pretend this is a slow database lookup.
   Future<Map<String, dynamic>> fetchUser(int id) async {

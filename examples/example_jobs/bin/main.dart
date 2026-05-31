@@ -1,16 +1,40 @@
 import 'package:darto/darto.dart';
+import 'package:darto_env/darto_env.dart';
 import 'package:darto_jobs/darto_jobs.dart';
+import 'package:darto_mailer/darto_mailer.dart';
 
 void main() async {
+  DartoEnv.load();
+
+  final mailer = Mailer(
+    from: DartoEnv.maybeGet('MAIL_FROM') ?? 'no-reply@example.com',
+    transport: SmtpTransport(
+      host: DartoEnv.maybeGet('SMTP_HOST') ?? 'sandbox.smtp.mailtrap.io',
+      port: DartoEnv.maybeGet('SMTP_PORT') != null
+          ? int.parse(DartoEnv.get('SMTP_PORT'))
+          : 2525,
+      username: DartoEnv.maybeGet('SMTP_USER') ?? '',
+      password: DartoEnv.maybeGet('SMTP_PASS') ?? '',
+      security: SmtpSecurity.starttls,
+    ),
+  );
+
   // In-process store. For durability + multiple worker processes, swap for:
   //   final queue = JobQueue(store: await RedisJobStore.connect(host: 'localhost'));
   final queue = JobQueue(store: MemoryJobStore());
 
-  // Register a handler by job name. Throwing triggers a retry with backoff;
-  // after maxAttempts the job is dead-lettered.
+  // Register a handler — throws → retry with exponential backoff;
+  // after maxAttempts the job is dead-lettered and onFailed fires.
   queue.handle('send-welcome', (job) async {
-    print('[job] sending welcome to ${job.data['email']} (attempt ${job.attempts})');
-    await Future<void>.delayed(const Duration(milliseconds: 200));
+    final email = job.data['email'] as String;
+    print('[job] sending welcome to $email (attempt ${job.attempts})');
+    await mailer.send(Message(
+      to: email,
+      subject: 'Welcome to Darto!',
+      text: 'Thanks for signing up.',
+      html: '<h1>Welcome!</h1><p>Thanks for signing up.</p>',
+    ));
+    print('[job] welcome email sent to $email');
   }, maxAttempts: 3);
 
   queue.onFailed((job, error, _) => print('[job] ${job.name} gave up: $error'));
@@ -35,10 +59,8 @@ void main() async {
     return c.status(202).json({'scheduled': true});
   });
 
-  app.get('/stats', [], (Context c) async => c.ok((await queue.store.stats()).toString()));
+  app.get('/stats', [],
+      (Context c) async => c.ok((await queue.store.stats()).toString()));
 
-  await app.listen(3000, () => print('Jobs example on http://localhost:3000'));
-  // On shutdown you'd drain the worker and close the store:
-  //   await worker.stop();
-  //   await queue.close();
+  app.listen(3000, () => print('Jobs example on http://localhost:3000'));
 }

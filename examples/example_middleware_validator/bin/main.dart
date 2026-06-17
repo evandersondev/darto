@@ -14,7 +14,7 @@ final searchSchema = z.map({
 });
 
 final postParamSchema = z.map({
-  'id': z.string().min(1),
+  'id': z.coerce.int(),
 });
 
 void main() {

@@ -1,3 +1,7 @@
+## 1.1.1
+
+- Require `zard: ^1.1.3`.
+
 ## 1.1.0
 
 - Require `darto: ^1.2.0`.

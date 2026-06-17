@@ -52,7 +52,7 @@ GET {{baseUrl}}/search
 ### ── GET /posts/:id — zValidator('param') ───────────────────────────────────
 
 ### Valid param (200)
-GET {{baseUrl}}/posts/abc123
+GET {{baseUrl}}/posts/2
 
 ###
 

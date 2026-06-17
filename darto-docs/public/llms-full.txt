@@ -1,0 +1,2134 @@
+# Darto — Full Documentation
+
+> A minimal, fast web framework for Dart. This file concatenates the entire Darto documentation for ingestion by language models.
+
+Source: https://darto-docs.vercel.app
+
+
+---
+
+# Getting Started
+
+## Installation
+<!-- https://darto-docs.vercel.app/docs?section=installation -->
+
+Add Darto to your pubspec.yaml:
+
+```yaml
+# pubspec.yaml
+dependencies:
+  darto: ^1.2.0
+```
+
+Or use the pub command directly:
+
+```sh
+dart pub add darto
+```
+
+## Quick Start
+<!-- https://darto-docs.vercel.app/docs?section=quick-start -->
+
+Spin up a server in under a minute. Define a Darto instance, register a route, listen on a port.
+
+```dart
+import 'package:darto/darto.dart';
+
+void main() {
+  final app = Darto();
+
+  app.get('/users/:id', [], (Context c) {
+    final id = c.req.param('id');
+    return c.ok({'id': id});
+  });
+
+  app.listen(3000, () => print('Listening on http://localhost:3000'));
+}
+```
+
+> **Tip:** Use response helpers (c.ok, c.created, c.badRequest…) for clean status-code handling without manual headers.
+
+## Core Concepts
+<!-- https://darto-docs.vercel.app/docs?section=core-concepts -->
+
+Three typedefs are all you need to understand the entire framework:
+
+```dart
+typedef Handler    = FutureOr<Response>? Function(Context c);
+typedef Middleware = FutureOr<void>      Function(Context c, Next next);
+typedef Next       = Future<void>        Function();
+```
+
+- A handler receives a Context and returns a Response.
+- A middleware receives a Context and a Next callback.
+- Call await next() to continue the pipeline; return without it to short-circuit.
+
+> **Success:** If you've used Hono, you already know Darto — the mental model is identical.
+
+
+---
+
+# API
+
+## Application
+<!-- https://darto-docs.vercel.app/docs?section=application -->
+
+### Creating the app
+
+```dart
+final app = Darto();             // default (non-strict trailing slash)
+final app = Darto(strict: true); // /users ≠ /users/
+```
+
+### Global base path
+
+```dart
+final app = Darto().basePath('/v1');
+
+app.get('/users', [], handler); // registered as /v1/users
+```
+
+### Starting and stopping
+
+```dart
+app.listen(3000);
+app.listen(3000, () => print('ready'));
+
+// Host binding, HTTPS/TLS and graceful-shutdown signals
+await app.serve(port: 8080, host: 'localhost');
+await app.listenSecure(443, securityContext);
+
+await app.stop();                 // graceful drain of in-flight requests
+int? port = app.port;             // bound port (e.g. after serve(port: 0))
+bool running = app.isRunning;
+```
+
+By default serve / listen trap SIGINT/SIGTERM and shut down gracefully — pass shutdownSignals: false to opt out.
+
+See: [HTTP verbs (app.get / post / …) → see Routing](https://darto-docs.vercel.app/docs?section=routing)
+
+## Routing
+<!-- https://darto-docs.vercel.app/docs?section=routing -->
+
+### HTTP verbs
+
+All verb methods take the middleware list as the second argument (required — pass [] for no middleware) and the handler last.
+
+```dart
+app.get(path, [], handler);
+app.post(path, [], handler);
+app.put(path, [], handler);
+app.patch(path, [], handler);
+app.delete(path, [], handler);
+
+app.all(path, [], handler);
+app.on(['GET', 'POST'], ['/a', '/b'], [], handler);
+```
+
+### Route parameters
+
+```dart
+app.get('/users/:id', [], (c) => c.ok({'id': c.req.param('id')}));
+app.get('/posts/:slug?', [], handler);          // optional
+app.get('/items/:id(\d+)', [], handler);        // regex constraint
+app.get('/files/*path', [], handler);           // named wildcard
+app.get('/assets/*', [], handler);              // unnamed wildcard
+```
+
+### Route groups
+
+```dart
+// Fluent chain
+app.route('/users')
+  .get([], listUsers)
+  .post([auth()], createUser);
+
+// Builder callback
+app.route('/users', (r) {
+  r.get('/', [], listUsers);
+  r.post('/', [auth()], createUser);
+  r.get('/:id', [], getUser);
+});
+
+// group() prefix
+final api = app.group('/api');
+api.get('/status', [], (c) => c.ok({'ok': true}));
+```
+
+> **Tip:** Groups compose: app.group('/api').group('/v2').get('/ping', [], …) registers GET /api/v2/ping.
+
+> **Success:** Fast matcher: literal routes (no params or wildcards) match by a direct string compare on the dispatch hot path — only dynamic routes use the compiled matcher — and dispatch short-circuits on the HTTP method first. No configuration needed.
+
+See: [Handler signature → see Context](https://darto-docs.vercel.app/docs?section=context)
+
+See: [Reading params / query → see Request](https://darto-docs.vercel.app/docs?section=request)
+
+## Context
+<!-- https://darto-docs.vercel.app/docs?section=context -->
+
+The Context (c) is the single object every handler and middleware receives. It exposes per-request state, shortcuts to the incoming request and outgoing response, and metadata about the matched route.
+
+### Reading the request
+
+URL, headers, params, query and body — everything inbound lives on c.req.
+
+See: [Full guide: Request (c.req)](https://darto-docs.vercel.app/docs?section=request)
+
+### Writing the response
+
+Status codes, JSON / text / HTML / binary helpers, redirects, file sending and Response factories — everything outbound lives on c (and Response.*).
+
+See: [Full guide: Response](https://darto-docs.vercel.app/docs?section=response)
+
+### Per-request state
+
+| Member | Description |
+| --- | --- |
+| c.set('key', value) | Store per-request state for later middleware/handlers |
+| c.get<T>('key') | Read state back, typed |
+| c.user | Authenticated-user shortcut (Map<String, dynamic>?) — set by auth middleware |
+
+```dart
+c.set('userId', '42');
+final id = c.get<String>('userId');
+
+c.user = {'id': '42', 'role': 'admin'};
+```
+
+### Route metadata
+
+| Member | Description |
+| --- | --- |
+| c.routePath | The matched route pattern, e.g. '/posts/:id' |
+| c.basePath | The app's base path, e.g. '/api' |
+| c.matchedRoutes | Every route that matched the request (middleware + handler) |
+
+## Request (c.req)
+<!-- https://darto-docs.vercel.app/docs?section=request -->
+
+Everything about the incoming request lives on c.req — URL, path parameters, query string, headers, body and per-request state.
+
+### URL & method
+
+| Member | Description |
+| --- | --- |
+| c.req.method | HTTP method (String) — GET, POST, … |
+| c.req.path | Request path without the query string, e.g. /users/42 |
+| c.req.url | The full request Uri (path, query and fragment) |
+| c.req.ip | Remote client IP address (String) |
+
+### Path parameters
+
+Values captured from the route pattern, e.g. /users/:id.
+
+| Member | Description |
+| --- | --- |
+| c.req.param('id') | Named path param as String? (null when absent) |
+| c.req.paramInt('id') | Same, parsed as int? (null if missing/not a number) |
+| c.req.paramDouble('id') | Parsed as double? |
+| c.req.params() | All captured values as List<String?> |
+| c.req.paramsMap | All params as an unmodifiable Map<String, String> |
+
+### Query parameters
+
+Read from the URL query string, e.g. ?page=2&active=true.
+
+| Member | Description |
+| --- | --- |
+| c.req.query('q') | Query value as String? |
+| c.req.queryInt('page') | Parsed as int? |
+| c.req.queryDouble('rate') | Parsed as double? |
+| c.req.queryBool('active') | true for 'true', '1', 'yes' or 'on' (case-insensitive) |
+| c.req.queries() | All query values as List<String> |
+
+### Headers
+
+| Member | Description |
+| --- | --- |
+| c.req.header('authorization') | Header value as String? (name is case-insensitive) |
+| c.req.headers | All headers as an unmodifiable Map<String, String> (multi-values joined by ', ') |
+
+### Body
+
+Read the request body once, in the shape you need.
+
+| Member | Description |
+| --- | --- |
+| await c.req.json() | Parse a JSON body → Map<String, dynamic> |
+| await c.req.json<User>(User.fromJson) | Parse a JSON body into a typed object |
+| await c.req.text() | Body decoded as a UTF-8 String |
+| await c.req.blob() | Body as raw bytes (Uint8List) |
+| await c.req.arrayBuffer() | Body as a ByteBuffer |
+| await c.req.parseBody({saveDir}) | multipart / urlencoded → Map; files come back as UploadedFile (pass saveDir to stream them to disk) |
+| await c.req.formData() | Form body — Map for urlencoded, String for multipart |
+| c.req.body | The raw body stream (Stream<List<int>>), consumed once |
+
+```dart
+final data   = await c.req.json();
+final user   = await c.req.json<User>(User.fromJson);
+final upload = await c.req.parseBody(saveDir: 'uploads');
+```
+
+> **Warning:** Read the body once: json(), text(), blob() and arrayBuffer() share a single cached read, but the raw body stream and multipart parseBody() consume the stream directly — don't mix the two on the same request.
+
+### Validated data & state
+
+| Member | Description |
+| --- | --- |
+| c.req.valid<T>('json') | Data stored by validator() / zValidator() for a target ('json', 'query', 'param', 'form', 'header') |
+| c.req.get('key') | Read per-request state set earlier in the pipeline |
+| c.req.set('key', value) | Store per-request state for later middleware/handlers |
+
+See: [Multipart bodies → see File Upload](https://darto-docs.vercel.app/docs?section=file-upload)
+
+## Response
+<!-- https://darto-docs.vercel.app/docs?section=response -->
+
+Two layers for sending a response. c.* helpers cover the common cases ergonomically; Response.* factories give you full control over status, content-type and headers when you need it.
+
+### Helpers on c.*
+
+| Helper | Description |
+| --- | --- |
+| c.ok([body]) | 200 OK |
+| c.created([body]) | 201 Created |
+| c.noContent() | 204 No Content |
+| c.badRequest([body]) | 400 Bad Request |
+| c.unauthorized([body]) | 401 Unauthorized |
+| c.forbidden([body]) | 403 Forbidden |
+| c.notFound([body]) | 404 Not Found |
+| c.conflict([body]) | 409 Conflict |
+| c.internalError([body]) | 500 Internal Server Error |
+| c.json(data, [status]) | JSON response (application/json) |
+| c.text(str, [status]) | Plain text (text/plain) |
+| c.html(str, [status]) | HTML (text/html) |
+| c.status(code) | Set the status, then chain .json() / .text() / .html() |
+| c.redirect(url, [status]) | Redirect (302 by default) |
+| c.binary(bytes, {status, contentType}) | Binary response |
+| c.body(data, [status], [headers]) | HonoJS-style raw body — text / bytes / null |
+
+```dart
+app.get('/users/:id', [], (c) {
+  final user = users[c.req.param('id')];
+  return user == null ? c.notFound({'error': 'not found'}) : c.ok(user);
+});
+```
+
+### Response headers
+
+| Member | Description |
+| --- | --- |
+| c.header(name, value) | Set a response header |
+| c.statusCode | Current response status code (int) |
+
+### Response factories
+
+Build a Response directly when you need full control over status, content-type and headers — the c.* helpers above call these internally.
+
+| Factory | Description |
+| --- | --- |
+| Response.json(data, {status, headers}) | JSON response (application/json); encodes Maps/Lists and converts DateTime to ISO-8601 |
+| Response.text(str, {status, headers}) | Plain text (text/plain; charset=utf-8) |
+| Response.html(str, {status, headers}) | HTML (text/html; charset=utf-8) |
+| Response.bytes(bytes, {status, contentType, headers}) | Binary body with a custom content-type (default application/octet-stream) |
+| Response.empty({status}) | No body (defaults to 204 No Content) |
+
+```dart
+app.get('/raw', [], (c) => Response.json({'ok': true}, status: 201));
+```
+
+### Sending files
+
+| Helper | Description |
+| --- | --- |
+| await c.file(path, {contentType}) | Stream a file — sets Content-Length automatically |
+| await c.download(path, {filename}) | Force download via Content-Disposition |
+
+See: [Full guide: File Download](https://darto-docs.vercel.app/docs?section=file-download)
+
+
+---
+
+# Helpers
+
+## Helpers
+<!-- https://darto-docs.vercel.app/docs?section=helpers -->
+
+### Cookie
+
+Cookie helpers are standalone functions imported from package:darto/cookie.dart.
+
+```dart
+import 'package:darto/cookie.dart';
+
+setCookie(c, 'session', token,
+  CookieOptions(maxAge: 3600, httpOnly: true, secure: true));
+final sid = getCookie(c, 'session');
+deleteCookie(c, 'session');
+
+// Signed cookies (HMAC-SHA256)
+await setSignedCookie(c, 'session', token, secret);
+final val = await getSignedCookie(c, secret, 'session');
+```
+
+| Function | Description |
+| --- | --- |
+| setCookie(c, name, value, [opts]) | Add a Set-Cookie header (multiple cookies stack) |
+| getCookie(c, name) | Read a cookie sent by the client (String?) |
+| getCookies(c) | All client cookies as Map<String, String> |
+| deleteCookie(c, name) | Expire a cookie |
+| setSignedCookie(c, name, value, secret, [opts]) | Set an HMAC-SHA256 signed cookie |
+| getSignedCookie(c, secret, name) | Read & verify a signed cookie — null if tampered |
+| CookieOptions(path, domain, maxAge, expires, httpOnly, secure, sameSite) | Cookie attributes |
+
+### JWT helpers
+
+sign() and verify() are async. Include exp in the payload to set an expiry.
+
+```dart
+import 'package:darto/jwt.dart';
+
+final token = await sign(
+  {'sub': '42', 'exp': DateTime.now().add(Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000},
+  env.jwtSecret,
+);
+final payload = await verify(token, env.jwtSecret);
+```
+
+### Proxy
+
+proxy() is a route handler helper — call it inside a handler and return its result. A single wildcard route covers exact and deep paths.
+
+```dart
+import 'package:darto/proxy.dart';
+
+// /* matches both the exact path and any sub-path:
+// /api/users  •  /api/users/1  •  /api/users/1/posts
+app.all('/api/users/*', [], (Context c) =>
+    proxy(c, 'https://backend.com${c.req.path}'));
+
+// With header overrides
+app.all('/v1/*', [], (Context c) =>
+    proxy(c, 'https://example.com${c.req.path}',
+        options: ProxyOptions(
+          headers: {
+            'X-Proxy-By': 'darto-gateway',
+            'Authorization': 'Bearer INTERNAL_SECRET',
+            'Cookie': null, // null = remove header
+          },
+        )));
+```
+
+### Health checks
+
+health() builds a liveness/readiness Handler. Returns 200 {status: 'ok'} when every check passes, or 503 {status: 'unavailable', checks: {...}} when any fails. A throwing check counts as down.
+
+```dart
+import 'package:darto/health.dart';
+
+// Liveness — 200 while the process is up
+app.get('/healthz', [], health());
+
+// Readiness — 503 until dependencies are reachable
+app.get('/readyz', [], health(
+  checks: {'db': () => db.ping(), 'cache': () => redis.ping()},
+  info: () => {'version': '1.0.0'},
+));
+```
+
+### Streaming (binary, text, SSE)
+
+Return one of stream() / streamText() / streamSSE() from a handler to push response chunks over a kept-alive connection. The writer exposes write / pipe / sleep, and onAbort fires when the client disconnects.
+
+```dart
+import 'package:darto/stream.dart';
+
+// Server-Sent Events — push live updates to the browser
+app.get('/sse', [], (c) => streamSSE(c, (w) async {
+  w.onAbort(() => print('client gone'));
+  for (var i = 0; i < 5; i++) {
+    await w.writeSSE(SseEvent(event: 'tick', data: '$i'));
+    await w.sleep(const Duration(seconds: 1));
+  }
+}));
+
+// Text stream — line-by-line
+app.get('/log', [], (c) => streamText(c, (w) async {
+  await w.writeln('starting…');
+  await w.pipe(linesOf('build.log'));
+}));
+```
+
+| Helper | Description |
+| --- | --- |
+| stream(c, cb, {onError}) | Binary stream — writer is DartoStreamWriter (write / pipe) |
+| streamText(c, cb, {onError}) | Text stream — writer is DartoTextStreamWriter (write / writeln / pipe) |
+| streamSSE(c, cb, {onError}) | Server-Sent Events — writer is DartoSSEWriter (writeSSE / sleep) |
+| SseEvent({data, event, id, retry}) | Payload for one SSE message |
+| writer.onAbort(cb) | Fires when the client closes the connection |
+
+### Route introspection
+
+Inspect the routing decision the framework made for the current request — useful for logging, metrics or debugging.
+
+```dart
+import 'package:darto/route.dart';
+
+app.get('/posts/:id', [], (c) {
+  print(routePath(c));      // '/posts/:id'
+  print(basePath(c));       // '/' (or the app's basePath)
+  print(matchedRoutes(c));  // every route that fired, mw + handler
+  return c.ok({});
+});
+```
+
+| Function | Description |
+| --- | --- |
+| matchedRoutes(c) | List<RouteSpec> of every route that matched (middleware + handler) |
+| routePath(c) | Pattern of the matched handler — e.g. '/posts/:id' |
+| baseRoutePath(c) | Group prefix pattern of the matched route |
+| basePath(c) | The app's base path |
+
+### Dev — routes printer
+
+showRoutes(app) pretty-prints every registered route with colored HTTP verbs — handy during development to verify wiring at a glance.
+
+```dart
+import 'package:darto/dev.dart';
+
+final app = Darto();
+app.get('/users', [], handler);
+app.post('/users', [], handler);
+
+showRoutes(app); // GET  /users
+                 // POST /users
+app.listen(3000);
+```
+
+
+---
+
+# Middlewares
+
+## Middleware
+<!-- https://darto-docs.vercel.app/docs?section=middleware -->
+
+### Registering
+
+use(middleware) registers a global middleware that runs on every request. mount(path, middleware) registers a path-scoped middleware — it only runs when the request path starts with path (supports * wildcards).
+
+```dart
+app.use(logger());               // global — runs on every request
+app.use(cors());                 // call separately per middleware
+app.mount('/api/*', jwt(...));   // path-scoped
+app.get('/admin', [requireAdmin()], handler); // route-level
+```
+
+### Writing one
+
+```dart
+Middleware timer() => (Context c, Next next) async {
+  final sw = Stopwatch()..start();
+  await next();
+  print('${c.req.method} ${c.req.path}  ${sw.elapsedMilliseconds}ms');
+};
+```
+
+### Short-circuit
+
+```dart
+Middleware requireAdmin() => (c, next) async {
+  if (c.user?['role'] != 'admin') {
+    c.forbidden({'error': 'Admins only'});
+    return; // pipeline stops here
+  }
+  await next();
+};
+```
+
+## Built-in Middlewares
+<!-- https://darto-docs.vercel.app/docs?section=middleware-builtin -->
+
+Darto ships with batteries: logger, CORS, JWT, Basic & Bearer auth, cache, compress, CSRF, body-limit, rate-limit, request ID, ETag, RBAC and more.
+
+```dart
+import 'package:darto/logger.dart';
+import 'package:darto/cors.dart';
+import 'package:darto/jwt.dart';
+import 'package:darto/basic_auth.dart';
+import 'package:darto/bearer_auth.dart';
+import 'package:darto/cache.dart';
+
+app.use(logger());
+app.mount('/api/*', cors(origin: 'https://example.com'));
+app.mount('/api/*', jwt(secret: env.jwtSecret));
+app.mount('/admin/*', basicAuth(username: 'admin', password: 'secret'));
+app.mount('/api/*', bearerAuth(token: ['key1', 'key2']));
+```
+
+### RBAC
+
+```dart
+import 'package:darto/require_roles.dart';
+app.delete('/users/:id', [requireRoles(['admin'])], handler);
+```
+
+### Body limit
+
+```dart
+app.post('/upload', [bodyLimit(maxSize: 5 * 1024 * 1024)], handler);
+```
+
+### Rate limit
+
+```dart
+import 'package:darto/rate_limit.dart';
+
+// 100 requests / minute per client IP (in-memory, zero-dep)
+app.use(rateLimit(max: 100, window: Duration(minutes: 1)));
+
+// Per-user, custom rejection — pass a RateLimitStore for a distributed backend
+app.mount('/api/*', rateLimit(
+  max: 20,
+  keyGenerator: (c) => c.user?['id'] ?? c.req.ip,
+  onLimitExceeded: (c) => c.status(429).json({'error': 'slow down'}),
+));
+```
+
+### Request ID
+
+```dart
+import 'package:darto/request_id.dart';
+
+app.use(requestId()); // honors an incoming X-Request-Id, else a UUID v4
+app.get('/', [], (c) => c.ok({'id': requestIdOf(c)}));
+```
+
+### ETag
+
+```dart
+import 'package:darto/etag.dart';
+
+app.use(etag()); // hashes dynamic responses → ETag + 304 on If-None-Match
+```
+
+### Health check
+
+health() is a handler factory (package:darto/health.dart). Returns 200 when every named check passes, or 503 with the failing checks.
+
+```dart
+import 'package:darto/health.dart';
+
+app.get('/healthz', [], health());
+app.get('/readyz', [], health(
+  checks: {'db': () => db.ping(), 'cache': () => redis.ping()},
+  info: () => {'version': '1.2.0'},
+));
+```
+
+> **Warning:** When using jwt, always set verifyOptions (iss, exp, nbf) for production deployments.
+
+## Session
+<!-- https://darto-docs.vercel.app/docs?section=session -->
+
+Cookie-based signed sessions. Data is JSON-serialised, base64url-encoded, and signed with HMAC-SHA256 — tamper-proof but not encrypted. Store only non-sensitive identifiers (e.g. userId) in the session.
+
+```dart
+import 'package:darto/session.dart';
+
+// Register once globally — reads and validates the session cookie on every request
+app.use(sessionMiddleware(
+  secret: 'at-least-32-chars-long-secret!!',
+  duration: 60 * 30,           // cookie maxAge in seconds (default: 1800)
+  cookieName: 'darto.session', // optional, this is the default
+));
+```
+
+### Write / Read / Delete
+
+```dart
+app.post('/login', [], (c) async {
+  final body = await c.req.json();
+  await sessionContext(c).update({'userId': body['id'], 'role': 'user'});
+  return c.ok({'message': 'logged in'});
+});
+
+app.get('/me', [], (c) {
+  final data = sessionContext(c).get(); // null if no active session
+  if (data == null) return c.unauthorized({'error': 'no session'});
+  return c.ok(data);
+});
+
+app.post('/logout', [], (c) {
+  sessionContext(c).delete();
+  return c.ok({'message': 'logged out'});
+});
+```
+
+| Method | Returns | Description |
+| --- | --- | --- |
+| sessionContext(c).get() | Map<String, dynamic>? | Session data — null if no valid session |
+| sessionContext(c).update(data) | Future<void> | Replace data and write the signed cookie |
+| sessionContext(c).delete() | void | Clear data and remove the cookie |
+
+> **Warning:** Session data is visible (base64-decoded) but not alterable — the HMAC signature prevents tampering. Do not store passwords or secrets inside the session.
+
+## Validator (core)
+<!-- https://darto-docs.vercel.app/docs?section=validator -->
+
+validator is the core validation middleware (from package:darto/validator.dart) — no extra package needed. You pass a callback that receives the raw value and the Context: return a Response to short-circuit with any status code, or return data to store it for c.req.valid().
+
+### Bring your own logic
+
+To validate with zard schemas, just add the zard package — you do NOT need darto_validator (that one is only for zValidator). See the zValidator section under Plugins for the schema-driven alternative.
+
+```dart
+import 'package:darto/validator.dart';
+import 'package:zard/zard.dart'; // add zard to pubspec — for z.*
+
+final loginSchema = z.map({
+  'email':    z.string().email(),
+  'password': z.string().min(6),
+});
+
+// 401 on failure — you decide the status code
+app.post('/login', [
+  validator('json', (value, c) {
+    final result = loginSchema.safeParse(value);
+    if (!result.success) return c.status(401).json({'errors': result.error?.format()});
+    return result.data;
+  }),
+], (c) {
+  final credentials = c.req.valid<Map<String, dynamic>>('json');
+  return c.ok({'message': 'Welcome, ${credentials[\'email\']}!'});
+});
+```
+
+### Targets
+
+- 'json' — request body
+- 'query' — query string
+- 'param' — path parameters
+- 'form' — url-encoded / multipart
+- 'header' — request headers
+
+> **Warning:** Always validate untrusted input at the edges — bodies, queries, headers and uploaded files.
+
+See: [Schema-driven alternative: zValidator (darto_validator)](https://darto-docs.vercel.app/docs?section=plugin-validator)
+
+
+---
+
+# Official Plugins
+
+## CLI Tools
+<!-- https://darto-docs.vercel.app/docs?section=cli-tools -->
+
+See: [Package: darto_cli](https://darto-docs.vercel.app/docs?section=plugin-cli)
+
+Install the Darto CLI globally with pub:
+
+```sh
+dart pub global activate darto_cli
+```
+
+Make sure ~/.pub-cache/bin is on your PATH.
+
+### Create a project
+
+```sh
+darto create my_api          # with starter user module
+darto create my_api --blank  # minimal — no modules, just GET /health
+```
+
+Generated structure (default):
+
+```sh
+my_api/
+  bin/server.dart
+  lib/
+    app.dart
+    modules/user/
+      user_controller.dart   # handlers + route registration
+      user_service.dart      # business logic
+  pubspec.yaml
+```
+
+### Dev server
+
+Watches lib/, bin/, and src/ recursively. Restarts automatically (350 ms debounce) on any .dart file change — including deep subdirectories.
+
+```sh
+darto dev
+darto dev bin/server.dart
+```
+
+### Build & Start
+
+```sh
+darto build                       # compile to build/server + Dockerfile
+darto build --output build/api    # custom output path
+darto build --no-docker           # skip Dockerfile
+darto start                       # run the compiled binary
+```
+
+### Generate typed Flutter client
+
+```sh
+darto gen client flutter
+darto gen client flutter --base-url https://api.example.com --output lib/api_client.dart
+```
+
+> **Tip:** darto gen reads createApp() from lib/app.dart, introspects all registered routes, and emits a typed ApiClient with one sub-module class per route group.
+
+## darto_cli
+<!-- https://darto-docs.vercel.app/docs?section=plugin-cli -->
+
+- [pub.dev](https://pub.dev/packages/darto_cli)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_cli)
+
+Official CLI — scaffold projects, run a hot-reload dev server, build native executables and generate a typed API client.
+
+### Install
+
+```sh
+dart pub global activate darto_cli
+```
+
+See: [Full guide: CLI Tools](https://darto-docs.vercel.app/docs?section=cli-tools)
+
+## darto_validator
+<!-- https://darto-docs.vercel.app/docs?section=plugin-validator -->
+
+- [pub.dev](https://pub.dev/packages/darto_validator)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_validator)
+
+Request validation powered by zard (Zod-style) via the zValidator middleware. Pairs schema-driven validation with automatic 400 responses and a c.req.valid<T>() typed read. Also converts schemas to OpenAPI with schema.toOpenApiSchema().
+
+### Install
+
+```yaml
+dependencies:
+  darto_validator: ^1.1.0
+```
+
+### zValidator — schema-driven
+
+```dart
+import 'package:darto_validator/darto_validator.dart';
+
+final body = z.map({
+  'email': z.string().email(),
+  'age':   z.int().min(18),
+});
+
+app.post('/users', [zValidator('json', body)], (c) {
+  final data = c.req.valid<Map<String, dynamic>>('json');
+  return c.created(data);
+});
+```
+
+### Custom error hook
+
+```dart
+zValidator('json', body, (result, c) {
+  if (!result.success) {
+    return c.status(422).json({
+      'error': 'Validation failed',
+      'issues': result.error?.format(),
+    });
+  }
+  return null;
+});
+```
+
+> **Tip:** If you only need the core validator (no zard schema), you don't need this package — see Middlewares → Validator (core).
+
+See: [Core alternative: validator (no plugin needed)](https://darto-docs.vercel.app/docs?section=validator)
+
+## darto_openapi
+<!-- https://darto-docs.vercel.app/docs?section=plugin-openapi -->
+
+- [pub.dev](https://pub.dev/packages/darto_openapi)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_openapi)
+
+OpenAPI 3.1 spec generation + Scalar API docs. Describe a route once: it validates the request and is documented from the same source.
+
+### Install
+
+```yaml
+dependencies:
+  darto_openapi: ^1.0.0
+```
+
+### Usage
+
+```dart
+import 'package:darto_openapi/darto_openapi.dart';
+
+final api = OpenApi(app, info: Info(title: 'API', version: '1.0.0'));
+
+api.post('/posts',
+  request: Req(json: Schema.object({'title': Schema.string(minLength: 1)}, required: ['title'])),
+  responses: {201: Res('Created')},
+  handler: (c) => c.created(c.req.valid('json')),
+);
+
+app.use(api.docs()); // serves /openapi.json + /docs (Scalar)
+```
+
+### Schema builders
+
+| Builder | Description |
+| --- | --- |
+| Schema.string({minLength, maxLength, format}) | String — format: 'email' | 'uri' | 'date-time' | … |
+| Schema.integer({minimum, maximum}) | Integer number |
+| Schema.number({minimum}) | Floating-point number |
+| Schema.boolean() | Boolean |
+| Schema.array(schema, {minItems}) | Array of items matching schema |
+| Schema.object({fields}, {required}) | Object with named properties |
+| Schema.raw(Map) | Pass raw OpenAPI schema through unchanged |
+
+### Security schemes
+
+```dart
+final api = OpenApi(app,
+  info: Info(title: 'My API', version: '1.0.0'),
+  securitySchemes: {
+    'bearer': SecurityScheme.bearer(),
+    'apiKey': SecurityScheme.apiKey(name: 'x-api-key', location: 'header'),
+  },
+);
+
+api.get('/me',
+  security: ['bearer'],
+  responses: {200: Res('User profile')},
+  handler: (c) => c.ok({'user': 'me'}),
+);
+```
+
+### Typed client
+
+generateDartClient(spec) turns the OpenAPI document into an end-to-end typed Dart client — model classes plus a typed method per operation (dependency-free).
+
+```dart
+final src = generateDartClient(api.toJson(), baseUrl: 'https://api.example.com');
+File('lib/api_client.dart').writeAsStringSync(src);
+
+// in the generated client:
+final post = await ApiClient().postPosts(PostPostsRequest(title: 'Hello'));
+print(post.id); // typed
+```
+
+## darto_test
+<!-- https://darto-docs.vercel.app/docs?section=plugin-test -->
+
+- [pub.dev](https://pub.dev/packages/darto_test)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_test)
+
+Ergonomic test client — boot an app on an ephemeral port and assert responses without managing a server (supertest-style).
+
+### Install
+
+```yaml
+dev_dependencies:
+  darto_test: ^1.0.0
+```
+
+### Usage
+
+```dart
+import 'package:darto_test/darto_test.dart';
+
+final client = await TestClient.create(buildApp());
+
+final res = await client.get('/hello');
+expect(res.statusCode, 200);
+expect(res.json['msg'], 'hi');
+
+await client.close();
+```
+
+### setUp / tearDown pattern
+
+```dart
+import 'package:darto_test/darto_test.dart';
+import 'package:test/test.dart';
+
+void main() {
+  late TestClient client;
+
+  setUp(() async => client = await TestClient.create(buildApp()));
+  tearDown(() => client.close());
+
+  test('GET /hello returns 200', () async {
+    final res = await client.get('/hello');
+    expect(res.statusCode, 200);
+    expect(res.json['msg'], 'hi');
+  });
+
+  test('POST /users creates a user', () async {
+    final res = await client.post('/users', json: {'name': 'Alice'});
+    expect(res.statusCode, 201);
+    expect(res.json['name'], 'Alice');
+  });
+}
+```
+
+### json: vs body:
+
+json: accepts a Map/List, encodes it with jsonEncode and sets Content-Type: application/json automatically. body: sends the value raw — a String is written as-is, a List<int> is sent as bytes. Use json: for APIs (the common case), body: when you need to control the payload format.
+
+```dart
+// json: → auto-encode + Content-Type: application/json
+client.post('/users', json: {'name': 'Alice'});
+
+// body: → raw String (no Content-Type set)
+client.post('/login', body: 'username=alice&password=s3cret',
+  headers: {'content-type': 'application/x-www-form-urlencoded'});
+
+// body: → raw bytes
+client.post('/upload', body: imageBytes);
+```
+
+### TestClient API
+
+| Member | Description |
+| --- | --- |
+| TestClient.create(app) | Boots the app on a free loopback port; returns a client |
+| client.get / head / options(path, {headers}) | Request without a body |
+| client.post / put / patch / delete(path, {headers, body, json}) | Request with an optional body |
+| client.request(method, path, {...}) | Generic request |
+| client.port | The bound ephemeral port |
+| client.close() | Stops the app and closes the client |
+
+### TestResponse API
+
+| Member | Description |
+| --- | --- |
+| res.statusCode | HTTP status code |
+| res.body | Raw response body as UTF-8 text |
+| res.json | Body parsed as JSON (null when empty) |
+| res.header(name) | Response header value (case-insensitive) |
+| res.headers | All headers as Map<String, String> |
+| res.cookie(name) / res.cookies | Set-Cookie lookup / full list |
+| res.isOk | true for 2xx status codes |
+
+## darto_logger
+<!-- https://darto-docs.vercel.app/docs?section=plugin-logger -->
+
+- [pub.dev](https://pub.dev/packages/darto_logger)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_logger)
+
+Structured logging — JSON or pretty output, levels, bound fields, and a request-logging middleware with request-id correlation.
+
+### Install
+
+```yaml
+dependencies:
+  darto_logger: ^1.0.0
+```
+
+### Usage
+
+```dart
+import 'package:darto/request_id.dart';
+import 'package:darto_logger/darto_logger.dart';
+
+final log = Logger();
+
+app.use(requestId());        // adds X-Request-Id
+app.use(requestLogger(log)); // logs each request with that id
+
+app.get('/', [], (c) {
+  log.info('home hit', {'q': c.req.query('q')});
+  return c.ok({'ok': true});
+});
+```
+
+### Child loggers
+
+child() returns a new Logger with fields bound to every subsequent message — useful for adding context (request-id, user-id, service name) once instead of repeating it.
+
+```dart
+final reqLog = log.child({'requestId': c.req.header('x-request-id')});
+reqLog.info('processing order', {'orderId': 42});
+// → {level: info, msg: "processing order", requestId: "…", orderId: 42}
+```
+
+### API
+
+| Symbol | Description |
+| --- | --- |
+| Logger({minLevel, pretty, output}) | Creates a logger; pretty=true for human-readable output |
+| log.debug / info / warn / error(msg, [fields]) | Log at the given level with optional fields |
+| log.child(fields) | Returns a new Logger with bound fields added to every message |
+| LogLevel.debug / info / warn / error | Enum — messages below minLevel are dropped |
+| requestLogger(logger) | Middleware — logs method, path, status, duration per request |
+
+## darto_auth
+<!-- https://darto-docs.vercel.app/docs?section=plugin-auth -->
+
+- [pub.dev](https://pub.dev/packages/darto_auth)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_auth)
+
+Authentication — password hashing (PBKDF2-HMAC-SHA256, no native deps) and session-based auth guards built on Darto's session middleware.
+
+### Install
+
+```yaml
+dependencies:
+  darto_auth: ^1.0.0
+```
+
+### Password hashing
+
+```dart
+import 'package:darto_auth/darto_auth.dart';
+
+final hash = hashPassword('s3cret');         // store this
+final ok   = verifyPassword('s3cret', hash); // true (constant-time)
+```
+
+### Session auth
+
+```dart
+import 'package:darto/session.dart';
+import 'package:darto_auth/darto_auth.dart';
+
+app.use(sessionMiddleware(secret: env.sessionSecret));
+
+app.post('/login', [], (c) async {
+  final body = await c.req.json();
+  final user = await users.findByEmail(body['email']);
+  if (user == null || !verifyPassword(body['password'], user.hash)) {
+    return c.unauthorized({'error': 'invalid credentials'});
+  }
+  await signIn(c, {'id': user.id});
+  return c.ok({'ok': true});
+});
+
+app.get('/me', [authGuard()], (c) => c.ok(authUser(c)));
+```
+
+| Symbol | Description |
+| --- | --- |
+| hashPassword / verifyPassword | PBKDF2 hash & constant-time verify |
+| PasswordHasher({iterations, saltLength}) | Configurable hasher |
+| signIn(c, user) / signOut(c) | Authenticate / clear the session |
+| authUser(c) | The session user, or null |
+| authGuard({onUnauthorized}) | Middleware — 401 when unauthenticated; sets c.user otherwise |
+
+### OAuth 2.0 / OpenID Connect
+
+OAuthProvider runs the Authorization-Code flow with PKCE S256 + randomised state (CSRF). Factories for Google (OIDC) and GitHub. provider.attach(app, prefix, onSignIn: ...) registers both /start and /callback routes in one call.
+
+```dart
+import 'package:darto/session.dart';
+import 'package:darto_auth/darto_auth.dart';
+
+final google = await OAuthProvider.google(
+  clientId: env.googleClientId,
+  clientSecret: env.googleClientSecret,
+  redirectUri: 'http://localhost:3000/auth/google/callback',
+);
+
+app.use(sessionMiddleware(secret: env.sessionSecret));
+
+google.attach(app, '/auth/google', onSignIn: (c, user) async {
+  await signIn(c, {'id': user.id, 'email': user.email, 'name': user.name});
+  return c.redirect('/');
+});
+```
+
+| Symbol | Description |
+| --- | --- |
+| OAuthProvider(...) | Generic OAuth2 provider |
+| OAuthProvider.oidc({issuer, ...}) | OIDC discovery from /.well-known/openid-configuration |
+| OAuthProvider.google({...}) / .github({...}) | Pre-configured factories |
+| provider.attach(app, prefix, {onSignIn, failureRedirect}) | Register /start + /callback in one call |
+| OAuthUser | Normalised (id, email, name, picture, raw) profile |
+| pkceVerifier() / pkceChallenge(v) | PKCE helpers (S256) |
+
+> **Tip:** id_token claims are decoded but not verified against the issuer's JWKS — authenticity comes from TLS to the token endpoint. JWKS verification is on the roadmap as opt-in.
+
+## darto_inject
+<!-- https://darto-docs.vercel.app/docs?section=plugin-di -->
+
+- [pub.dev](https://pub.dev/packages/darto_inject)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_inject)
+
+Typed dependency injection — Provider<T> factories with app- and request-scope, lifecycle hooks (onDispose), test overrides, and a built-in contextProvider. No build_runner, no decorators.
+
+### Install
+
+```yaml
+dependencies:
+  darto_inject: ^1.0.0
+```
+
+### Declare providers
+
+```dart
+import 'package:darto_inject/darto_inject.dart';
+
+final envProvider = Provider<Env>((di) => Env.fromFile('.env'));
+
+final dbProvider = Provider<Db>(
+  (di) => Db.connect(di.read(envProvider).dbUrl),
+  onDispose: (db) => db.close(),
+);
+
+final userServiceProvider = Provider<UserService>(
+  (di) => UserService(di.read(dbProvider)),
+);
+```
+
+### Install on the app
+
+```dart
+final di = Di(providers: [envProvider, dbProvider, userServiceProvider]);
+await di.warmup(); // eagerly build app-scope singletons
+
+final app = Darto()..use(di.middleware());
+
+app.get('/users', [], (c) {
+  final svc = c.read(userServiceProvider);
+  return c.ok(svc.list());
+});
+
+app.listen(3000);
+await di.dispose(); // runs every onDispose in reverse order
+```
+
+### Request scope + contextProvider
+
+Mark a provider with scope: Scope.request and read contextProvider inside it to derive per-request values without leaking the Context into your services.
+
+```dart
+final currentUserProvider = AsyncProvider<User?>(
+  (di) async {
+    final c = di.read(contextProvider);
+    final token = c.req.header('authorization')?.replaceFirst('Bearer ', '');
+    return token == null ? null : await di.read(userServiceProvider).fromToken(token);
+  },
+  scope: Scope.request,
+);
+
+app.get('/me', [], (c) async => c.ok(await c.readAsync(currentUserProvider)));
+```
+
+### Test overrides
+
+```dart
+final di = Di(providers: [userServiceProvider])
+  ..override(userServiceProvider, (di) => FakeUserService());
+```
+
+### Feature
+
+```dart
+final userFeature = Feature(
+  providers: [userServiceProvider],
+  routes: (r) {
+    r.get('/users', [], listUsers);
+    r.post('/users', [authGuard()], createUser);
+  },
+);
+
+app.install('/api', userFeature);
+```
+
+### CLI scaffolds
+
+```sh
+darto gen feature users    # lib/features/users/users_feature.dart
+darto gen service mailer   # lib/services/mailer_service.dart
+```
+
+| Symbol | Description |
+| --- | --- |
+| Provider<T>(factory, {scope, onDispose}) | Synchronous typed factory |
+| AsyncProvider<T>(factory, {scope, onDispose}) | Asynchronous typed factory |
+| Scope.app / Scope.request | Lifetime of the cached instance |
+| Di({providers, asyncProviders}) | Container — caches, overrides, middleware |
+| Di.warmup() / dispose() | Eager build / reverse-order cleanup |
+| Di.override(p, factory) | Replace a factory (tests) |
+| c.read(p) / c.readAsync(p) | Resolve a provider on the current request |
+| contextProvider | Built-in Provider<Context> for request-scope factories |
+| Feature({providers, routes}) | Providers + routes bundle |
+| app.install([prefix], feature) | Mount a feature, optionally prefixed |
+
+## darto_cache
+<!-- https://darto-docs.vercel.app/docs?section=plugin-cache -->
+
+- [pub.dev](https://pub.dev/packages/darto_cache)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_cache)
+
+Cache primitives — a tiny Cache interface with a zero-dep MemoryCache (LRU + TTL) and a RedisCache adapter for shared / distributed caching.
+
+### Install
+
+```yaml
+dependencies:
+  darto_cache: ^1.0.0
+```
+
+### In-process: MemoryCache
+
+```dart
+import 'package:darto_cache/darto_cache.dart';
+
+final cache = MemoryCache(maxEntries: 1024);
+
+await cache.set('user:42', {'name': 'Eva'}, ttl: Duration(minutes: 5));
+final user = await cache.get<Map<String, dynamic>>('user:42');
+```
+
+### Distributed: RedisCache
+
+```dart
+final cache = await RedisCache.connect(
+  host: 'localhost',
+  port: 6379,
+  prefix: 'app:',
+);
+
+await cache.set('user:42', {'name': 'Eva'}, ttl: Duration(minutes: 5));
+final user = await cache.get<Map<String, dynamic>>('user:42');
+await cache.close();
+```
+
+### Read-through with remember
+
+The call site you want 90% of the time: builder runs on miss, the value is stored with ttl, then returned. null is not cached.
+
+```dart
+final user = await cache.remember<Map<String, dynamic>>(
+  'user:$id',
+  ttl: Duration(minutes: 5),
+  builder: () => db.users.findById(id),
+);
+```
+
+### Wiring with darto_inject
+
+```dart
+final cacheProvider = AsyncProvider<Cache>(
+  (di) => RedisCache.connect(
+    host: di.read(envProvider).redisHost,
+    prefix: 'app:',
+  ),
+  onDispose: (c) => c.close(),
+);
+
+app.get('/users/:id', [], (c) async {
+  final cache = await c.readAsync(cacheProvider);
+  final user = await cache.remember(
+    'user:${c.req.param('id')}',
+    ttl: Duration(minutes: 5),
+    builder: () => userService.findById(c.req.param('id')!),
+  );
+  return c.ok(user);
+});
+```
+
+| Symbol | Description |
+| --- | --- |
+| Cache (interface) | get / set / delete / has / clear / close |
+| cache.remember(key, {ttl, builder}) | Read-through helper |
+| MemoryCache({maxEntries}) | In-process; LRU when maxEntries is set |
+| RedisCache.connect({host, port, prefix}) | Distributed cache over Redis |
+| prefix (Redis) | Namespaces the keys; clear() only drops keys under prefix |
+
+## darto_rate_limit
+<!-- https://darto-docs.vercel.app/docs?section=plugin-rate-limit -->
+
+- [pub.dev](https://pub.dev/packages/darto_rate_limit)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_rate_limit)
+
+Distributed RateLimitStore for the core rateLimit() middleware. The in-process store is fine for one instance; this package adds a Redis-backed store so multiple replicas behind a load balancer share the same counter.
+
+### Install
+
+```yaml
+dependencies:
+  darto: ^1.2.0
+  darto_rate_limit: ^1.0.0
+```
+
+### Usage
+
+```dart
+import 'package:darto/darto.dart';
+import 'package:darto/rate_limit.dart';
+import 'package:darto_rate_limit/darto_rate_limit.dart';
+
+final store = await RedisRateLimitStore.connect(
+  host: 'localhost',
+  port: 6379,
+  prefix: 'rl:',
+);
+
+app.use(rateLimit(
+  max: 100,
+  window: Duration(minutes: 1),
+  store: store, // ← shared across instances
+));
+```
+
+### How it works
+
+Each hit runs a single Lua script — INCR + conditional PEXPIRE + PTTL — in one round-trip. INCR is atomic so counts never drift, and PEXPIRE only fires when a new window starts, so every instance agrees on the same resetAt.
+
+| Symbol | Description |
+| --- | --- |
+| RedisRateLimitStore.connect({host, port, prefix}) | Opens a connection to a Redis server; the prefix namespaces keys. |
+| store.hit(key, window) | Records a hit; returns count + resetAt |
+| store.reset(key) | Clears the counter for key |
+| store.close() | Releases the Redis connection |
+
+See: [See: core rateLimit() middleware](https://darto-docs.vercel.app/docs?section=middleware-builtin)
+
+## darto_mailer
+<!-- https://darto-docs.vercel.app/docs?section=plugin-mailer -->
+
+- [pub.dev](https://pub.dev/packages/darto_mailer)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_mailer)
+
+Email sending — a small Mailer API with an SMTP transport (pure-Dart) plus console and memory transports for development and tests.
+
+### Install
+
+```yaml
+dependencies:
+  darto_mailer: ^1.0.0
+```
+
+### Send via SMTP
+
+```dart
+import 'package:darto_mailer/darto_mailer.dart';
+
+final mailer = Mailer(
+  from: 'no-reply@example.com',
+  transport: SmtpTransport(
+    host: 'smtp.example.com',
+    port: 587,
+    username: env.smtpUser,
+    password: env.smtpPass,
+    security: SmtpSecurity.starttls, // none | ssl | starttls
+  ),
+);
+
+await mailer.send(Message(
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  text: 'Hello, welcome aboard.',
+  html: '<h1>Hello!</h1>',
+));
+```
+
+### Cc / bcc and attachments
+
+```dart
+await mailer.send(Message(
+  to: ['a@x.com', 'b@x.com'],
+  cc: 'manager@x.com',
+  replyTo: 'support@x.com',
+  subject: 'Report',
+  html: '<p>See attached.</p>',
+  attachments: [
+    Attachment.file('report.pdf'),
+    Attachment.bytes('logo.png', bytes, contentType: 'image/png'),
+  ],
+));
+```
+
+### Dev & test transports
+
+```dart
+// Dev — prints a summary, sends nothing
+final mailer = Mailer(from: '…', transport: ConsoleTransport());
+
+// Tests — capture and assert
+final box = MemoryTransport();
+final mailer = Mailer(from: 'a@b.com', transport: box);
+await mailer.send(Message(to: 'x@y.com', subject: 'Hi', text: '…'));
+expect(box.sent.single.message.subject, 'Hi');
+```
+
+> **Tip:** No template engine here — pass rendered html/text. Combine with darto_view (Mustache/Jinja) to render the body.
+
+| Symbol | Description |
+| --- | --- |
+| Mailer({from, transport}) | Sends messages; injects the default from |
+| Message({to, cc, bcc, replyTo, subject, text, html, attachments}) | An email |
+| Attachment.file / .bytes / .string | Attachment constructors |
+| SmtpTransport({host, port, username, password, security}) | SMTP delivery |
+| SmtpSecurity | none / ssl / starttls |
+| ConsoleTransport / MemoryTransport | Dev / test transports |
+
+## darto_jobs
+<!-- https://darto-docs.vercel.app/docs?section=plugin-jobs -->
+
+- [pub.dev](https://pub.dev/packages/darto_jobs)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_jobs)
+
+Background job queue — enqueue work, process it with retries and backoff, backed by an in-memory or Redis store (at-least-once).
+
+### Install
+
+```yaml
+dependencies:
+  darto_jobs: ^1.0.0
+```
+
+### Define, enqueue, work
+
+```dart
+import 'package:darto_jobs/darto_jobs.dart';
+
+final queue = JobQueue(store: MemoryJobStore()); // or RedisJobStore.connect(...)
+
+queue.handle('send-welcome', (job) async {
+  await mailer.send(Message(to: job.data['email'], subject: 'Welcome'));
+});
+
+await queue.add('send-welcome', {'email': 'user@x.com'});
+await queue.add('report', {'id': 42}, delay: Duration(minutes: 5));
+
+final worker = queue.work(concurrency: 4);
+// … on shutdown:
+await worker.stop(); // drains in-flight jobs
+```
+
+### Retries, backoff & dead-letter
+
+```dart
+queue.handle('charge', (job) async {
+  await payments.charge(job.data['orderId']);
+}, maxAttempts: 5, backoff: (attempt) => Duration(seconds: 2 * attempt));
+
+queue.onFailed((job, error, stack) {
+  log.error('job ${job.name} gave up', error, stack);
+});
+
+final dead = await queue.store.deadLetter();
+```
+
+> **Warning:** Delivery is at-least-once — a job may run more than once if a worker crashes mid-process. Make handlers idempotent.
+
+### Durable & distributed (Redis)
+
+RedisJobStore persists jobs across restarts and lets multiple worker processes share one queue. reserve runs a Lua script (promote due → pop → lease) atomically; a periodic sweep re-queues jobs from crashed workers.
+
+```dart
+final queue = JobQueue(
+  store: await RedisJobStore.connect(host: 'localhost', port: 6379),
+);
+```
+
+| Symbol | Description |
+| --- | --- |
+| JobQueue({store}) | add / handle / work / onFailed / close |
+| queue.add(name, data, {delay, scheduledAt, maxAttempts}) | Enqueue a job |
+| queue.handle(name, handler, {maxAttempts, backoff}) | Register a handler |
+| queue.work({concurrency, pollInterval, lease}) | Start a Worker |
+| Worker.stop() | Drain in-flight jobs and stop |
+| MemoryJobStore / RedisJobStore | In-process / durable, shared store |
+| JobStats | ready / delayed / active / dead counts |
+
+## darto_ws
+<!-- https://darto-docs.vercel.app/docs?section=plugin-ws -->
+
+- [pub.dev](https://pub.dev/packages/darto_ws)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_ws)
+
+WebSocket support — same port, route-integrated. Middleware (auth, params, state) runs before the upgrade. v1.1 adds rooms / broadcast (WsHub) and a Redis adapter for multi-instance fanout.
+
+### Install
+
+```yaml
+dependencies:
+  darto_ws: ^1.1.0
+```
+
+See: [Full guide: WebSocket](https://darto-docs.vercel.app/docs?section=websocket)
+
+## darto_view
+<!-- https://darto-docs.vercel.app/docs?section=plugin-view -->
+
+- [pub.dev](https://pub.dev/packages/darto_view)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_view)
+
+Pluggable template engine — ships with Mustache. Register once, then call c.render() in any handler.
+
+### Install
+
+```yaml
+dependencies:
+  darto_view: ^1.0.1
+  mustache_template: ^2.0.0
+```
+
+See: [Full guide: View Engine](https://darto-docs.vercel.app/docs?section=view-engine)
+
+## darto_static
+<!-- https://darto-docs.vercel.app/docs?section=plugin-static -->
+
+- [pub.dev](https://pub.dev/packages/darto_static)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_static)
+
+Static file serving middleware — ETag, 304, Range requests, optional gzip and Cache-Control, with built-in path-traversal protection.
+
+### Install
+
+```yaml
+dependencies:
+  darto_static: ^1.0.1
+```
+
+### Usage
+
+```dart
+import 'package:darto_static/darto_static.dart';
+
+app.mount('/public/*', serveStatic('public'));
+app.mount('/assets/*', serveStatic('dist', urlPrefix: '/assets', maxAge: Duration(days: 7)));
+```
+
+### serveStatic options
+
+| Option | Description |
+| --- | --- |
+| dir (positional) | Directory to serve files from (relative to cwd) |
+| urlPrefix | URL prefix to strip — defaults to '/dir'. Set when the mount path differs from the folder name. |
+| maxAge | Sets Cache-Control: public, max-age=N. Omit to disable client caching. |
+
+> **Tip:** Built-in path-traversal protection, automatic MIME detection, and ETag / 304 / Range support. When a file isn't found it falls through to next(), so your other routes still match.
+
+## darto_env
+<!-- https://darto-docs.vercel.app/docs?section=plugin-env -->
+
+- [pub.dev](https://pub.dev/packages/darto_env)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_env)
+
+Environment variable loader — reads .env files and Platform.environment with typed accessors.
+
+### Install
+
+```yaml
+dependencies:
+  darto_env: ^1.0.1
+```
+
+### Usage
+
+```dart
+import 'package:darto_env/darto_env.dart';
+
+DartoEnv.load(); // call once at startup
+
+final port  = DartoEnv.getInt('PORT', 3000);
+final debug = DartoEnv.getBool('DEBUG', false);
+final key   = DartoEnv.get('API_KEY'); // throws if missing
+```
+
+### API
+
+| Method | Description |
+| --- | --- |
+| DartoEnv.load([path = '.env']) | Load a .env file — call once at startup |
+| DartoEnv.get('KEY', [default]) | String — throws if missing and no default given |
+| DartoEnv.maybeGet('KEY') | String? — null when the var is not set |
+| DartoEnv.getInt('PORT', 3000) | int with a fallback |
+| DartoEnv.getDouble('RATE', 1.5) | double with a fallback |
+| DartoEnv.getBool('DEBUG', false) | bool with a fallback |
+| DartoEnv.getOrThrow('KEY') | String — always throws if missing |
+| DartoEnv.all() | Map<String, String> — every loaded variable |
+
+
+---
+
+# Advanced
+
+## Render / Layouts
+<!-- https://darto-docs.vercel.app/docs?section=render-layouts -->
+
+Two-step rendering modelled after Hono's setRenderer / c.render.
+
+```dart
+app.use((Context c, Next next) async {
+  c.setRender((content, props) => c.html('''
+    <!DOCTYPE html>
+    <html><head><title>${props['title'] ?? 'Darto'}</title></head>
+    <body>$content</body></html>
+  '''));
+  await next();
+});
+
+app.get('/', [], (c) => c.render('<h1>Welcome</h1>', {'title': 'Home'}));
+```
+
+> **Tip:** Register a different layout via app.mount('/admin/*', …) to override for a path scope.
+
+## View Engine
+<!-- https://darto-docs.vercel.app/docs?section=view-engine -->
+
+See: [Package: darto_view](https://darto-docs.vercel.app/docs?section=plugin-view)
+
+For file-based templates (Mustache, Jinja…) use the darto_view package. Register an engine once via middleware, then call c.render() in any handler.
+
+```dart
+import 'package:darto/darto.dart';
+import 'package:darto_view/darto_view.dart';
+
+final app = Darto();
+app.use(viewEngine(MustacheEngine(viewsPath: 'views')));
+
+app.get('/', [], (c) => c.render('index', {
+  'title': 'Home',
+  'items': ['Routing', 'Middleware', 'Validation'],
+}));
+```
+
+### Template file
+
+Templates live in the viewsPath directory (here views/) with a .mustache extension. c.render('index', data) renders views/index.mustache with data.
+
+```html
+// views/index.mustache
+<!DOCTYPE html>
+<html>
+  <head><title>{{title}}</title></head>
+  <body>
+    <h1>{{title}}</h1>
+    <ul>
+      {{#items}}<li>{{.}}</li>{{/items}}
+    </ul>
+  </body>
+</html>
+```
+
+## File Upload
+<!-- https://darto-docs.vercel.app/docs?section=file-upload -->
+
+### In-memory
+
+```dart
+app.post('/upload', [], (c) async {
+  final form = await c.req.formData();
+  final file = (form as Map)['avatar'] as UploadedFile;
+  print(file.filename); // logo.png
+  print(file.size);     // bytes
+  return c.created({'name': file.filename});
+});
+```
+
+### Streamed to disk
+
+```dart
+app.post('/upload', [], (c) async {
+  final form = await c.req.formData();
+  final file = (form as Map)['video'] as UploadedFile;
+  await file.saveTo('uploads/${file.filename}');
+  return c.created({'ok': true});
+});
+```
+
+> **Tip:** Prefer saveTo for files larger than a few MB — it streams instead of buffering the entire body.
+
+## File Download
+<!-- https://darto-docs.vercel.app/docs?section=file-download -->
+
+```dart
+// Inline (browser tries to render it)
+await c.file('/path/to/report.pdf');
+
+// Force download with Content-Disposition
+await c.download('/path/to/report.csv', filename: 'export.csv');
+```
+
+## WebSocket
+<!-- https://darto-docs.vercel.app/docs?section=websocket -->
+
+See: [Package: darto_ws](https://darto-docs.vercel.app/docs?section=plugin-ws)
+
+Use the darto_ws package to upgrade any route to a WebSocket — same port, same middleware pipeline as HTTP routes. Add it to your pubspec: darto_ws: ^1.1.0.
+
+```dart
+import 'package:darto/darto.dart';
+import 'package:darto_ws/darto_ws.dart';
+
+app.get('/chat', [], upgradeWebSocket((c) => WSHandler(
+  onOpen:    (ws) => ws.send('hello'),
+  onMessage: (event, ws) => ws.send('echo: ${event.text}'),
+  onClose:   (ws) => print('${ws.id} disconnected'),
+)));
+```
+
+### Path params and state
+
+```dart
+// Middleware runs before the upgrade — path params and state are available inside WSHandler
+app.get('/rooms/:id', [bearerAuth(token: env.token)], upgradeWebSocket((c) {
+  final room = c.req.param('id');
+  return WSHandler(
+    onOpen: (ws) => ws.send('joined room $room'),
+    onMessage: (event, ws) => ws.sendJson({'echo': event.json}),
+  );
+}));
+```
+
+> **Success:** Middleware (auth, logging) runs before the upgrade — protect WS endpoints just like HTTP routes.
+
+### Rooms and broadcast — WsHub
+
+A WsHub is the connection registry — group sockets in rooms and fan messages out. Install one per app via middleware so every upgradeWebSocket factory picks it up automatically.
+
+```dart
+final hub = WsHub();
+final app = Darto()..use(hub.middleware());
+
+app.get('/chat/:room', [], upgradeWebSocket((c) {
+  final room = c.req.param('room')!;
+  return WSHandler(
+    onOpen: (ws) {
+      ws.join(room);
+      ws.to(room).except(ws).send('${ws.id} joined');
+    },
+    onMessage: (ev, ws) =>
+      ws.to(room).sendJson({'from': ws.id, 'text': ev.text}),
+    onClose: (ws) { /* ws.leave(room) is automatic */ },
+  );
+}));
+
+// Server-initiated broadcast — works from any HTTP route or cron
+app.post('/announce', [], (c) async {
+  hub.to('lobby').send('shutdown soon');
+  return c.noContent();
+});
+```
+
+| Symbol | Description |
+| --- | --- |
+| hub.middleware() | Exposes the hub to factories via wsHub(c) |
+| hub.to(room) / hub.broadcast() | Fluent fanout — chain .except(ws), then send / sendJson / sendBytes |
+| hub.connections / roomSize / rooms | Membership stats |
+| ws.id / ws.rooms | Per-connection UUID + rooms it is in |
+| ws.join(room) / ws.leave(room) | Mutate membership (auto-leave on close) |
+| ws.to(room) / ws.broadcast() | Shortcuts to hub.to / hub.broadcast |
+
+### Multi-instance fanout — RedisWsAdapter
+
+When two replicas behind a load balancer hold sockets in the same room, attach the Redis adapter so broadcasts cross instances. Origin-id tagging suppresses self-echo.
+
+```dart
+final hub = WsHub();
+await hub.attachAdapter(await RedisWsAdapter.connect(
+  host: 'localhost',
+  port: 6379,
+));
+
+final app = Darto()..use(hub.middleware());
+```
+
+### WSHandler & DartoWebSocket
+
+| WSHandler callback | Description |
+| --- | --- |
+| onOpen: (ws) | Connection established |
+| onMessage: (event, ws) | A frame arrived — read event.text or event.json |
+| onClose: (ws) | Connection closed — read ws.id / ws.rooms here |
+| onError: (err, ws) | An error occurred |
+
+> **Warning:** Breaking in 1.1.0: onClose and onError now receive the closing socket — old `onClose: () => …` becomes `onClose: (_) => …`.
+
+| ws / event member | Description |
+| --- | --- |
+| ws.send(text) | Send a text frame to this client |
+| ws.sendJson(map) | Encode a Map as JSON and send it |
+| ws.sendBytes(bytes) | Send a binary frame |
+| ws.close([code, reason]) | Close the connection |
+| ws.closeCode | Peer close code (null while open) |
+| ws.id | Unique per-connection UUID v4 |
+| ws.rooms / join / leave / to / broadcast | Hub helpers (require hub.middleware()) |
+| event.text | Frame data as a String |
+| event.json | Frame data parsed as a JSON Map |
+
+## Error Handling
+<!-- https://darto-docs.vercel.app/docs?section=error-handling -->
+
+```dart
+app.onError((err, c) {
+  print('error: $err');
+  return c.internalError({'error': 'something went wrong'});
+});
+
+app.notFound((c) => c.notFound({'error': 'route not found'}));
+```
+
+## Full Example
+<!-- https://darto-docs.vercel.app/docs?section=full-example -->
+
+```dart
+import 'package:darto/darto.dart';
+import 'package:darto/logger.dart';
+import 'package:darto/cors.dart';
+import 'package:darto/jwt.dart';
+import 'package:darto_validator/darto_validator.dart';
+
+final createUser = z.map({
+  'email': z.string().email(),
+  'name':  z.string().min(2),
+});
+
+void main() {
+  final app = Darto();
+
+  app.use(logger());
+  app.mount('/api/*', cors());
+  app.mount('/api/*', jwt(secret: 'mySecret'));
+
+  final api = app.group('/api');
+
+  api.get('/me', [], (c) {
+    final payload = c.get<Map<String, dynamic>>('jwtPayload');
+    return c.ok({'userId': payload?['sub']});
+  });
+
+  api.post('/users', [zValidator('json', createUser)], (c) {
+    final data = c.req.valid<Map<String, dynamic>>('json');
+    return c.created({'id': '42', ...data});
+  });
+
+  app.onError((err, c) => c.internalError({'error': err.toString()}));
+
+  app.listen(3000, () => print('http://localhost:3000'));
+}
+```
+
+
+---
+
+# Migration Guide
+
+## v0.x → v2 Overview
+<!-- https://darto-docs.vercel.app/docs?section=migration-overview -->
+
+> **Warning:** Darto v2 is a full rewrite. The API is incompatible with v0.x. Every route, middleware and response call needs to be updated. This guide covers all breaking changes side by side.
+
+The central concept changed from Express-style (Request, Response, NextFunction) to a Hono-style single Context object. Everything request/response related is now on c.
+
+| Area | v0.x | v2 |
+| --- | --- | --- |
+| Handler | (Request req, Response res) | (Context c) |
+| Middleware | (Request req, Response res, NextFunction next) | (Context c, Next next) async |
+| Route verb | app.get(path, handler) | app.get(path, [], handler) |
+| Path-scoped mw | app.use('/path', mw) | app.mount('/path', mw) |
+| Path params | req.param['id'] / req.params['id'] | c.req.param('id') |
+| Query params | req.query['key'] | c.req.query('key') |
+| Body | await req.body | await c.req.json() |
+| Send JSON | res.json({...}) | c.json({...}) / c.ok({...}) |
+| Status + send | res.status(201).json({...}) | c.status(201).json({...}) / c.created({...}) |
+| Error handler | (Err, Request, Response, Next) | app.onError((err, c) => ...) |
+
+## Handler & Middleware
+<!-- https://darto-docs.vercel.app/docs?section=migration-handlers -->
+
+### Handler signature
+
+```dart
+// v0.x
+app.get('/users/:id', (Request req, Response res) {
+  final id = req.param['id'];
+  res.json({'id': id});
+});
+
+// v2
+app.get('/users/:id', [], (Context c) {
+  final id = c.req.param('id');
+  return c.ok({'id': id});
+});
+```
+
+### Middleware signature
+
+```dart
+// v0.x
+app.use((Request req, Response res, NextFunction next) {
+  print('request: ${req.method} ${req.originalUrl}');
+  next();
+});
+
+// v2
+app.use((Context c, Next next) async {
+  print('request: ${c.req.method} ${c.req.path}');
+  await next();
+});
+```
+
+### Route-level middleware
+
+```dart
+// v0.x — middleware passed as positional argument before handler
+app.get('/admin', authMiddleware, (req, res) { ... });
+
+// v2 — always a List in the second argument
+app.get('/admin', [authMiddleware], (c) { ... });
+```
+
+## Request API
+<!-- https://darto-docs.vercel.app/docs?section=migration-request -->
+
+```dart
+// v0.x
+final id      = req.param['id'];          // path param
+final name    = req.query['name'];         // query param
+final body    = await req.body;            // any body
+final auth    = req.headers.value('authorization');
+final method  = req.method;
+final path    = req.originalUrl;
+
+// v2
+final id      = c.req.param('id');         // path param
+final name    = c.req.query('name');       // query param
+final body    = await c.req.json();        // JSON body
+final typed   = await c.req.json<User>(User.fromJson);
+final auth    = c.req.header('authorization');
+final method  = c.req.method;
+final path    = c.req.path;
+```
+
+> **Tip:** c.req.queryInt() and c.req.queryBool() parse typed query params without manual conversion.
+
+## Response API
+<!-- https://darto-docs.vercel.app/docs?section=migration-response -->
+
+```dart
+// v0.x
+res.send('text');               // plain text
+res.json({'key': 'value'});     // JSON
+res.status(201).json({...});    // status + JSON
+res.status(404).send('Not found');
+res.redirect('https://example.com');
+res.sendFile('path/to/file');
+res.download('path/to/file', {'filename': 'custom.txt'});
+
+// v2
+return c.text('text');          // plain text
+return c.json({'key': 'value'});
+return c.ok({...});             // 200 JSON
+return c.created({...});        // 201 JSON
+return c.badRequest({...});     // 400 JSON
+return c.notFound({...});       // 404 JSON
+return c.status(201).json({...});
+return c.redirect('https://example.com');
+await c.file('path/to/file');   // serve inline
+await c.download('path', filename: 'custom.txt');
+```
+
+| v0.x | v2 equivalent |
+| --- | --- |
+| res.send('text') | c.text('text') |
+| res.json({...}) | c.json({...}) |
+| res.status(200).json({...}) | c.ok({...}) |
+| res.status(201).json({...}) | c.created({...}) |
+| res.status(400).json({...}) | c.badRequest({...}) |
+| res.status(401).json({...}) | c.unauthorized({...}) |
+| res.status(403).json({...}) | c.forbidden({...}) |
+| res.status(404).send(...) | c.notFound({...}) |
+| res.status(500).send(...) | c.internalError({...}) |
+| res.redirect(url) | c.redirect(url) |
+| res.sendFile(path) | await c.file(path) |
+| res.download(path, opts) | await c.download(path, filename: ...) |
+
+## Routing & Middleware Registration
+<!-- https://darto-docs.vercel.app/docs?section=migration-routing -->
+
+### Path-scoped middleware
+
+```dart
+// v0.x
+app.use('/api/:id', middlewareFn); // path-scoped
+
+// v2
+app.mount('/api/*', middlewareFn); // wildcard required for prefix matching
+```
+
+### Router / grouping
+
+```dart
+// v0.x
+Router userRouter() {
+  final r = Router();
+  r.get('/', (req, res) { res.json(users); });
+  r.post('/', (req, res) async { ... });
+  return r;
+}
+app.use('/users', userRouter());
+
+// v2 — three equivalent styles
+// 1. Fluent chain
+app.route('/users').get([], listUsers).post([], createUser);
+
+// 2. Builder callback
+app.route('/users', (r) {
+  r.get('/', [], listUsers);
+  r.post('/', [], createUser);
+});
+
+// 3. group() prefix
+final users = app.group('/users');
+users.get('/', [], listUsers);
+users.post('/', [], createUser);
+```
+
+### Error handler
+
+```dart
+// v0.x
+app.use((Err err, Request req, Response res, NextFunction next) {
+  res.status(500).json({'error': err.toString()});
+});
+
+// v2
+app.onError((err, c) {
+  return c.internalError({'error': err.toString()});
+});
+```
+
+## Validation
+<!-- https://darto-docs.vercel.app/docs?section=migration-validation -->
+
+```dart
+// v0.x — manual try/catch with Zard
+app.post('/users', (Request req, Response res) async {
+  final schema = z.map({
+    'name': z.string().min(3),
+    'age':  z.int().min(1),
+  });
+  try {
+    final data = await schema.parseAsync(req.body);
+    res.json(data);
+  } catch (e) {
+    res.status(406).send(schema.getErrors());
+  }
+});
+
+// v2 — zValidator middleware (darto_validator package)
+import 'package:darto_validator/darto_validator.dart';
+
+final userSchema = z.map({
+  'name': z.string().min(3),
+  'age':  z.int().min(1),
+});
+
+app.post('/users', [zValidator('json', userSchema)], (c) {
+  final data = c.req.valid<Map<String, dynamic>>('json');
+  return c.created(data);
+});
+```
+
+> **Tip:** Add darto_validator: ^1.1.0 to pubspec.yaml. zard is re-exported — no separate zard dependency needed.

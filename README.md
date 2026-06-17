@@ -96,6 +96,8 @@ darto/
 ├── darto_mailer/       # Email (SMTP + console/memory transports)
 ├── darto_jobs/         # Background jobs (Memory + Redis)
 ├── darto-docs/         # Documentation site
+├── skills/             # AI agent Skills (Claude) — task-scoped procedures
+├── AGENTS.md           # Conventions for AI coding agents
 └── examples/           # Example projects (see below)
 ```
 
@@ -133,6 +135,20 @@ Explore ready-to-run examples inside the [`examples/`](./examples/) folder:
 - **Full API docs:** [darto README](./darto/README.md)
 - **pub.dev:** [pub.dev/packages/darto](https://pub.dev/packages/darto)
 - **Docs site:** [darto-docs](./darto-docs/)
+
+### 🤖 AI-friendly documentation
+
+Darto ships three layers of machine-readable docs so AI assistants write correct
+Darto code:
+
+- **`llms.txt` / `llms-full.txt`** — served from the docs site
+  ([`/llms.txt`](https://darto-docs.vercel.app/llms.txt)); a curated index and a
+  full concatenation of the docs for models to ingest.
+- **[`AGENTS.md`](./AGENTS.md)** — the conventions an agent needs to write code
+  in this repo (read natively by Codex, Cursor, Copilot, Gemini CLI, and more).
+- **[`skills/`](./skills/)** — task-scoped Claude Skills (add a route, validate a
+  request, write middleware, scaffold a project) loaded on demand. See
+  [`skills/README.md`](./skills/README.md) to install them.
 
 ---
 

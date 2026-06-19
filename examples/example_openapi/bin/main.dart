@@ -19,9 +19,10 @@ void main() async {
     request: Req(params: {'id': Schema.integer()}),
     responses: {
       200: Res('A post', body: Schema.object({
+        // Fields are required by default — no need for a separate list.
         'id': Schema.integer(),
         'title': Schema.string(),
-      }, required: ['id', 'title'])),
+      })),
     },
     handler: (c) => c.ok({'id': c.req.paramInt('id'), 'title': 'Hello'}),
   );
@@ -31,9 +32,9 @@ void main() async {
     summary: 'Create a post',
     tags: ['posts'],
     request: Req(json: Schema.object({
-      'title': Schema.string(minLength: 1),
-      'tags': Schema.array(Schema.string()),
-    }, required: ['title'])),
+      'title': Schema.string(minLength: 1),       // required by default
+      'tags': Schema.array(Schema.string(), required: false), // optional
+    })),
     responses: {201: Res('Created')},
     // The validated body is available via c.req.valid('json'); invalid bodies
     // get an automatic 400 with the issues.

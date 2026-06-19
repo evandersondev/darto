@@ -1,6 +1,6 @@
 name: darto_openapi
 description: OpenAPI 3.1 spec generation and Scalar API docs for the Darto web framework — describe a route once to validate requests and document them.
-version: 1.0.0
+version: 1.1.0
 homepage: https://github.com/evandersondev/darto/tree/main/darto_openapi
 repository: https://github.com/evandersondev/darto
 

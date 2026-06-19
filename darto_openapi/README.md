@@ -40,9 +40,9 @@ void main() {
     summary: 'Create a post',
     tags: ['posts'],
     request: Req(json: Schema.object({
-      'title': Schema.string(minLength: 1),
-      'tags':  Schema.array(Schema.string()),
-    }, required: ['title'])),
+      'title': Schema.string(minLength: 1),                   // required by default
+      'tags':  Schema.array(Schema.string(), required: false), // optional
+    })),
     responses: {201: Res('Created')},
     handler: (c) => c.created(c.req.valid<Map<String, dynamic>>('json')),
   );
@@ -66,8 +66,18 @@ Schema.integer(minimum: 0, maximum: 150);
 Schema.number(minimum: 0);
 Schema.boolean();
 Schema.array(Schema.string(), minItems: 1);
-Schema.object({'name': Schema.string()}, required: ['name']);
 Schema.raw({'type': 'string'}); // escape hatch: raw OpenAPI Schema Object
+```
+
+In `Schema.object`, fields are **required by default**; opt out per field with
+`required: false`. Passing an object-level `required:` list overrides the
+per-field flags (backward compatible):
+
+```dart
+Schema.object({
+  'name':  Schema.string(),                 // required
+  'email': Schema.string(required: false),  // optional
+});
 ```
 
 When a route declares `request: Req(json: schema)`, the body is validated

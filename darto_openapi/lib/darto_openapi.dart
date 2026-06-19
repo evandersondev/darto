@@ -15,8 +15,8 @@
 ///   summary: 'Create a post',
 ///   tags: ['posts'],
 ///   request: Req(json: Schema.object({
-///     'title': Schema.string(minLength: 1),
-///   }, required: ['title'])),
+///     'title': Schema.string(minLength: 1), // required by default
+///   })),
 ///   responses: {201: Res('Created')},
 ///   handler: (c) => c.created(c.req.valid('json')),
 /// );

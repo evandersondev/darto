@@ -4,24 +4,33 @@
 /// Constraints are stored as data (not closures), so the same definition both
 /// validates a request body and is emitted into the OpenAPI document.
 ///
+/// Fields are **required by default**. Mark a field optional with
+/// `required: false`, or override the whole set with the object-level
+/// `required:` list (which, when provided, wins over the per-field flags).
+///
 /// ```dart
 /// final user = Schema.object({
 ///   'name': Schema.string(minLength: 1),
-///   'age':  Schema.integer(minimum: 0),
-///   'tags': Schema.array(Schema.string()),
-/// }, required: ['name']);
+///   'age':  Schema.integer(minimum: 0, required: false), // optional
+///   'tags': Schema.array(Schema.string(), required: false),
+/// });
 ///
-/// user.validate({'name': 'Ada', 'age': 36}); // → [] (valid)
+/// user.validate({'name': 'Ada'});            // → [] (valid; age/tags optional)
 /// user.toOpenApi();                           // → OpenAPI Schema Object map
 /// ```
 class Schema {
   /// The backing OpenAPI Schema Object.
   final Map<String, dynamic> node;
 
-  const Schema._(this.node);
+  /// Whether this schema is required when used as a property of an enclosing
+  /// [Schema.object]. Ignored in any other position (e.g. array items).
+  final bool required;
+
+  const Schema._(this.node, {this.required = true});
 
   /// Wraps a raw OpenAPI Schema Object — an escape hatch for advanced cases.
-  factory Schema.raw(Map<String, dynamic> node) => Schema._(Map.of(node));
+  factory Schema.raw(Map<String, dynamic> node, {bool required = true}) =>
+      Schema._(Map.of(node), required: required);
 
   factory Schema.string({
     int? minLength,
@@ -32,17 +41,21 @@ class Schema {
     String? description,
     Object? example,
     bool nullable = false,
+    bool required = true,
   }) =>
-      Schema._({
-        'type': nullable ? ['string', 'null'] : 'string',
-        if (minLength != null) 'minLength': minLength,
-        if (maxLength != null) 'maxLength': maxLength,
-        if (format != null) 'format': format,
-        if (enumValues != null) 'enum': enumValues,
-        if (pattern != null) 'pattern': pattern,
-        if (description != null) 'description': description,
-        if (example != null) 'example': example,
-      });
+      Schema._(
+        {
+          'type': nullable ? ['string', 'null'] : 'string',
+          if (minLength != null) 'minLength': minLength,
+          if (maxLength != null) 'maxLength': maxLength,
+          if (format != null) 'format': format,
+          if (enumValues != null) 'enum': enumValues,
+          if (pattern != null) 'pattern': pattern,
+          if (description != null) 'description': description,
+          if (example != null) 'example': example,
+        },
+        required: required,
+      );
 
   factory Schema.integer({
     int? minimum,
@@ -50,14 +63,18 @@ class Schema {
     String? description,
     Object? example,
     bool nullable = false,
+    bool required = true,
   }) =>
-      Schema._({
-        'type': nullable ? ['integer', 'null'] : 'integer',
-        if (minimum != null) 'minimum': minimum,
-        if (maximum != null) 'maximum': maximum,
-        if (description != null) 'description': description,
-        if (example != null) 'example': example,
-      });
+      Schema._(
+        {
+          'type': nullable ? ['integer', 'null'] : 'integer',
+          if (minimum != null) 'minimum': minimum,
+          if (maximum != null) 'maximum': maximum,
+          if (description != null) 'description': description,
+          if (example != null) 'example': example,
+        },
+        required: required,
+      );
 
   factory Schema.number({
     num? minimum,
@@ -65,50 +82,82 @@ class Schema {
     String? description,
     Object? example,
     bool nullable = false,
+    bool required = true,
   }) =>
-      Schema._({
-        'type': nullable ? ['number', 'null'] : 'number',
-        if (minimum != null) 'minimum': minimum,
-        if (maximum != null) 'maximum': maximum,
-        if (description != null) 'description': description,
-        if (example != null) 'example': example,
-      });
+      Schema._(
+        {
+          'type': nullable ? ['number', 'null'] : 'number',
+          if (minimum != null) 'minimum': minimum,
+          if (maximum != null) 'maximum': maximum,
+          if (description != null) 'description': description,
+          if (example != null) 'example': example,
+        },
+        required: required,
+      );
 
-  factory Schema.boolean({String? description, bool nullable = false}) =>
-      Schema._({
-        'type': nullable ? ['boolean', 'null'] : 'boolean',
-        if (description != null) 'description': description,
-      });
+  factory Schema.boolean({
+    String? description,
+    bool nullable = false,
+    bool required = true,
+  }) =>
+      Schema._(
+        {
+          'type': nullable ? ['boolean', 'null'] : 'boolean',
+          if (description != null) 'description': description,
+        },
+        required: required,
+      );
 
   factory Schema.array(
     Schema items, {
     int? minItems,
     int? maxItems,
     String? description,
+    bool required = true,
   }) =>
-      Schema._({
-        'type': 'array',
-        'items': items.node,
-        if (minItems != null) 'minItems': minItems,
-        if (maxItems != null) 'maxItems': maxItems,
-        if (description != null) 'description': description,
-      });
+      Schema._(
+        {
+          'type': 'array',
+          'items': items.node,
+          if (minItems != null) 'minItems': minItems,
+          if (maxItems != null) 'maxItems': maxItems,
+          if (description != null) 'description': description,
+        },
+        required: required,
+      );
 
+  /// Builds an object schema.
+  ///
+  /// By default every property is required; mark individual ones optional with
+  /// `required: false` on the field. Passing the object-level [required] list
+  /// overrides the per-field flags entirely (kept for backward compatibility
+  /// and dynamic property maps). The whole object can itself be marked optional
+  /// for an enclosing object via [required].
   factory Schema.object(
     Map<String, Schema> properties, {
-    List<String> required = const [],
+    List<String>? required,
     bool additionalProperties = true,
     String? description,
-  }) =>
-      Schema._({
+    bool isRequired = true,
+  }) {
+    final req = required ??
+        [
+          for (final e in properties.entries)
+            if (e.value.required) e.key,
+        ];
+    return Schema._(
+      {
         'type': 'object',
         'properties': {
           for (final e in properties.entries) e.key: e.value.node,
         },
-        if (required.isNotEmpty) 'required': required,
+        if (req.isNotEmpty) 'required': req,
         if (!additionalProperties) 'additionalProperties': false,
         if (description != null) 'description': description,
-      });
+      },
+      required: isRequired,
+    );
+  }
 
   /// The OpenAPI Schema Object map for this schema.
   Map<String, dynamic> toOpenApi() => node;

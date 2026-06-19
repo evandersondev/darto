@@ -1,3 +1,12 @@
+## 1.1.0
+
+- `Schema.object` properties are now **required by default**. Mark a field
+  optional with `required: false` on the field itself (`Schema.string(...,
+  required: false)`), instead of maintaining a separate name list.
+- The object-level `required:` list still works and, when provided, overrides
+  the per-field flags — fully backward compatible.
+- Nest an optional object with `Schema.object(..., isRequired: false)`.
+
 ## 1.0.0
 
 - Initial release.

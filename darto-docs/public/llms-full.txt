@@ -869,7 +869,7 @@ import 'package:darto_openapi/darto_openapi.dart';
 final api = OpenApi(app, info: Info(title: 'API', version: '1.0.0'));
 
 api.post('/posts',
-  request: Req(json: Schema.object({'title': Schema.string(minLength: 1)}, required: ['title'])),
+  request: Req(json: Schema.object({'title': Schema.string(minLength: 1)})), // fields required by default
   responses: {201: Res('Created')},
   handler: (c) => c.created(c.req.valid('json')),
 );
@@ -885,8 +885,8 @@ app.use(api.docs()); // serves /openapi.json + /docs (Scalar)
 | Schema.integer({minimum, maximum}) | Integer number |
 | Schema.number({minimum}) | Floating-point number |
 | Schema.boolean() | Boolean |
-| Schema.array(schema, {minItems}) | Array of items matching schema |
-| Schema.object({fields}, {required}) | Object with named properties |
+| Schema.array(schema, {minItems, required}) | Array of items matching schema |
+| Schema.object({fields}, {required}) | Object — fields required by default; opt out per field with `required: false`, or pass an object-level `required` list to override |
 | Schema.raw(Map) | Pass raw OpenAPI schema through unchanged |
 
 ### Security schemes

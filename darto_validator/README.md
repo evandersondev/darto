@@ -153,7 +153,11 @@ OpenAPI 3.1 Schema Object map, ready for `darto_openapi`'s `Schema.raw(...)`.
 ```dart
 import 'package:darto_openapi/darto_openapi.dart';
 
-final userSchema = z.map({'name': z.string(), 'age': z.int().optional()});
+final userSchema = z.map({
+  'name': z.string().min(2).max(50),
+  'email': z.string().email(),
+  'age': z.int().min(0).max(120).optional(),
+});
 
 api.post('/users',
   request: Req(json: Schema.raw(userSchema.toOpenApiSchema())),
@@ -163,8 +167,12 @@ api.post('/users',
 ```
 
 It captures object shape + `required`, arrays, enums, nullability, defaults and
-unions. Fine-grained constraints (`min`/`max`/`format`) live in zard closures and
-are not introspectable, so they are omitted.
+unions, **plus fine-grained constraints**: `minLength`/`maxLength`, `pattern`,
+`format` (email, uri, uuid, date, time, date-time, ipv4, ipv6, hostname),
+`minimum`/`maximum`, `multipleOf` and `minItems`/`maxItems`. So one zard schema
+both validates requests and documents the API. Only arbitrary `refine`/
+`transform` logic can't be represented in a schema and is omitted (it still
+validates at runtime). Requires `zard: ^1.2.0`.
 
 ---
 

@@ -1,3 +1,13 @@
+## 1.2.0
+
+- `zardToOpenApiSchema()` now emits **fine-grained constraints**, not just
+  structure: `minLength`/`maxLength`, `pattern`, `format` (`email`, `uri`,
+  `uuid`, `date`, `time`, `date-time`, `ipv4`, `ipv6`, `hostname`), `minimum`/
+  `maximum`, `exclusiveMinimum`/`exclusiveMaximum`, `multipleOf`, and
+  `minItems`/`maxItems`. Constraints survive `nullable()`/`optional()` wrappers.
+  A single zard schema now validates **and** documents an API with full fidelity.
+- Require `zard: ^1.2.0` (reads its new introspectable `Schema.checks` metadata).
+
 ## 1.1.1
 
 - Require `zard: ^1.1.3`.

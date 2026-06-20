@@ -19,5 +19,5 @@ dev_dependencies:
 dependency_overrides:
   darto:
     path: ../../darto
-  darto_validator:
-    path: ../../darto_validator
+  zard:
+    path: ../../../zard

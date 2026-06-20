@@ -1,0 +1,25 @@
+name: example_openapi_zard
+description: Darto — Hono-style zod-openapi DX with darto_zard_openapi (one zard schema validates AND documents)
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto_zard_openapi:
+    path: ../../darto_zard_openapi
+
+dev_dependencies:
+  lints: ^5.0.0
+
+# Resolve the whole Darto family against this monorepo's local sources.
+dependency_overrides:
+  darto:
+    path: ../../darto
+  zard:
+    path: ../../../zard
+  darto_validator:
+    path: ../../darto_validator
+  darto_zard_openapi:
+    path: ../../darto_zard_openapi

@@ -1,0 +1,26 @@
+name: darto_zard_openapi
+description: Hono-style zod-openapi for Darto — define a zard schema once to validate requests and generate the OpenAPI 3.1 document, with OpenAPIDarto, createRoute and Scalar UI.
+version: 0.1.0
+homepage: https://github.com/evandersondev/darto/tree/main/darto_zard_openapi
+repository: https://github.com/evandersondev/darto
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  darto: ^1.2.0
+  zard: ^1.2.0
+  darto_validator: ^1.2.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0
+
+# Local development against this monorepo's packages.
+dependency_overrides:
+  darto:
+    path: ../darto
+  zard:
+    path: ../../zard
+  darto_validator:
+    path: ../darto_validator

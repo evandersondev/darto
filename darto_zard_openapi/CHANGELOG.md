@@ -1,0 +1,15 @@
+## 0.1.0
+
+- Initial release. Hono-style `zod-openapi` for Darto:
+  - `OpenAPIDarto` — a `Darto` subclass with `openapi(route, middlewares, handler)`
+    and `doc(path, info:, servers:)`.
+  - `createRoute({method, path, request, responses})` — a reusable route
+    contract, decoupled from the handler.
+  - `Req(json:, params:, query:, headers:)` / `Res(status, description, body:)`
+    accept zard schemas bridged with `.openapi([name])`.
+  - `.openapi([name])` extension on zard `Schema` — names a reusable component
+    (`#/components/schemas/<name>`, referenced via `$ref`) or inlines it.
+  - `scalarUI(url:)` — serves the Scalar API reference UI.
+  - Validation is performed by the zard schemas (via Darto's `validator`
+    middleware): full zard power (email/refine/coerce/custom messages), with the
+    same schema feeding the generated OpenAPI 3.1 document.

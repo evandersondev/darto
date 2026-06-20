@@ -1,0 +1,35 @@
+@host = http://localhost:3000
+
+### Create a user — valid
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "Ada Lovelace",
+  "email": "ada@example.com",
+  "age": 36,
+  "role": "admin"
+}
+
+### Create a user — invalid (short name, bad email, unknown role) → 400 with zard issues
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "name": "A",
+  "email": "not-an-email",
+  "age": 36,
+  "role": "superuser"
+}
+
+### Get a user by id (path string coerced to int + checked min:1)
+GET {{host}}/users/123
+
+### Invalid id (violates min:1) → 400
+GET {{host}}/users/0
+
+### Non-integer id → 400
+GET {{host}}/users/abc
+
+### OpenAPI document (note: User as a $ref component, with constraints + example/description)
+GET {{host}}/openapi.json

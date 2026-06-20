@@ -24,6 +24,14 @@ import 'package:zard/zard.dart';
 /// );
 /// ```
 Map<String, dynamic> zardToOpenApiSchema(Schema schema) {
+  final node = _convert(schema);
+  // Documentation metadata applies at every level (including wrappers).
+  if (schema.description != null) node['description'] = schema.description;
+  if (schema.hasExample) node['example'] = schema.exampleValue;
+  return node;
+}
+
+Map<String, dynamic> _convert(Schema schema) {
   if (schema is ZOptional) return zardToOpenApiSchema(schema.inner);
   if (schema is ZDefault) {
     return {

@@ -1,3 +1,9 @@
+## 1.3.0
+
+- `zardToOpenApiSchema()` now emits `description` and `example` from zard's
+  `.describe()` / `.example()` metadata (at every level, including wrappers).
+- Require `zard: ^1.3.0` (for the new documentation metadata getters).
+
 ## 1.2.0
 
 - `zardToOpenApiSchema()` now emits **fine-grained constraints**, not just

@@ -1,4 +1,4 @@
-## 0.1.0
+## 1.0.0
 
 - Initial release. Hono-style `zod-openapi` for Darto:
   - `OpenAPIDarto` — a `Darto` subclass with `openapi(route, middlewares, handler)`

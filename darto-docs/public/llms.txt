@@ -35,6 +35,7 @@ Darto centers on three typedefs — Handler, Middleware, and Next. Handlers rece
 - [darto_cli](https://darto-docs.vercel.app/docs?section=plugin-cli): Official CLI — scaffold projects, run a hot-reload dev server, build native executables and generate a typed API client.
 - [darto_validator](https://darto-docs.vercel.app/docs?section=plugin-validator): Request validation powered by zard (Zod-style) via the zValidator middleware.
 - [darto_openapi](https://darto-docs.vercel.app/docs?section=plugin-openapi): OpenAPI 3.1 spec generation + Scalar API docs.
+- [darto_zard_openapi](https://darto-docs.vercel.app/docs?section=plugin-zard-openapi): Hono-style zod-openapi for Darto.
 - [darto_test](https://darto-docs.vercel.app/docs?section=plugin-test): Ergonomic test client — boot an app on an ephemeral port and assert responses without managing a server (supertest-style).
 - [darto_logger](https://darto-docs.vercel.app/docs?section=plugin-logger): Structured logging — JSON or pretty output, levels, bound fields, and a request-logging middleware with request-id correlation.
 - [darto_auth](https://darto-docs.vercel.app/docs?section=plugin-auth): Authentication — password hashing (PBKDF2-HMAC-SHA256, no native deps) and session-based auth guards built on Darto's session middleware.

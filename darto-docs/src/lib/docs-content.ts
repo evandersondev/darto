@@ -1998,6 +1998,105 @@ const SECTIONS: BiSection[] = [
     ),
   },
   {
+    id: "plugin-zard-openapi",
+    group: "plugins",
+    title: bi("darto_zard_openapi", "darto_zard_openapi"),
+    blocks: bi(
+      [
+        {
+          kind: "links",
+          links: [
+            { label: "pub.dev", href: "https://pub.dev/packages/darto_zard_openapi" },
+            {
+              label: "GitHub",
+              href: "https://github.com/evandersondev/darto/tree/main/darto_zard_openapi",
+            },
+          ],
+        },
+        {
+          kind: "p",
+          text: "Hono-style zod-openapi for Darto. Define a zard schema once: it validates the request (real zard — email, refine, coerce, custom messages) and generates the OpenAPI 3.1 document from the same source. A composable plugin: OpenAPIDarto wraps your own Darto app.",
+        },
+        { kind: "h3", text: "Install", id: "zard-openapi-install" },
+        {
+          kind: "code",
+          lang: "yaml",
+          code: `dependencies:\n  darto: ^1.2.0\n  darto_zard_openapi: ^1.0.0`,
+        },
+        { kind: "h3", text: "Usage", id: "zard-openapi-usage" },
+        {
+          kind: "code",
+          code: `import 'package:darto/darto.dart';\nimport 'package:darto_zard_openapi/darto_zard_openapi.dart';\n\nfinal app = Darto();            // your own Darto app\nfinal api = OpenAPIDarto(app);  // plug OpenAPI on top\n\n// A reusable route contract, decoupled from the handler.\nfinal getUser = createRoute(\n  method: 'get',\n  path: '/users/:id',\n  request: Req(params: z.map({'id': z.coerce.int().min(1)}).openapiSchema()),\n  responses: [Res(200, 'Found', body: userSchema), Res(404, 'Not found')],\n);\n\napi.openapi(getUser, [], (c) {\n  final id = c.req.valid<Map<String, dynamic>>('param')['id'];\n  return c.ok({'id': id});\n});\n\napi.doc('/openapi.json', info: Info(title: 'API', version: '1.0.0'));\napp.get('/docs', [], scalarUI(url: '/openapi.json')); // Scalar UI`,
+        },
+        { kind: "h3", text: "Schema metadata", id: "zard-openapi-schema" },
+        {
+          kind: "p",
+          text: "Add per-field metadata with .openapi(example:, description:) — example is type-checked against the field's type and stays correct through coerce/transform. Name a reusable component with .openapiSchema('Name'), emitted under #/components/schemas and referenced with $ref.",
+        },
+        {
+          kind: "code",
+          code: `final userSchema = z.map({\n  'name': z.string().min(2).openapi(example: 'Ada', description: 'Full name'),\n  'age':  z.int().min(0).max(150).openapi(example: 28),\n  'role': z.\$enum(['admin', 'user']).openapi(description: 'Role'),\n}).openapiSchema('User'); // -> #/components/schemas/User`,
+        },
+        {
+          kind: "callout",
+          variant: "tip",
+          text: "Validation is done by the zard schemas (via Darto's validator middleware) — full zard power, with the same schema feeding the spec. Requires zard ^1.3.0 and darto_validator ^1.3.0.",
+        },
+        {
+          kind: "ref",
+          to: "plugin-openapi",
+          label: "Lower-level alternative: darto_openapi (native Schema builders)",
+        },
+      ],
+      [
+        {
+          kind: "links",
+          links: [
+            { label: "pub.dev", href: "https://pub.dev/packages/darto_zard_openapi" },
+            {
+              label: "GitHub",
+              href: "https://github.com/evandersondev/darto/tree/main/darto_zard_openapi",
+            },
+          ],
+        },
+        {
+          kind: "p",
+          text: "zod-openapi estilo Hono para Darto. Defina um schema zard uma vez: ele valida a requisição (zard de verdade — email, refine, coerce, mensagens custom) e gera o documento OpenAPI 3.1 da mesma fonte. Plugin componível: OpenAPIDarto envolve o seu próprio app Darto.",
+        },
+        { kind: "h3", text: "Instalação", id: "zard-openapi-install" },
+        {
+          kind: "code",
+          lang: "yaml",
+          code: `dependencies:\n  darto: ^1.2.0\n  darto_zard_openapi: ^1.0.0`,
+        },
+        { kind: "h3", text: "Uso", id: "zard-openapi-usage" },
+        {
+          kind: "code",
+          code: `import 'package:darto/darto.dart';\nimport 'package:darto_zard_openapi/darto_zard_openapi.dart';\n\nfinal app = Darto();            // seu próprio app Darto\nfinal api = OpenAPIDarto(app);  // pluga o OpenAPI por cima\n\n// Contrato de rota reutilizável, desacoplado do handler.\nfinal getUser = createRoute(\n  method: 'get',\n  path: '/users/:id',\n  request: Req(params: z.map({'id': z.coerce.int().min(1)}).openapiSchema()),\n  responses: [Res(200, 'Encontrado', body: userSchema), Res(404, 'Não encontrado')],\n);\n\napi.openapi(getUser, [], (c) {\n  final id = c.req.valid<Map<String, dynamic>>('param')['id'];\n  return c.ok({'id': id});\n});\n\napi.doc('/openapi.json', info: Info(title: 'API', version: '1.0.0'));\napp.get('/docs', [], scalarUI(url: '/openapi.json')); // Scalar UI`,
+        },
+        { kind: "h3", text: "Metadados do schema", id: "zard-openapi-schema" },
+        {
+          kind: "p",
+          text: "Adicione metadados por campo com .openapi(example:, description:) — example é checado contra o tipo do campo e permanece correto através de coerce/transform. Nomeie um componente reutilizável com .openapiSchema('Name'), emitido em #/components/schemas e referenciado com $ref.",
+        },
+        {
+          kind: "code",
+          code: `final userSchema = z.map({\n  'name': z.string().min(2).openapi(example: 'Ada', description: 'Nome completo'),\n  'age':  z.int().min(0).max(150).openapi(example: 28),\n  'role': z.\$enum(['admin', 'user']).openapi(description: 'Papel'),\n}).openapiSchema('User'); // -> #/components/schemas/User`,
+        },
+        {
+          kind: "callout",
+          variant: "tip",
+          text: "A validação é feita pelos schemas zard (via middleware validator do Darto) — todo o poder do zard, com o mesmo schema alimentando o spec. Requer zard ^1.3.0 e darto_validator ^1.3.0.",
+        },
+        {
+          kind: "ref",
+          to: "plugin-openapi",
+          label: "Alternativa de baixo nível: darto_openapi (builders Schema nativos)",
+        },
+      ],
+    ),
+  },
+  {
     id: "plugin-test",
     group: "plugins",
     title: bi("darto_test", "darto_test"),

@@ -869,7 +869,7 @@ import 'package:darto_openapi/darto_openapi.dart';
 final api = OpenApi(app, info: Info(title: 'API', version: '1.0.0'));
 
 api.post('/posts',
-  request: Req(json: Schema.object({'title': Schema.string(minLength: 1)})), // fields required by default
+  request: Req(json: Schema.object({'title': Schema.string(minLength: 1)}, required: ['title'])),
   responses: {201: Res('Created')},
   handler: (c) => c.created(c.req.valid('json')),
 );
@@ -885,8 +885,8 @@ app.use(api.docs()); // serves /openapi.json + /docs (Scalar)
 | Schema.integer({minimum, maximum}) | Integer number |
 | Schema.number({minimum}) | Floating-point number |
 | Schema.boolean() | Boolean |
-| Schema.array(schema, {minItems, required}) | Array of items matching schema |
-| Schema.object({fields}, {required}) | Object — fields required by default; opt out per field with `required: false`, or pass an object-level `required` list to override |
+| Schema.array(schema, {minItems}) | Array of items matching schema |
+| Schema.object({fields}, {required}) | Object with named properties |
 | Schema.raw(Map) | Pass raw OpenAPI schema through unchanged |
 
 ### Security schemes
@@ -919,6 +919,64 @@ File('lib/api_client.dart').writeAsStringSync(src);
 final post = await ApiClient().postPosts(PostPostsRequest(title: 'Hello'));
 print(post.id); // typed
 ```
+
+## darto_zard_openapi
+<!-- https://darto-docs.vercel.app/docs?section=plugin-zard-openapi -->
+
+- [pub.dev](https://pub.dev/packages/darto_zard_openapi)
+- [GitHub](https://github.com/evandersondev/darto/tree/main/darto_zard_openapi)
+
+Hono-style zod-openapi for Darto. Define a zard schema once: it validates the request (real zard — email, refine, coerce, custom messages) and generates the OpenAPI 3.1 document from the same source. A composable plugin: OpenAPIDarto wraps your own Darto app.
+
+### Install
+
+```yaml
+dependencies:
+  darto: ^1.2.0
+  darto_zard_openapi: ^1.0.0
+```
+
+### Usage
+
+```dart
+import 'package:darto/darto.dart';
+import 'package:darto_zard_openapi/darto_zard_openapi.dart';
+
+final app = Darto();            // your own Darto app
+final api = OpenAPIDarto(app);  // plug OpenAPI on top
+
+// A reusable route contract, decoupled from the handler.
+final getUser = createRoute(
+  method: 'get',
+  path: '/users/:id',
+  request: Req(params: z.map({'id': z.coerce.int().min(1)}).openapiSchema()),
+  responses: [Res(200, 'Found', body: userSchema), Res(404, 'Not found')],
+);
+
+api.openapi(getUser, [], (c) {
+  final id = c.req.valid<Map<String, dynamic>>('param')['id'];
+  return c.ok({'id': id});
+});
+
+api.doc('/openapi.json', info: Info(title: 'API', version: '1.0.0'));
+app.get('/docs', [], scalarUI(url: '/openapi.json')); // Scalar UI
+```
+
+### Schema metadata
+
+Add per-field metadata with .openapi(example:, description:) — example is type-checked against the field's type and stays correct through coerce/transform. Name a reusable component with .openapiSchema('Name'), emitted under #/components/schemas and referenced with $ref.
+
+```dart
+final userSchema = z.map({
+  'name': z.string().min(2).openapi(example: 'Ada', description: 'Full name'),
+  'age':  z.int().min(0).max(150).openapi(example: 28),
+  'role': z.$enum(['admin', 'user']).openapi(description: 'Role'),
+}).openapiSchema('User'); // -> #/components/schemas/User
+```
+
+> **Tip:** Validation is done by the zard schemas (via Darto's validator middleware) — full zard power, with the same schema feeding the spec. Requires zard ^1.3.0 and darto_validator ^1.3.0.
+
+See: [Lower-level alternative: darto_openapi (native Schema builders)](https://darto-docs.vercel.app/docs?section=plugin-openapi)
 
 ## darto_test
 <!-- https://darto-docs.vercel.app/docs?section=plugin-test -->

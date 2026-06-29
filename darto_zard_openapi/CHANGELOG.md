@@ -1,8 +1,9 @@
 ## 1.0.0
 
 - Initial release. Hono-style `zod-openapi` for Darto:
-  - `OpenAPIDarto` — a `Darto` subclass with `openapi(route, middlewares, handler)`
-    and `doc(path, info:, servers:)`.
+  - `OpenAPIDarto(darto)` — a composable plugin that wraps your own `Darto`,
+    with `openapi(route, middlewares, handler)` and `doc(path, info:, servers:)`.
+    Plain routes/middleware and `listen` stay on the `Darto` you pass in.
   - `createRoute({method, path, request, responses})` — a reusable route
     contract, decoupled from the handler.
   - `Req(json:, params:, query:, headers:)` / `Res(status, description, body:)`

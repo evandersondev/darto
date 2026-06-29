@@ -5,13 +5,17 @@ import 'package:zard/zard.dart';
 import 'route.dart';
 import 'schema.dart';
 
-/// A [Darto] app with `@hono/zod-openapi`-style OpenAPI support.
+/// `@hono/zod-openapi`-style OpenAPI support for a [Darto] app.
 ///
-/// Register routes with [openapi] (validation comes from the zard schemas in
-/// the route's [Req]), serve the spec with [doc], and the Scalar UI with
-/// [scalarUI].
-class OpenAPIDarto extends Darto {
-  OpenAPIDarto({super.strict = false});
+/// A composable plugin — pass your own [Darto] (`OpenAPIDarto(app)`), register
+/// routes with [openapi] (validation comes from the zard schemas in the route's
+/// [Req]) and serve the spec with [doc]. Plain routes, middleware and `listen`
+/// stay on the `Darto` you passed in; mount the Scalar UI with [scalarUI].
+class OpenAPIDarto {
+  /// The Darto app this registry mounts its routes and spec endpoint on.
+  final Darto app;
+
+  OpenAPIDarto(this.app);
 
   final List<RouteConfig> _routes = [];
 
@@ -41,19 +45,19 @@ class OpenAPIDarto extends Darto {
 
     switch (route.method.toLowerCase()) {
       case 'get':
-        get(route.path, mws, handler);
+        app.get(route.path, mws, handler);
         break;
       case 'post':
-        post(route.path, mws, handler);
+        app.post(route.path, mws, handler);
         break;
       case 'put':
-        put(route.path, mws, handler);
+        app.put(route.path, mws, handler);
         break;
       case 'patch':
-        patch(route.path, mws, handler);
+        app.patch(route.path, mws, handler);
         break;
       case 'delete':
-        delete(route.path, mws, handler);
+        app.delete(route.path, mws, handler);
         break;
       default:
         throw ArgumentError('Unsupported method: ${route.method}');
@@ -64,7 +68,7 @@ class OpenAPIDarto extends Darto {
 
   /// Serves the OpenAPI 3.1 document (JSON) at [path].
   void doc(String path, {required Info info, List<Server> servers = const []}) {
-    use((Context c, Next next) async {
+    app.use((Context c, Next next) async {
       if (c.req.path == path) {
         c.json(buildSpec(info, servers));
         return;

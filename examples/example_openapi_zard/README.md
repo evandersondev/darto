@@ -4,31 +4,33 @@ Hono-style `zod-openapi` DX in Darto, using **`darto_zard_openapi`**: a single
 zard schema both **validates** the request and **documents** the API.
 
 ```dart
+import 'package:darto/darto.dart';
 import 'package:darto_zard_openapi/darto_zard_openapi.dart';
 
 final userSchema = z.map({
-  'name':  z.string().min(2).describe('Nome completo').example('João Silva'),
+  'name':  z.string().min(2).openapi(example: 'João Silva', description: 'Nome completo'),
   'email': z.string().email(),
   'role':  z.$enum(['admin', 'user', 'guest']),
-}).openapi('User'); // named component → #/components/schemas/User
+}).openapiSchema('User'); // named component → #/components/schemas/User
 
 void main() async {
-  final app = OpenAPIDarto();
+  final app = Darto();            // your own Darto app
+  final api = OpenAPIDarto(app);  // plug OpenAPI on top
 
   final route = createRoute(
     method: 'get',
     path: '/users/:id',
-    request: Req(params: z.map({'id': z.coerce.int().min(1)}).openapi()),
+    request: Req(params: z.map({'id': z.coerce.int().min(1)}).openapiSchema()),
     responses: [Res(200, 'Usuário encontrado', body: userSchema)],
   );
 
-  app.openapi(route, [], (c) {
+  api.openapi(route, [], (c) {
     final id = c.req.valid<Map<String, dynamic>>('param')['id'];
     if (id != 123) return c.status(404).json({'message': 'Not Found'});
     return c.ok({'id': 123, 'name': 'João Silva'});
   });
 
-  app.doc('/openapi.json', info: Info(title: 'Users API', version: '1.0.0'));
+  api.doc('/openapi.json', info: Info(title: 'Users API', version: '1.0.0'));
   app.get('/docs', [], scalarUI(url: '/openapi.json'));
   await app.listen(3000);
 }

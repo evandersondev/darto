@@ -1,3 +1,4 @@
+import 'package:darto/darto.dart';
 import 'package:darto_zard_openapi/darto_zard_openapi.dart';
 import 'package:test/test.dart';
 
@@ -12,8 +13,8 @@ void main() {
     }).openapiSchema('User');
 
     OpenAPIDarto buildApp() {
-      final app = OpenAPIDarto();
-      app.openapi(
+      final api = OpenAPIDarto(Darto());
+      api.openapi(
         createRoute(
           method: 'get',
           path: '/users/:id',
@@ -27,7 +28,7 @@ void main() {
         [],
         (c) => c.ok({}),
       );
-      app.openapi(
+      api.openapi(
         createRoute(
           method: 'post',
           path: '/users',
@@ -37,7 +38,7 @@ void main() {
         [],
         (c) => c.created({}),
       );
-      return app;
+      return api;
     }
 
     test('paths, methods and :id → {id}', () {

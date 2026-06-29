@@ -12,6 +12,7 @@ decoupled from the handler, Scalar UI included.
 ## Quick start
 
 ```dart
+import 'package:darto/darto.dart';
 import 'package:darto_zard_openapi/darto_zard_openapi.dart';
 
 // Define the schema once. .openapi(example:, description:) adds doc metadata per
@@ -28,7 +29,8 @@ final userIdParam = z.map({
 }).openapiSchema();
 
 void main() async {
-  final app = OpenAPIDarto();
+  final app = Darto();            // your own Darto app
+  final api = OpenAPIDarto(app);  // plug OpenAPI on top (composition)
 
   // Reusable route contract (≈ createRoute), decoupled from the handler.
   final getUser = createRoute(
@@ -43,14 +45,14 @@ void main() async {
   );
 
   // Attach contract + middlewares + handler (≈ app.openapi).
-  app.openapi(getUser, [], (c) {
+  api.openapi(getUser, [], (c) {
     final id = c.req.valid<Map<String, dynamic>>('param')['id']; // int, validated
     if (id != 123) return c.status(404).json({'message': 'Not Found'});
     return c.ok({'id': 123, 'name': 'Ada Lovelace', 'age': 28});
   });
 
-  app.doc('/openapi.json', info: Info(title: 'Users API', version: '1.0.0'));
-  app.get('/docs', [], scalarUI(url: '/openapi.json'));
+  api.doc('/openapi.json', info: Info(title: 'Users API', version: '1.0.0'));
+  app.get('/docs', [], scalarUI(url: '/openapi.json')); // plain Darto route
 
   await app.listen(3000);
 }
@@ -60,13 +62,13 @@ void main() async {
 
 | `@hono/zod-openapi` | `darto_zard_openapi` |
 |---|---|
-| `new OpenAPIHono()` | `OpenAPIDarto()` |
+| `new OpenAPIHono()` | `OpenAPIDarto(Darto())` (composition) |
 | `createRoute({...})` | `createRoute(...)` |
-| `app.openapi(route, handler)` | `app.openapi(route, [middlewares], handler)` |
+| `app.openapi(route, handler)` | `api.openapi(route, [middlewares], handler)` |
 | `field.openapi({example, description})` | `field.openapi(example:, description:)` (type-safe `example`) |
 | `schema.openapi('User')` | `schema.openapiSchema('User')` |
 | `c.req.valid('param')` | `c.req.valid<...>('param')` |
-| `app.doc('/openapi.json', {...})` | `app.doc('/openapi.json', info:, servers:)` |
+| `app.doc('/openapi.json', {...})` | `api.doc('/openapi.json', info:, servers:)` |
 | `swaggerUI({url})` | `scalarUI(url:)` |
 
 ## Notes

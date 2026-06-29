@@ -24,7 +24,7 @@ class Server {
       {'url': url, if (description != null) 'description': description};
 }
 
-/// The request contract. Each part is a zard schema bridged with `.openapi()`:
+/// The request contract. Each part is a zard schema bridged with `.openapiSchema()`:
 ///
 /// - [json] — the request body (`requestBody`), validated as a whole.
 /// - [params] / [query] / [headers] — **object** schemas whose properties each

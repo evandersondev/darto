@@ -3,11 +3,13 @@ import 'package:test/test.dart';
 
 void main() {
   group('buildSpec', () {
+    // `.openapi(example:, description:)` is type-safe: `example` must match the
+    // field's type — `z.int().openapi(example: 'x')` would NOT compile.
     final userSchema = z.map({
-      'name': z.string().min(2).describe('Nome').example('Ada'),
+      'name': z.string().min(2).openapi(example: 'Ada', description: 'Nome'),
       'email': z.string().email(),
       'role': z.$enum(['admin', 'user']),
-    }).openapi('User');
+    }).openapiSchema('User');
 
     OpenAPIDarto buildApp() {
       final app = OpenAPIDarto();
@@ -16,7 +18,7 @@ void main() {
           method: 'get',
           path: '/users/:id',
           summary: 'Get a user',
-          request: Req(params: z.map({'id': z.coerce.int().min(1)}).openapi()),
+          request: Req(params: z.map({'id': z.coerce.int().min(1)}).openapiSchema()),
           responses: [
             Res(200, 'Found', body: userSchema),
             Res(404, 'Missing'),

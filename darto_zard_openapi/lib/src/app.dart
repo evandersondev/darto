@@ -74,7 +74,7 @@ class OpenAPIDarto extends Darto {
   }
 
   /// Assembles the OpenAPI 3.1 document from the registered routes. Named
-  /// schemas (`.openapi('Name')`) are emitted once under
+  /// schemas (`.openapiSchema('Name')`) are emitted once under
   /// `components.schemas` and referenced with `$ref`.
   Map<String, dynamic> buildSpec(Info info, List<Server> servers) {
     final components = <String, dynamic>{};

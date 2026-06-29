@@ -6,9 +6,13 @@
   - `createRoute({method, path, request, responses})` — a reusable route
     contract, decoupled from the handler.
   - `Req(json:, params:, query:, headers:)` / `Res(status, description, body:)`
-    accept zard schemas bridged with `.openapi([name])`.
-  - `.openapi([name])` extension on zard `Schema` — names a reusable component
-    (`#/components/schemas/<name>`, referenced via `$ref`) or inlines it.
+    accept zard schemas bridged with `.openapiSchema([name])`.
+  - `.openapi({example, description})` extension on zard `Schema<T>` — attaches
+    field metadata; `example` is **type-checked** against the schema's type
+    (`z.int()` → `int`, `z.string()` → `String`), and stays correct through
+    `z.coerce.*`/`transform`.
+  - `.openapiSchema([name])` extension on zard `Schema` — names a reusable
+    component (`#/components/schemas/<name>`, referenced via `$ref`) or inlines it.
   - `scalarUI(url:)` — serves the Scalar API reference UI.
   - Validation is performed by the zard schemas (via Darto's `validator`
     middleware): full zard power (email/refine/coerce/custom messages), with the

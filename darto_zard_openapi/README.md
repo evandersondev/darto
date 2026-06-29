@@ -14,17 +14,18 @@ decoupled from the handler, Scalar UI included.
 ```dart
 import 'package:darto_zard_openapi/darto_zard_openapi.dart';
 
-// Define the schema once. .describe()/.example() add doc metadata;
-// .openapi('User') registers a reusable component (#/components/schemas/User).
+// Define the schema once. .openapi(example:, description:) adds doc metadata per
+// field — `example` is type-checked against the field's type. .openapiSchema('User')
+// registers a reusable component (#/components/schemas/User).
 final userSchema = z.map({
-  'name':  z.string().min(1).describe('Full name').example('Ada Lovelace'),
-  'email': z.string().email().describe('Contact e-mail'),
-  'age':   z.int().min(0).max(150).example(28),
-}).openapi('User');
+  'name':  z.string().min(1).openapi(example: 'Ada Lovelace', description: 'Full name'),
+  'email': z.string().email().openapi(description: 'Contact e-mail'),
+  'age':   z.int().min(0).max(150).openapi(example: 28),
+}).openapiSchema('User');
 
 final userIdParam = z.map({
-  'id': z.coerce.int().min(1).describe('User id'),
-}).openapi();
+  'id': z.coerce.int().min(1).openapi(description: 'User id'),
+}).openapiSchema();
 
 void main() async {
   final app = OpenAPIDarto();
@@ -62,7 +63,8 @@ void main() async {
 | `new OpenAPIHono()` | `OpenAPIDarto()` |
 | `createRoute({...})` | `createRoute(...)` |
 | `app.openapi(route, handler)` | `app.openapi(route, [middlewares], handler)` |
-| `schema.openapi('User')` | `schema.openapi('User')` |
+| `field.openapi({example, description})` | `field.openapi(example:, description:)` (type-safe `example`) |
+| `schema.openapi('User')` | `schema.openapiSchema('User')` |
 | `c.req.valid('param')` | `c.req.valid<...>('param')` |
 | `app.doc('/openapi.json', {...})` | `app.doc('/openapi.json', info:, servers:)` |
 | `swaggerUI({url})` | `scalarUI(url:)` |

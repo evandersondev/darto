@@ -1,18 +1,31 @@
 import 'package:darto_zard_openapi/darto_zard_openapi.dart';
 
-// 2. Schema defined once with zard. .describe()/.example() add OpenAPI metadata;
-//    .openapi('User') names the component (#/components/schemas/User).
+// 2. Schema defined once with zard. .openapi(example:, description:) adds doc
+//    metadata per field — `example` is type-checked against the field's type
+//    (String for z.string(), int for z.int()). .openapiSchema('User') names the
+//    component (#/components/schemas/User).
 final userSchema = z.map({
-  'name': z.string().min(2).max(50).describe('Nome completo').example('João Silva'),
-  'email': z.string().email().describe('E-mail do usuário').example('joao@example.com'),
-  'age': z.int().min(0).max(150).describe('Idade em anos').example(28),
-  'role': z.$enum(['admin', 'user', 'guest']).describe('Papel do usuário'),
-}).openapi('User');
+  'name': z.string().min(2).max(50).openapi(
+        example: 'João Silva',
+        description: 'Nome completo',
+      ),
+  'email': z.string().email().openapi(
+        example: 'joao@example.com',
+        description: 'E-mail do usuário',
+      ),
+  'age': z.int().min(0).max(150).openapi(
+        example: 28,
+        description: 'Idade em anos',
+      ),
+  'role': z.$enum(['admin', 'user', 'guest']).openapi(
+        description: 'Papel do usuário',
+      ),
+}).openapiSchema('User');
 
 // Params come as strings → z.coerce makes "42" become 42.
 final getUserParams = z.map({
-  'id': z.coerce.int().min(1).describe('ID do usuário a ser buscado'),
-}).openapi();
+  'id': z.coerce.int().min(1).openapi(description: 'ID do usuário a ser buscado'),
+}).openapiSchema();
 
 void main() async {
   // 1. App OpenAPI (≈ new OpenAPIHono()).

@@ -8,8 +8,8 @@
 /// import 'package:darto_zard_openapi/darto_zard_openapi.dart';
 ///
 /// final userSchema = z.map({
-///   'name': z.string().min(1).describe('Full name').example('Ada'),
-/// }).openapi('User');
+///   'name': z.string().min(1).openapi(example: 'Ada', description: 'Full name'),
+/// }).openapiSchema('User');
 ///
 /// void main() async {
 ///   final app = OpenAPIDarto();

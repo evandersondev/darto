@@ -57,9 +57,43 @@ Runs `dart pub get` automatically after scaffolding.
 
 ---
 
+### `darto create <name> --template <t>`
+
+Choose a project template with `--template` (`-t`). Available templates:
+
+| Template  | What you get |
+| --------- | ------------ |
+| `default` | Starter project with an example `user` module (controller + service). |
+| `blank`   | Minimal project — just a `/health` route. |
+| `openapi` | REST API where **one zard schema validates the request AND generates the OpenAPI 3.1 docs**, served with the Scalar UI at `/docs`. Includes tests. |
+
+```sh
+darto create my_api                      # default
+darto create my_api --template openapi   # validation + OpenAPI docs
+darto create my_api --template blank
+```
+
+#### `--template openapi` structure
+
+```
+my_api/
+  bin/
+    server.dart
+  lib/
+    app.dart                  ← OpenAPIDarto(app) + routes + /docs (Scalar)
+    schemas/
+      user_schema.dart        ← one schema: validates AND documents
+  test/
+    app_test.dart             ← boots the app, asserts validation + spec
+  pubspec.yaml                ← darto + darto_zard_openapi
+  analysis_options.yaml
+  .gitignore
+```
+
 ### `darto create <name> --blank`
 
-Scaffold a minimal project with no starter module — just the server entry point and a `/health` route.
+Alias for `--template blank`: a minimal project with no starter module — just the
+server entry point and a `/health` route.
 
 ```sh
 darto create my_api --blank

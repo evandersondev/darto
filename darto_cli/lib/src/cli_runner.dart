@@ -15,8 +15,9 @@ const _help = '''
 \x1B[1mUsage:\x1B[0m  darto <command> [arguments]
 
 \x1B[1mCommands:\x1B[0m
-  create <name>          Scaffold a new Darto project
-  create <name> --blank  Scaffold a minimal project (no starter module)
+  create <name>                  Scaffold a new Darto project
+  create <name> --template <t>   Template: default | blank | openapi
+  create <name> --blank          Minimal project (alias for --template blank)
   dev [entrypoint]       Run server in development mode (auto-restart)
   build [entrypoint]     Compile server to native executable + generate Dockerfile
   start [binary]         Run the compiled binary
@@ -31,6 +32,7 @@ const _help = '''
 
 \x1B[1mExamples:\x1B[0m
   darto create my_api
+  darto create my_api --template openapi
   darto create my_api --blank
   darto dev
   darto gen client flutter
@@ -56,9 +58,7 @@ Future<void> runCli(List<String> args) async {
 
   switch (command) {
     case 'create':
-      final blank = rest.contains('--blank') || rest.contains('-b');
-      final nameArgs = rest.where((a) => !a.startsWith('-')).toList();
-      await runCreate(nameArgs, blank: blank);
+      await _runCreate(rest);
     case 'dev':
       await runDev(rest);
     case 'build':
@@ -72,6 +72,47 @@ Future<void> runCli(List<String> args) async {
       stderr.writeln('Run \x1B[36mdarto --help\x1B[0m for available commands.');
       exit(1);
   }
+}
+
+/// Parses `darto create <name> [--template <t>] [--blank]`.
+Future<void> _runCreate(List<String> rest) async {
+  final blank = rest.contains('--blank') || rest.contains('-b');
+
+  // Resolve --template <t> / --template=<t> / -t <t>.
+  String? templateValue;
+  final consumed = <int>{};
+  for (var i = 0; i < rest.length; i++) {
+    final a = rest[i];
+    if (a == '--template' || a == '-t') {
+      if (i + 1 < rest.length) {
+        templateValue = rest[i + 1];
+        consumed
+          ..add(i)
+          ..add(i + 1);
+      }
+    } else if (a.startsWith('--template=')) {
+      templateValue = a.substring('--template='.length);
+      consumed.add(i);
+    }
+  }
+
+  ProjectTemplate? template;
+  if (templateValue != null) {
+    template = ProjectTemplate.parse(templateValue);
+    if (template == null) {
+      stderr.writeln('\x1B[31mError: unknown template "$templateValue". '
+          'Use one of: default, blank, openapi.\x1B[0m');
+      exit(1);
+    }
+  }
+
+  // Positional args: everything that isn't a flag or a consumed template value.
+  final nameArgs = <String>[
+    for (var i = 0; i < rest.length; i++)
+      if (!rest[i].startsWith('-') && !consumed.contains(i)) rest[i],
+  ];
+
+  await runCreate(nameArgs, blank: blank, template: template);
 }
 
 /// Dispatches `darto gen <subcommand> [args]`.

@@ -2,10 +2,13 @@
 
 # 🎯 Darto Framework
 
-**Minimal, fast and type-safe web framework for Dart — inspired by Express and Hono.**
+**The minimal, pure-Dart backend framework — the same language from app to server.**
 
-Everything flows through a single concept: **Context**.
+No JS bridges, no context switch: if you write Flutter, you already write Darto.
+A thin, fast, type-safe layer over Dart's native `HttpServer`, with an
+Express/Hono-style API where everything flows through a single concept: **Context**.
 
+[![CI](https://github.com/evandersondev/darto/actions/workflows/ci.yml/badge.svg)](https://github.com/evandersondev/darto/actions/workflows/ci.yml)
 [![pub.dev](https://img.shields.io/pub/v/darto.svg?label=darto)](https://pub.dev/packages/darto)
 [![pub.dev](https://img.shields.io/pub/v/darto_cli.svg?label=darto_cli)](https://pub.dev/packages/darto_cli)
 [![Dart](https://img.shields.io/badge/Dart-3.x-blue.svg)](https://dart.dev)
@@ -29,6 +32,7 @@ This repository is a **monorepo** containing the entire Darto ecosystem.
 | [`darto_static`](./darto_static/)       | Static file serving middleware                         | [![pub](https://img.shields.io/pub/v/darto_static.svg)](https://pub.dev/packages/darto_static)       |
 | [`darto_env`](./darto_env/)             | `.env` file loader                                     | [![pub](https://img.shields.io/pub/v/darto_env.svg)](https://pub.dev/packages/darto_env)             |
 | [`darto_openapi`](./darto_openapi/)     | OpenAPI 3.1 spec generation + Scalar API docs          | [![pub](https://img.shields.io/pub/v/darto_openapi.svg)](https://pub.dev/packages/darto_openapi)     |
+| [`darto_zard_openapi`](./darto_zard_openapi/) | Hono-style zod-openapi — one zard schema validates **and** documents | [![pub](https://img.shields.io/pub/v/darto_zard_openapi.svg)](https://pub.dev/packages/darto_zard_openapi) |
 | [`darto_test`](./darto_test/)           | Ergonomic test client (boot + assert, supertest-style) | [![pub](https://img.shields.io/pub/v/darto_test.svg)](https://pub.dev/packages/darto_test)           |
 | [`darto_logger`](./darto_logger/)       | Structured logging + request-logging middleware        | [![pub](https://img.shields.io/pub/v/darto_logger.svg)](https://pub.dev/packages/darto_logger)       |
 | [`darto_auth`](./darto_auth/)           | Password hashing (PBKDF2) + session-based auth guards   | [![pub](https://img.shields.io/pub/v/darto_auth.svg)](https://pub.dev/packages/darto_auth)           |

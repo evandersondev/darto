@@ -4,15 +4,15 @@ export const translations = {
   en: {
     nav: { docs: "Documentation", github: "GitHub", getStarted: "Get Started" },
     hero: {
-      badge: "v1.2· Minimal Dart web framework",
-      title1: "A minimal, fast web framework",
-      title2: "for Dart, done right.",
+      badge: "v1.2· Minimal pure-Dart backend framework",
+      title1: "The backend framework for Dart,",
+      title2: "from app to server.",
       subtitle:
-        "Define routes, compose middleware, ship APIs. Everything flows through one concept: Context — inspired by Express and Hono, built for pure Dart.",
+        "Stay in Dart all the way from your Flutter app to the server. Define routes, compose middleware, ship APIs — a thin, fast, type-safe layer over Dart's native HttpServer, with an Express/Hono-style Context.",
       cta1: "Get Started",
       cta2: "View Documentation",
       installNote: "dart pub add darto",
-      tagline: "One Context. Familiar API. Zero JS bridges.",
+      tagline: "Same language, app to server. Pure Dart. Zero JS bridges.",
       credibility: {
         version: "v1.2.0",
         oss: "Open source · MIT",
@@ -219,15 +219,15 @@ app.get('/api/me', [], (c) {
   pt: {
     nav: { docs: "Documentação", github: "GitHub", getStarted: "Começar" },
     hero: {
-      badge: "v1.2· Framework web minimalista para Dart",
-      title1: "Um framework web rápido e mínimo",
-      title2: "para Dart, do jeito certo.",
+      badge: "v1.2· Framework backend minimalista em Dart puro",
+      title1: "O framework backend para Dart,",
+      title2: "do app ao servidor.",
       subtitle:
-        "Defina rotas, componha middlewares, publique APIs. Tudo passa por um único conceito: Context — inspirado em Express e Hono, feito em Dart puro.",
+        "Continue em Dart do seu app Flutter até o servidor. Defina rotas, componha middlewares, publique APIs — uma camada fina, rápida e type-safe sobre o HttpServer nativo do Dart, com um Context no estilo Express/Hono.",
       cta1: "Começar",
       cta2: "Ver documentação",
       installNote: "dart pub add darto",
-      tagline: "Um único Context. API familiar. Zero pontes JS.",
+      tagline: "Mesma linguagem, do app ao servidor. Dart puro. Zero pontes JS.",
       credibility: {
         version: "v1.2.0",
         oss: "Código aberto · MIT",

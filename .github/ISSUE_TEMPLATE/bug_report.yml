@@ -1,0 +1,54 @@
+name: 🐛 Bug report
+description: Report a problem so we can fix it / Reporte um problema para corrigirmos
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! / Obrigado por reportar um bug!
+        Please fill in as much as you can. / Preencha o máximo que conseguir.
+
+  - type: input
+    id: package
+    attributes:
+      label: Package & version / Pacote e versão
+      description: e.g. darto 1.2.0, darto_zard_openapi 1.0.0
+      placeholder: darto x.y.z
+    validations:
+      required: true
+
+  - type: input
+    id: dart
+    attributes:
+      label: Dart SDK version / Versão do Dart SDK
+      placeholder: "dart --version"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened? / O que aconteceu?
+      description: A clear description of the bug. / Descrição clara do bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce / Passos para reproduzir
+      description: A minimal code snippet is ideal. / Um trecho mínimo de código é o ideal.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+      render: dart
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / Comportamento esperado
+    validations:
+      required: false

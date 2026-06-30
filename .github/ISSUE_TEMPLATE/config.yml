@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Questions & discussions / Dúvidas e discussões
+    url: https://github.com/evandersondev/darto/discussions
+    about: Ask questions and share ideas here. / Tire dúvidas e compartilhe ideias aqui.
+  - name: 📚 Documentation / Documentação
+    url: https://darto-docs.vercel.app
+    about: Read the docs before opening an issue. / Leia a documentação antes de abrir uma issue.

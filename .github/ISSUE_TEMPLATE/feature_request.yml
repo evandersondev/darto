@@ -1,0 +1,27 @@
+name: ✨ Feature request
+description: Suggest an idea / Sugira uma ideia
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Problema
+      description: What are you trying to do that Darto makes hard today? / O que você quer fazer que hoje é difícil no Darto?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution / Solução proposta
+      description: How could the API look? / Como a API poderia ser?
+      render: dart
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered / Alternativas consideradas
+    validations:
+      required: false

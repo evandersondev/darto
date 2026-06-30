@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - darto
+          - darto_auth
+          - darto_cache
+          - darto_cli
+          - darto_env
+          - darto_inject
+          - darto_jobs
+          - darto_logger
+          - darto_mailer
+          - darto_openapi
+          - darto_rate_limit
+          - darto_static
+          - darto_test
+          - darto_validator
+          - darto_view
+          - darto_ws
+          - darto_zard_openapi
+    steps:
+      - uses: actions/checkout@v4
+
+      # darto_validator and darto_zard_openapi override `zard` to ../../zard,
+      # i.e. a sibling of this checkout. zard lives in its own repo, so clone it
+      # alongside the workspace before resolving dependencies.
+      - name: Clone zard (sibling for path overrides)
+        run: |
+          if [ ! -d "${{ github.workspace }}/../zard" ]; then
+            git clone --depth 1 https://github.com/evandersondev/zard.git "${{ github.workspace }}/../zard"
+          fi
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.package }}
+        run: dart pub get
+
+      - name: Verify formatting
+        working-directory: ${{ matrix.package }}
+        run: dart format --output=none --set-exit-if-changed .
+        continue-on-error: true
+
+      - name: Analyze
+        working-directory: ${{ matrix.package }}
+        run: dart analyze
+
+      - name: Run tests
+        working-directory: ${{ matrix.package }}
+        run: |
+          if ls test/*_test.dart >/dev/null 2>&1; then
+            dart test
+          else
+            echo "No tests in ${{ matrix.package }} — skipping."
+          fi

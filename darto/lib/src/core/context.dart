@@ -207,6 +207,50 @@ class Context {
 
   void header(String key, String value) => _res.setHeader(key, value);
 
+  // ── Content negotiation ─────────────────────────────────────────────────────
+
+  /// Serializes [data] according to the request's `Accept` header.
+  ///
+  /// Chooses the best representation via [req.accepts]. Out of the box it
+  /// handles:
+  ///
+  /// - `application/json` → `c.json(data)` (requires a [Map] or [List])
+  /// - `text/plain`       → `c.text(data.toString())`
+  ///
+  /// Add more representations (XML, CSV, …) via [producers] — a map from media
+  /// type to a builder that turns [data] into a [Response]. Entries in
+  /// [producers] extend and override the built-ins, and their keys participate
+  /// in negotiation:
+  ///
+  /// ```dart
+  /// c.negotiate(user, producers: {
+  ///   'text/html': (d) => c.html('<b>${d['name']}</b>'),
+  /// });
+  /// ```
+  ///
+  /// When the client accepts none of the available types, responds `406 Not
+  /// Acceptable`.
+  Response negotiate(
+    Object data, {
+    int status = 200,
+    Map<String, Response Function(Object data)> producers = const {},
+  }) {
+    final builders = <String, Response Function(Object data)>{
+      'application/json': (d) => Response.json(d as dynamic, status: status),
+      'text/plain': (d) => Response.text(d.toString(), status: status),
+      ...producers,
+    };
+
+    final choice = _req.accepts(builders.keys.toList());
+    if (choice == null) {
+      return _r(Response.json(
+        const {'error': 'Not Acceptable'},
+        status: 406,
+      ));
+    }
+    return _r(builders[choice]!(data));
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   RenderLayout? _renderLayout;

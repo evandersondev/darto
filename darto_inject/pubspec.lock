@@ -84,16 +84,18 @@ packages:
   darto:
     dependency: "direct main"
     description:
-      path: "../darto"
-      relative: true
-    source: path
+      name: darto
+      sha256: "72abda3cca6cc5dce718f29f4ac33adf4e64fd97799796ec86ee772c43682c78"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.2.0"
   darto_test:
     dependency: "direct dev"
     description:
-      path: "../darto_test"
-      relative: true
-    source: path
+      name: darto_test
+      sha256: a09bd829a89b6c9025b24078484c49d4a1aff2dc11afc716c811d361a1c50457
+      url: "https://pub.dev"
+    source: hosted
     version: "1.1.0"
   file:
     dependency: transitive

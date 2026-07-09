@@ -105,6 +105,8 @@ darto/
 └── examples/           # Example projects (see below)
 ```
 
+> **Dependency injection lives in [`darto_inject`](./darto_inject/)** (`Provider<T>` + request scope + overrides). An earlier `darto_di` package was never published and has been removed.
+
 ---
 
 ## 🧪 Examples

@@ -1,6 +1,6 @@
 name: darto_inject
 description: Typed dependency injection for Darto — Provider<T>, request scope, lifecycle hooks and per-test overrides. No codegen, no decorators.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/evandersondev/darto/tree/main/darto_inject
 repository: https://github.com/evandersondev/darto
 
@@ -14,11 +14,3 @@ dev_dependencies:
   lints: ^5.0.0
   test: ^1.24.0
   darto_test: ^1.1.0
-
-# Local development against this monorepo's packages. Ignored by consumers of
-# the published package.
-dependency_overrides:
-  darto:
-    path: ../darto
-  darto_test:
-    path: ../darto_test

@@ -1,3 +1,14 @@
+## 1.3.0
+
+- **Content negotiation:**
+  - `c.req.accepts(List<String> types)` — picks the best representation for the
+    request's `Accept` header (honoring `q` values), or `null` if none match.
+  - `c.negotiate(data, {producers})` — serializes `data` according to `Accept`,
+    with built-ins for `application/json` and `text/plain` and a `producers`
+    map to add/override media types (XML, CSV, …).
+- Documented that Darto serves over HTTP/1.1 only (no HTTP/2) — see
+  `Darto.serve`.
+
 ## 1.2.0
 
 - **Server hardening:**

@@ -307,6 +307,16 @@ class Darto {
   /// await app.serve(port: 8080, host: 'localhost');
   /// await app.serve(port: 443, securityContext: ctx); // HTTPS
   /// ```
+  ///
+  /// ## Protocol: HTTP/1.1 only (documented limitation)
+  ///
+  /// Darto serves over `dart:io`'s [HttpServer], which speaks **HTTP/1.1**
+  /// (with keep-alive and TLS) only — it has no HTTP/2 support. True HTTP/2
+  /// (ALPN negotiation, HPACK header compression, stream multiplexing) would
+  /// require building on `package:http2` and driving raw `SecureSocket`s
+  /// manually, bypassing [HttpServer] entirely. That is future work and is
+  /// intentionally **not** hacked in here, since a partial H2 implementation
+  /// would be worse than none. Track it on the roadmap.
   Future<void> serve({
     int port = 3000,
     Object? host,

@@ -95,7 +95,8 @@ class Di implements DiRef {
     final v = factory(this);
     _appCache[p] = v;
     _knownSync.add(p);
-    if (p.onDispose != null) _appDisposers.add(() => p.onDispose!(v));
+    final disposer = p.disposerFor(v);
+    if (disposer != null) _appDisposers.add(disposer);
     return v;
   }
 
@@ -112,9 +113,8 @@ class Di implements DiRef {
     final v = await factory(this);
     _appCacheAsync[p] = v;
     _knownAsync.add(p);
-    if (p.onDispose != null) {
-      _appDisposers.add(() => p.onDispose!(v));
-    }
+    final disposer = p.disposerFor(v);
+    if (disposer != null) _appDisposers.add(disposer);
     return v;
   }
 
@@ -184,7 +184,8 @@ class _RequestScope implements DiRef {
     final v = factory(this);
     _cache[p] = v;
     _parent._knownSync.add(p);
-    if (p.onDispose != null) _disposers.add(() => p.onDispose!(v));
+    final disposer = p.disposerFor(v);
+    if (disposer != null) _disposers.add(disposer);
     return v;
   }
 
@@ -197,9 +198,8 @@ class _RequestScope implements DiRef {
     final v = await factory(this);
     _cacheAsync[p] = v;
     _parent._knownAsync.add(p);
-    if (p.onDispose != null) {
-      _disposers.add(() => p.onDispose!(v));
-    }
+    final disposer = p.disposerFor(v);
+    if (disposer != null) _disposers.add(disposer);
     return v;
   }
 

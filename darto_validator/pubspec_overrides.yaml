@@ -1,0 +1,6 @@
+# Local monorepo development only — NOT published to pub.dev.
+dependency_overrides:
+  darto:
+    path: ../darto
+  zard:
+    path: ../../zard

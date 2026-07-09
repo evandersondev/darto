@@ -50,6 +50,16 @@ class Provider<T> {
     this.name,
   });
 
+  /// Internal: builds a bound disposer for [value]. Runs as an instance method
+  /// so it executes with this instance's reified `T`, avoiding the covariant
+  /// field-read check that would fire if the container touched [onDispose] on a
+  /// `Provider<dynamic>` view (e.g. during `warmup()`).
+  void Function()? disposerFor(Object? value) {
+    final d = onDispose;
+    if (d == null) return null;
+    return () => d(value as T);
+  }
+
   @override
   String toString() => 'Provider<$T>${name == null ? '' : '($name)'}';
 }
@@ -71,6 +81,13 @@ class AsyncProvider<T> {
     this.onDispose,
     this.name,
   });
+
+  /// Internal: builds a bound disposer for [value]. See [Provider.disposerFor].
+  Future<void> Function()? disposerFor(Object? value) {
+    final d = onDispose;
+    if (d == null) return null;
+    return () => d(value as T);
+  }
 
   @override
   String toString() => 'AsyncProvider<$T>${name == null ? '' : '($name)'}';

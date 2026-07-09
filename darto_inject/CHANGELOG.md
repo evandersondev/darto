@@ -1,3 +1,10 @@
+## 1.0.1
+
+- Fix a runtime type error when disposing a provider read through a
+  `dynamic`-narrowed handle (e.g. during `di.warmup()` / `readAsync<dynamic>`):
+  the disposer is now bound with the provider's reified type via
+  `disposerFor(value)`, avoiding a covariant field-read crash.
+
 ## 1.0.0
 
 - Initial release.

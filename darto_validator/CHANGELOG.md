@@ -1,3 +1,12 @@
+## 1.4.0
+
+- Add `errorBridge()` middleware — translates thrown typed errors into coherent
+  HTTP responses: zard `ZardError` → `422 {issues: [...]}`, duck-typed ORM
+  constraint errors (`UniqueViolationError`/`ForeignKeyError` → `409`,
+  `NotNullViolationError` → `400`, `ConnectionError` → `503`), plus custom
+  `ErrorMapper`s. Lives here (not in darto core) so the framework core stays
+  free of a zard dependency.
+
 ## 1.3.0
 
 - `zardToOpenApiSchema()` now emits `description` and `example` from zard's

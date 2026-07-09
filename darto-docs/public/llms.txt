@@ -29,6 +29,10 @@ Darto centers on three typedefs — Handler, Middleware, and Next. Handlers rece
 - [Session](https://darto-docs.vercel.app/docs?section=session): Cookie-based signed sessions.
 - [Validator (core)](https://darto-docs.vercel.app/docs?section=validator): validator is the core validation middleware (from package:darto/validator.dart) — no extra package needed.
 
+## Database
+
+- [Database & ORM](https://darto-docs.vercel.app/docs?section=database): Darto is unopinionated about persistence — it's a web framework, so you can use any database package you like (raw sqlite3, a driver, or any ORM).
+
 ## Official Plugins
 
 - [CLI Tools](https://darto-docs.vercel.app/docs?section=cli-tools): Install the Darto CLI globally with pub:

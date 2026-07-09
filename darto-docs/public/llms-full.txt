@@ -719,6 +719,71 @@ See: [Schema-driven alternative: zValidator (darto_validator)](https://darto-doc
 
 ---
 
+# Database
+
+## Database & ORM
+<!-- https://darto-docs.vercel.app/docs?section=database -->
+
+Darto is unopinionated about persistence — it's a web framework, so you can use any database package you like (raw sqlite3, a driver, or any ORM). For a type-safe, batteries-included experience the officially recommended ORM is Dartonic.
+
+### Dartonic (recommended ORM)
+
+Dartonic is a type-safe SQL query builder and ORM for Dart, inspired by Drizzle. You define your schema once as Dart classes and query SQLite, PostgreSQL or MySQL through a fully-typed, fluent API — no code generation, no dynamic.
+
+> **Tip:** One schema, three databases. Pair dartonic_core with a driver (dartonic_sqlite / dartonic_postgres / dartonic_mysql) — you only ship what you use.
+
+- [Dartonic documentation](https://dartonic.vercel.app/)
+- [pub.dev/packages/dartonic_core](https://pub.dev/packages/dartonic_core)
+
+### Validation with Zard
+
+For request validation the recommended library is Zard — a Zod-inspired schema validator. Wire it into Darto with darto_validator, which gives you the zValidator middleware (400 on invalid input) and errorBridge (maps thrown/typed errors — including Dartonic's DatabaseError — to HTTP status codes).
+
+- [Zard documentation](https://zard-docs.vercel.app/)
+- [pub.dev/packages/zard](https://pub.dev/packages/zard)
+- [pub.dev/packages/darto_validator](https://pub.dev/packages/darto_validator)
+
+### End-to-end example
+
+A Dartonic table as the source of truth, Zard validating the request, and errorBridge turning a duplicate email into a 409:
+
+```dart
+// main.dart
+import 'package:darto/darto.dart';
+import 'package:darto_validator/darto_validator.dart'; // zValidator + errorBridge
+import 'package:dartonic_core/dartonic_core.dart';
+import 'package:dartonic_sqlite/dartonic_sqlite.dart';
+
+class Users extends Table {
+  final id    = integer('id').primaryKey(autoIncrement: true);
+  final email = text('email').notNull().unique();
+  final name  = text('name').notNull();
+}
+final users = Users();
+
+void main() async {
+  final db = await connectSqlite('app.db', schemas: [users]);
+  final app = Darto();
+  app.use(errorBridge()); // DB errors (e.g. unique) -> HTTP (409/...)
+
+  final schema = z.map({
+    'email': z.string().email(),
+    'name': z.string().min(1),
+  });
+
+  app.post('/users', [zValidator('json', schema)], (Context c) async {
+    final data = c.req.valid<Map<String, dynamic>>('json');
+    final rows = await db.insert(users).valuesRaw(data).returning();
+    return c.created(rows.first.raw);
+  });
+
+  app.listen(3000);
+}
+```
+
+
+---
+
 # Official Plugins
 
 ## CLI Tools

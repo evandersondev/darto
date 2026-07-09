@@ -14,7 +14,7 @@ export type Block =
 export interface DocSection {
   id: string;
   title: string;
-  group: "start" | "api" | "helpers" | "middlewares" | "plugins" | "advanced" | "migration";
+  group: "start" | "api" | "helpers" | "middlewares" | "database" | "plugins" | "advanced" | "migration";
   blocks: Block[];
 }
 
@@ -1656,6 +1656,53 @@ const SECTIONS: BiSection[] = [
           kind: "code",
           code: `import 'package:darto/dev.dart';\n\nfinal app = Darto();\napp.get('/users', [], handler);\napp.post('/users', [], handler);\n\nshowRoutes(app); // GET  /users\n                 // POST /users\napp.listen(3000);`,
         },
+      ],
+    ),
+  },
+  {
+    id: "database",
+    group: "database",
+    title: bi("Database & ORM", "Banco de dados & ORM"),
+    blocks: bi(
+      [
+        { kind: "p", text: "Darto is unopinionated about persistence — it's a web framework, so you can use any database package you like (raw sqlite3, a driver, or any ORM). For a type-safe, batteries-included experience the officially recommended ORM is Dartonic." },
+        { kind: "h3", text: "Dartonic (recommended ORM)" },
+        { kind: "p", text: "Dartonic is a type-safe SQL query builder and ORM for Dart, inspired by Drizzle. You define your schema once as Dart classes and query SQLite, PostgreSQL or MySQL through a fully-typed, fluent API — no code generation, no dynamic." },
+        { kind: "callout", variant: "tip", text: "One schema, three databases. Pair dartonic_core with a driver (dartonic_sqlite / dartonic_postgres / dartonic_mysql) — you only ship what you use." },
+        { kind: "links", links: [
+          { label: "Dartonic documentation", href: "https://dartonic.vercel.app/" },
+          { label: "pub.dev/packages/dartonic_core", href: "https://pub.dev/packages/dartonic_core" },
+        ] },
+        { kind: "h3", text: "Validation with Zard" },
+        { kind: "p", text: "For request validation the recommended library is Zard — a Zod-inspired schema validator. Wire it into Darto with darto_validator, which gives you the zValidator middleware (400 on invalid input) and errorBridge (maps thrown/typed errors — including Dartonic's DatabaseError — to HTTP status codes)." },
+        { kind: "links", links: [
+          { label: "Zard documentation", href: "https://zard-docs.vercel.app/" },
+          { label: "pub.dev/packages/zard", href: "https://pub.dev/packages/zard" },
+          { label: "pub.dev/packages/darto_validator", href: "https://pub.dev/packages/darto_validator" },
+        ] },
+        { kind: "h3", text: "End-to-end example" },
+        { kind: "p", text: "A Dartonic table as the source of truth, Zard validating the request, and errorBridge turning a duplicate email into a 409:" },
+        { kind: "code", lang: "dart", filename: "main.dart", code: `import 'package:darto/darto.dart';\nimport 'package:darto_validator/darto_validator.dart'; // zValidator + errorBridge\nimport 'package:dartonic_core/dartonic_core.dart';\nimport 'package:dartonic_sqlite/dartonic_sqlite.dart';\n\nclass Users extends Table {\n  final id    = integer('id').primaryKey(autoIncrement: true);\n  final email = text('email').notNull().unique();\n  final name  = text('name').notNull();\n}\nfinal users = Users();\n\nvoid main() async {\n  final db = await connectSqlite('app.db', schemas: [users]);\n  final app = Darto();\n  app.use(errorBridge()); // DB errors (e.g. unique) -> HTTP (409/...)\n\n  final schema = z.map({\n    'email': z.string().email(),\n    'name': z.string().min(1),\n  });\n\n  app.post('/users', [zValidator('json', schema)], (Context c) async {\n    final data = c.req.valid<Map<String, dynamic>>('json');\n    final rows = await db.insert(users).valuesRaw(data).returning();\n    return c.created(rows.first.raw);\n  });\n\n  app.listen(3000);\n}` },
+      ],
+      [
+        { kind: "p", text: "O Darto não impõe uma forma de persistência — ele é um framework web, então você pode usar o pacote de banco que preferir (sqlite3 direto, um driver, ou qualquer ORM). Para uma experiência type-safe e completa, o ORM oficialmente recomendado é o Dartonic." },
+        { kind: "h3", text: "Dartonic (ORM recomendado)" },
+        { kind: "p", text: "Dartonic é um query builder e ORM SQL type-safe para Dart, inspirado no Drizzle. Você define o schema uma vez como classes Dart e consulta SQLite, PostgreSQL ou MySQL por uma API fluente e totalmente tipada — sem code generation e sem dynamic." },
+        { kind: "callout", variant: "tip", text: "Um schema, três bancos. Combine o dartonic_core com um driver (dartonic_sqlite / dartonic_postgres / dartonic_mysql) — você entrega só o que usa." },
+        { kind: "links", links: [
+          { label: "Documentação do Dartonic", href: "https://dartonic.vercel.app/" },
+          { label: "pub.dev/packages/dartonic_core", href: "https://pub.dev/packages/dartonic_core" },
+        ] },
+        { kind: "h3", text: "Validação com Zard" },
+        { kind: "p", text: "Para validação de requisições, a biblioteca recomendada é o Zard — um validador de schemas inspirado no Zod. Integre com o Darto via darto_validator, que fornece o middleware zValidator (400 em entrada inválida) e o errorBridge (mapeia erros lançados/tipados — incluindo o DatabaseError do Dartonic — para status HTTP)." },
+        { kind: "links", links: [
+          { label: "Documentação do Zard", href: "https://zard-docs.vercel.app/" },
+          { label: "pub.dev/packages/zard", href: "https://pub.dev/packages/zard" },
+          { label: "pub.dev/packages/darto_validator", href: "https://pub.dev/packages/darto_validator" },
+        ] },
+        { kind: "h3", text: "Exemplo ponta a ponta" },
+        { kind: "p", text: "Uma tabela Dartonic como fonte de verdade, o Zard validando a requisição e o errorBridge transformando e-mail duplicado em 409:" },
+        { kind: "code", lang: "dart", filename: "main.dart", code: `import 'package:darto/darto.dart';\nimport 'package:darto_validator/darto_validator.dart'; // zValidator + errorBridge\nimport 'package:dartonic_core/dartonic_core.dart';\nimport 'package:dartonic_sqlite/dartonic_sqlite.dart';\n\nclass Users extends Table {\n  final id    = integer('id').primaryKey(autoIncrement: true);\n  final email = text('email').notNull().unique();\n  final name  = text('name').notNull();\n}\nfinal users = Users();\n\nvoid main() async {\n  final db = await connectSqlite('app.db', schemas: [users]);\n  final app = Darto();\n  app.use(errorBridge()); // erros de banco (ex.: unique) -> HTTP (409/...)\n\n  final schema = z.map({\n    'email': z.string().email(),\n    'name': z.string().min(1),\n  });\n\n  app.post('/users', [zValidator('json', schema)], (Context c) async {\n    final data = c.req.valid<Map<String, dynamic>>('json');\n    final rows = await db.insert(users).valuesRaw(data).returning();\n    return c.created(rows.first.raw);\n  });\n\n  app.listen(3000);\n}` },
       ],
     ),
   },
